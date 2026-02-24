@@ -21,7 +21,12 @@ const RESOURCES = [
 export default function ResourcesPage() {
   return (
     <>
-      <PageHeader title="Resources" description="Access laws, rules, fees, forms, meeting records, and publications from the Board." />
+      <PageHeader
+        title="Resources"
+        description="Access laws, rules, fees, forms, meeting records, and publications from the Board."
+        image="/images/heroes/hero-clinical.png"
+        imageAlt="Clinical dental tools and equipment"
+      />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {RESOURCES.map((resource) => {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { LogIn, FileText, Search } from "lucide-react";
 import { SITE_NAME, EXTERNAL_LINKS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -18,14 +19,24 @@ export function SiteHeader() {
               href="/"
               className="flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded-md"
             >
-              <div className="flex flex-col">
-                <span className="font-[family-name:var(--font-oswald)] text-[#005f8f] text-base sm:text-lg font-bold leading-tight uppercase tracking-wide">
-                  {SITE_NAME}
-                </span>
-                <span className="text-xs text-[#495057] hidden sm:block">
-                  Established 1894
-                </span>
-              </div>
+              {/* Small logo for mobile */}
+              <Image
+                src="/images/logos/lsbd-logo-small.png"
+                alt="LSBD"
+                width={40}
+                height={40}
+                className="h-8 w-auto lg:hidden"
+                priority
+              />
+              {/* Full logo for desktop */}
+              <Image
+                src="/images/logos/lsbd-logo.png"
+                alt="Louisiana State Board of Dentistry"
+                width={200}
+                height={60}
+                className="h-12 w-auto hidden lg:block"
+                priority
+              />
             </Link>
           </div>
 

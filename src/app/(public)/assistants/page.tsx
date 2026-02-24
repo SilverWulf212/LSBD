@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, ArrowRight, FileText, BookOpen, Shield, ClipboardCheck } from "lucide-react";
@@ -59,6 +60,17 @@ export default function AssistantsPage() {
           </div>
 
           <div className="space-y-6">
+            {/* Sidebar image */}
+            <div className="hidden lg:block">
+              <Image
+                src="/images/people/assistant-male.png"
+                alt="Male dental assistant in professional attire"
+                width={400}
+                height={500}
+                className="rounded-lg"
+              />
+            </div>
+
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
