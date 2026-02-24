@@ -13,7 +13,7 @@ import type { Meeting, MeetingDocument, MeetingWithDocuments } from "@/types";
 async function requireSession() {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
-  return session;
+  return session as typeof session & { user: NonNullable<typeof session.user> };
 }
 
 export async function getMeetings(): Promise<MeetingWithDocuments[]> {

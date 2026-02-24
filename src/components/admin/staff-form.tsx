@@ -34,7 +34,7 @@ export function StaffForm({ staffMember }: StaffFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<StaffFormValues>({
-    resolver: zodResolver(staffSchema),
+    resolver: zodResolver(staffSchema) as any,
     defaultValues: {
       name: staffMember?.name ?? "",
       title: staffMember?.title ?? "",

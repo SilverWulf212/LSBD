@@ -49,7 +49,7 @@ export function AlertForm({ alert }: AlertFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<AlertFormValues>({
-    resolver: zodResolver(alertSchema),
+    resolver: zodResolver(alertSchema) as any,
     defaultValues: {
       title: alert?.title ?? "",
       content: alert?.content ?? "",

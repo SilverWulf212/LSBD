@@ -48,7 +48,7 @@ export function PublicationForm({ publication }: PublicationFormProps) {
   );
 
   const form = useForm<PublicationFormValues>({
-    resolver: zodResolver(publicationSchema),
+    resolver: zodResolver(publicationSchema) as any,
     defaultValues: {
       title: publication?.title ?? "",
       year: publication?.year ?? new Date().getFullYear(),

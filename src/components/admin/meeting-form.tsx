@@ -52,14 +52,14 @@ export function MeetingForm({ meeting }: MeetingFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<MeetingFormValues>({
-    resolver: zodResolver(meetingSchema),
+    resolver: zodResolver(meetingSchema) as any,
     defaultValues: {
       title: meeting?.title ?? "",
       meetingDate: meeting?.meetingDate
         ? new Date(meeting.meetingDate).toISOString().slice(0, 16)
         : "",
       description: meeting?.description ?? "",
-      meetingType: meeting?.meetingType ?? "board",
+      meetingType: (meeting?.meetingType as MeetingFormValues["meetingType"]) ?? "board",
       isPublished: meeting?.isPublished ?? true,
     },
   });

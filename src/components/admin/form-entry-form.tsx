@@ -56,7 +56,7 @@ export function FormEntryForm({ formEntry }: FormEntryFormProps) {
   );
 
   const form = useForm<FormEntryFormValues>({
-    resolver: zodResolver(formEntrySchema),
+    resolver: zodResolver(formEntrySchema) as any,
     defaultValues: {
       name: formEntry?.name ?? "",
       description: formEntry?.description ?? "",

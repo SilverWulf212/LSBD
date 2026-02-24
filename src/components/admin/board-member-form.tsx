@@ -50,7 +50,7 @@ export function BoardMemberForm({ boardMember }: BoardMemberFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<BoardMemberFormValues>({
-    resolver: zodResolver(boardMemberSchema),
+    resolver: zodResolver(boardMemberSchema) as any,
     defaultValues: {
       name: boardMember?.name ?? "",
       honorific: boardMember?.honorific ?? "",
