@@ -14,10 +14,18 @@ import {
 } from "@/components/ui/command";
 import { NAV_ITEMS } from "@/lib/constants";
 
-const SEARCHABLE_PAGES = [
-  { title: "Home", href: "/", section: "Pages" },
-  ...NAV_ITEMS.flatMap((item) => {
-    const pages = [{ title: item.label, href: item.href, section: "Pages" }];
+interface SearchPage {
+  title: string;
+  href: string;
+  section: string;
+}
+
+function buildSearchablePages(): SearchPage[] {
+  const pages: SearchPage[] = [
+    { title: "Home", href: "/", section: "Pages" },
+  ];
+  NAV_ITEMS.forEach((item) => {
+    pages.push({ title: item.label, href: item.href, section: "Pages" });
     if ("children" in item && item.children) {
       item.children.forEach((child) => {
         pages.push({
@@ -27,9 +35,11 @@ const SEARCHABLE_PAGES = [
         });
       });
     }
-    return pages;
-  }),
-];
+  });
+  return pages;
+}
+
+const SEARCHABLE_PAGES = buildSearchablePages();
 
 export function SearchDialog() {
   const [open, setOpen] = React.useState(false);
