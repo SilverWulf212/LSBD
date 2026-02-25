@@ -38,21 +38,21 @@ async function seed() {
 
   // 2. Board members (from current site)
   const boardMemberData = [
-    { name: "Dr. Kimberly Caldwell", honorific: "Dr.", role: "president" as const, district: "4th", sortOrder: 1 },
-    { name: "Dr. David Baughman", honorific: "Dr.", role: "vice_president" as const, district: "2nd", sortOrder: 2 },
-    { name: "Dr. Nelson Daly", honorific: "Dr.", role: "secretary_treasurer" as const, district: "8th", sortOrder: 3 },
-    { name: "Dr. Donald Bennett", honorific: "Dr.", role: "member" as const, district: "5th", sortOrder: 4 },
-    { name: "Dr. Terry Billings", honorific: "Dr.", role: "member" as const, district: "5th", sortOrder: 5 },
-    { name: "Dr. Michael Casadaban", honorific: "Dr.", role: "member" as const, district: "8th", sortOrder: 6 },
-    { name: "Dr. David Chambers", honorific: "Dr.", role: "member" as const, district: "1st", sortOrder: 7 },
-    { name: "Dr. Stephen Chapman", honorific: "Dr.", role: "member" as const, district: "3rd", sortOrder: 8 },
-    { name: "Dr. Adam Cormier", honorific: "Dr.", role: "member" as const, district: "7th", sortOrder: 9 },
-    { name: "Dr. Griffin Deen", honorific: "Dr.", role: "member" as const, district: "6th", sortOrder: 10 },
-    { name: "Dr. Jeetendra Patel", honorific: "Dr.", role: "member" as const, district: "4th", sortOrder: 11 },
-    { name: "Dr. Thomas Price", honorific: "Dr.", role: "member" as const, district: "9th", sortOrder: 12 },
-    { name: "Dr. Joshua Reaves", honorific: "Dr.", role: "member" as const, district: "1st", sortOrder: 13 },
-    { name: "Joelle Breaux, R.D.H.", credential: "R.D.H.", role: "hygienist_representative" as const, sortOrder: 14 },
-    { name: "Mr. Carlos Zelaya", role: "consumer_member" as const, sortOrder: 15 },
+    { name: "Kimberly Caldwell", honorific: "Dr.", role: "president" as const, district: "4th", sortOrder: 1 },
+    { name: "David Baughman", honorific: "Dr.", role: "vice_president" as const, district: "2nd", sortOrder: 2 },
+    { name: "Nelson Daly", honorific: "Dr.", role: "secretary_treasurer" as const, district: "8th", sortOrder: 3 },
+    { name: "Donald Bennett", honorific: "Dr.", role: "member" as const, district: "5th", sortOrder: 4 },
+    { name: "Terry Billings", honorific: "Dr.", role: "member" as const, district: "5th", sortOrder: 5 },
+    { name: "Michael Casadaban", honorific: "Dr.", role: "member" as const, district: "8th", sortOrder: 6 },
+    { name: "David Chambers", honorific: "Dr.", role: "member" as const, district: "1st", sortOrder: 7 },
+    { name: "Stephen Chapman", honorific: "Dr.", role: "member" as const, district: "3rd", sortOrder: 8 },
+    { name: "Adam Cormier", honorific: "Dr.", role: "member" as const, district: "7th", sortOrder: 9 },
+    { name: "Griffin Deen", honorific: "Dr.", role: "member" as const, district: "6th", sortOrder: 10 },
+    { name: "Jeetendra Patel", honorific: "Dr.", role: "member" as const, district: "4th", sortOrder: 11 },
+    { name: "Thomas Price", honorific: "Dr.", role: "member" as const, district: "9th", sortOrder: 12 },
+    { name: "Joshua Reaves", honorific: "Dr.", role: "member" as const, district: "1st", sortOrder: 13 },
+    { name: "Joelle Breaux", credential: "R.D.H.", role: "hygienist_representative" as const, sortOrder: 14 },
+    { name: "Carlos Zelaya", honorific: "Mr.", role: "consumer_member" as const, sortOrder: 15 },
   ];
   for (const member of boardMemberData) {
     await db.insert(boardMembers).values({ ...member, isActive: true }).onConflictDoNothing();
