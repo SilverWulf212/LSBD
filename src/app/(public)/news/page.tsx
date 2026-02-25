@@ -2,17 +2,19 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { PageHeader } from "@/components/layout/page-header";
 import { PostCard } from "@/components/content/post-card";
-import { MOCK_POSTS } from "@/lib/mock-data";
+import { db } from "@/lib/db";
+import { posts } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "News & Updates",
   description: "Latest news, announcements, and updates from the Louisiana State Board of Dentistry.",
 };
 
-export default function NewsPage() {
-  const publishedPosts = MOCK_POSTS.filter((p) => p.status === "published").sort(
-    (a, b) => new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime()
-  );
+export default async function NewsPage() {
+  const publishedPosts = await db.select().from(posts).where(eq(posts.status, "published")).orderBy(desc(posts.publishedAt));
 
   return (
     <>
@@ -30,7 +32,7 @@ export default function NewsPage() {
                     title={post.title}
                     slug={post.slug}
                     excerpt={post.excerpt}
-                    publishedAt={post.publishedAt}
+                    publishedAt={post.publishedAt?.toISOString() ?? null}
                   />
                 ))}
               </div>

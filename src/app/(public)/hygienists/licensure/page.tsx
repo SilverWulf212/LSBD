@@ -28,7 +28,7 @@ export default function HygienistLicensurePage() {
             <CardContent className="space-y-4">
               <h3 className="font-[family-name:var(--font-oswald)] text-base font-semibold text-[#005f8f] uppercase tracking-wide">Requirements</h3>
               <ul className="space-y-2">
-                {["Graduation from a CODA-accredited dental hygiene program", "Successful completion of the National Board Dental Hygiene Examination (NBDHE)", "Successful completion of a regional clinical examination (ADEX, CRDTS, SRTA, or WREB)", "Current BLS certification from an approved provider", "Jurisprudence examination administered by the Board", "Application fee: $150.00"].map((req, i) => (
+                {["Graduation from a CODA-accredited dental hygiene program", "Successful completion of the National Board Dental Hygiene Examination (NBDHE)", "Successful completion of a regional clinical examination (ADEX, CRDTS, SRTA, or WREB)", "Current BLS certification (American Heart Association BLS Provider or American Red Cross BLS)", "Criminal fingerprint background check", "ADEX clinical examination completed within 3 years of application", "Jurisprudence examination administered by the Board", "Application fee: $180.00"].map((req, i) => (
                   <li key={i} className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-1 shrink-0" aria-hidden="true" />
                     <span className="text-sm text-[#495057]">{req}</span>
@@ -51,7 +51,7 @@ export default function HygienistLicensurePage() {
             <CardContent className="space-y-4">
               <h3 className="font-[family-name:var(--font-oswald)] text-base font-semibold text-[#005f8f] uppercase tracking-wide">Requirements</h3>
               <ul className="space-y-2">
-                {["Active, unrestricted dental hygiene license in another U.S. state", "Minimum of three (3) years of active clinical practice", "No disciplinary actions or pending complaints", "Graduation from a CODA-accredited dental hygiene program", "Current BLS certification", "Jurisprudence examination administered by the Board", "Verification of licensure from all states where licensed", "Application fee: $250.00"].map((req, i) => (
+                {["Active, unrestricted dental hygiene license in another U.S. state", "Minimum of one (1) year of active clinical practice (minimum 1,000 hours)", "No disciplinary actions or pending complaints", "Graduation from a CODA-accredited dental hygiene program", "Current BLS certification (American Heart Association BLS Provider or American Red Cross BLS)", "Criminal fingerprint background check", "ADEX clinical examination completed within 3 years of application", "Jurisprudence examination administered by the Board", "Verification of licensure from all states where licensed", "Application fee: $830.00"].map((req, i) => (
                   <li key={i} className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-1 shrink-0" aria-hidden="true" />
                     <span className="text-sm text-[#495057]">{req}</span>
@@ -71,7 +71,7 @@ export default function HygienistLicensurePage() {
           <h2 className="font-[family-name:var(--font-oswald)] text-xl font-bold text-[#005f8f] uppercase tracking-wide mb-4">Additional Information</h2>
           <div className="space-y-3 text-sm text-[#495057]">
             <p>Applications are submitted through the Board&apos;s online portal. Processing times are typically 3-4 weeks for LBE and 4-6 weeks for LBC applications.</p>
-            <p>Contact the Board office at <a href="mailto:admin@lsbd.org" className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded">admin@lsbd.org</a> or <a href="tel:2252197330" className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded">225-219-7330</a> with questions.</p>
+            <p>For LBE questions, contact Iris Pourciau at <a href="mailto:iris@lsbd.org" className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded">iris@lsbd.org</a>. For LBC questions, contact Alexx Smith at <a href="mailto:alexx@lsbd.org" className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded">alexx@lsbd.org</a>. You may also reach the Board office at <a href="tel:2252197330" className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded">225-219-7330</a>.</p>
           </div>
         </div>
       </div>

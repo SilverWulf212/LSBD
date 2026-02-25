@@ -4,8 +4,12 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { PageHeader } from "@/components/layout/page-header";
 import { PostContent } from "@/components/content/post-content";
-import { MOCK_POSTS } from "@/lib/mock-data";
+import { db } from "@/lib/db";
+import { posts } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { CalendarDays, ArrowLeft } from "lucide-react";
+
+export const revalidate = 60;
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -13,7 +17,7 @@ interface PostPageProps {
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = MOCK_POSTS.find((p) => p.slug === slug);
+  const [post] = await db.select().from(posts).where(eq(posts.slug, slug)).limit(1);
   if (!post) return { title: "Post Not Found" };
   return {
     title: post.title,
@@ -21,13 +25,9 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   };
 }
 
-export async function generateStaticParams() {
-  return MOCK_POSTS.map((post) => ({ slug: post.slug }));
-}
-
 export default async function PostPage({ params }: PostPageProps) {
   const { slug } = await params;
-  const post = MOCK_POSTS.find((p) => p.slug === slug);
+  const [post] = await db.select().from(posts).where(eq(posts.slug, slug)).limit(1);
 
   if (!post) {
     notFound();
@@ -39,8 +39,8 @@ export default async function PostPage({ params }: PostPageProps) {
         {post.publishedAt && (
           <div className="flex items-center gap-2 text-sm text-[#495057]">
             <CalendarDays className="h-4 w-4" aria-hidden="true" />
-            <time dateTime={new Date(post.publishedAt).toISOString()}>
-              {format(new Date(post.publishedAt), "MMMM d, yyyy")}
+            <time dateTime={post.publishedAt.toISOString()}>
+              {format(post.publishedAt, "MMMM d, yyyy")}
             </time>
           </div>
         )}

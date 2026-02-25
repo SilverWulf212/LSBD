@@ -8,7 +8,7 @@ import { LogIn, AlertTriangle, Calendar, DollarSign, CheckCircle2, ArrowRight } 
 
 export const metadata: Metadata = {
   title: "Dentist License Renewal",
-  description: "Information about the annual dental license renewal process, deadlines, fees, and continuing education requirements.",
+  description: "Information about the biennial dental license renewal process, deadlines, fees, and continuing education requirements.",
 };
 
 export default function DentistRenewalPage() {
@@ -16,31 +16,37 @@ export default function DentistRenewalPage() {
     <>
       <PageHeader
         title="License Renewal"
-        description="All Louisiana dental licenses expire on December 31 each year. Renew online through the licensee portal."
+        description="All Louisiana dental licenses expire on December 31 of even-numbered years. Submit renewal applications by mail with check or money order."
       />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Renewal CTA */}
-        <div className="bg-[#0077B6] text-white rounded-xl p-6 sm:p-8 mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Renewal Notice */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 sm:p-8 mb-8">
+          <div className="flex flex-col gap-4">
             <div>
-              <h2 className="font-[family-name:var(--font-oswald)] text-xl font-bold uppercase tracking-wide">
-                Renew Your License Online
+              <h2 className="font-[family-name:var(--font-oswald)] text-xl font-bold uppercase tracking-wide text-amber-800">
+                Important: Online Renewals Discontinued
               </h2>
-              <p className="mt-1 text-white/90 text-sm">
-                Log in to the licensee portal to complete your annual renewal.
+              <p className="mt-1 text-amber-700 text-sm">
+                Online license renewals are no longer available. Please submit renewal applications by mail
+                with check or money order payable to the Louisiana State Board of Dentistry.
               </p>
             </div>
-            <Button
-              asChild
-              size="lg"
-              className="bg-white text-[#005f8f] hover:bg-[#CAF0F8] font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] shrink-0"
-            >
-              <a href={EXTERNAL_LINKS.dentistLogin} target="_blank" rel="noopener noreferrer">
-                <LogIn className="h-5 w-5 mr-2" aria-hidden="true" />
-                Licensee Portal
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                asChild
+                size="lg"
+                className="bg-[#0077B6] hover:bg-[#005f8f] text-white font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] shrink-0"
+              >
+                <a href={EXTERNAL_LINKS.dentistLogin} target="_blank" rel="noopener noreferrer">
+                  <LogIn className="h-5 w-5 mr-2" aria-hidden="true" />
+                  Licensee Portal
+                  <span className="sr-only"> (opens in a new tab — for license verification and other account functions)</span>
+                </a>
+              </Button>
+            </div>
+            <p className="text-xs text-amber-600">
+              The Licensee Portal remains available for license verification, address changes, and other account functions.
+            </p>
           </div>
         </div>
 
@@ -52,9 +58,9 @@ export default function DentistRenewalPage() {
             </h2>
             <div className="space-y-4">
               {[
-                { date: "October 1", title: "Renewal Period Opens", desc: "Online renewal applications become available through the licensee portal." },
-                { date: "December 31", title: "Renewal Deadline", desc: "All renewal applications and fees must be received by this date to avoid late penalties." },
-                { date: "January 1", title: "Late Period Begins", desc: "A $150.00 late fee is assessed in addition to the standard renewal fee." },
+                { date: "October 1", title: "Renewal Period Opens", desc: "Renewal applications are mailed to licensees. Complete and return by mail with check or money order." },
+                { date: "December 31", title: "Renewal Deadline", desc: "All renewal applications and fees must be received by this date to avoid late penalties. Licenses expire on December 31 of even-numbered years." },
+                { date: "January 1", title: "Late Period Begins", desc: "A late fee is assessed per the Board's fee schedule in addition to the standard biennial renewal fee." },
                 { date: "March 31", title: "Final Deadline", desc: "Licenses not renewed by this date are considered expired and require reinstatement." },
               ].map((item, i) => (
                 <div key={i} className="flex gap-4">
@@ -89,12 +95,12 @@ export default function DentistRenewalPage() {
               </CardHeader>
               <CardContent className="pt-0 space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-[#495057]">Annual Renewal</span>
-                  <span className="font-semibold text-[#005f8f]">$275.00</span>
+                  <span className="text-[#495057]">Biennial Renewal</span>
+                  <span className="font-semibold text-[#005f8f]">$590.00</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#495057]">Late Fee (after Dec 31)</span>
-                  <span className="font-semibold text-red-600">$150.00</span>
+                  <span className="font-semibold text-red-600">Per Board schedule</span>
                 </div>
                 <Link
                   href="/resources/fees"
@@ -117,10 +123,9 @@ export default function DentistRenewalPage() {
               <CardContent className="pt-0">
                 <ul className="space-y-2">
                   {[
-                    "20 hours of approved CE completed",
-                    "BLS certification current",
-                    "3 hours opioid management CE",
-                    "Malpractice insurance current",
+                    "40 hours of approved CE completed (biennial cycle)",
+                    "BLS certification current (AHA or American Red Cross only)",
+                    "Opioid management CE completed (one-time requirement)",
                     "No address changes unreported",
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-[#495057]">

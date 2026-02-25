@@ -1,6 +1,7 @@
 import {
   pgTable, text, varchar, integer, boolean, timestamp, serial, pgEnum, jsonb, index,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 export const postStatusEnum = pgEnum("post_status", ["draft", "published", "archived"]);
 export const alertSeverityEnum = pgEnum("alert_severity", ["info", "warning", "critical"]);
@@ -111,6 +112,18 @@ export const meetingDocuments = pgTable("meeting_documents", {
 }, (table) => [
   index("meeting_docs_meeting_id_idx").on(table.meetingId),
 ]);
+
+// Relations
+export const meetingsRelations = relations(meetings, ({ many }) => ({
+  documents: many(meetingDocuments),
+}));
+
+export const meetingDocumentsRelations = relations(meetingDocuments, ({ one }) => ({
+  meeting: one(meetings, {
+    fields: [meetingDocuments.meetingId],
+    references: [meetings.id],
+  }),
+}));
 
 // Downloadable Forms
 export const downloadableForms = pgTable("downloadable_forms", {

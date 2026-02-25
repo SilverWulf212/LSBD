@@ -21,13 +21,13 @@ const SECTIONS = [
   },
   {
     title: "License Renewal",
-    description: "All dental hygiene licenses expire on December 31 each year. Renew online through the licensee portal before the deadline.",
+    description: "Dental hygiene licenses are renewed on a biennial (every two years) cycle. Submit your renewal application by mail before the deadline.",
     href: "/hygienists/renewal",
     icon: RefreshCw,
   },
   {
     title: "Continuing Education",
-    description: "Dental hygienists must complete a minimum of 12 hours of approved continuing education annually, including BLS and opioid management.",
+    description: "Dental hygienists must complete a minimum of 12 hours of approved continuing education per biennial renewal cycle, including BLS certification.",
     href: "/hygienists/continuing-ed",
     icon: GraduationCap,
   },

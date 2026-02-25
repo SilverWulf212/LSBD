@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { BoardMemberCard } from "@/components/content/board-member-card";
-import { MOCK_BOARD_MEMBERS } from "@/lib/mock-data";
+import { db } from "@/lib/db";
+import { boardMembers } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Board Members",
   description: "Meet the members of the Louisiana State Board of Dentistry.",
 };
 
-export default function BoardMembersPage() {
-  const sorted = [...MOCK_BOARD_MEMBERS].sort((a, b) => a.sortOrder - b.sortOrder);
+export default async function BoardMembersPage() {
+  const sorted = await db.select().from(boardMembers).where(eq(boardMembers.isActive, true)).orderBy(boardMembers.sortOrder);
 
   return (
     <>

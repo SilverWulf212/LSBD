@@ -1,17 +1,26 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { MeetingList } from "@/components/content/meeting-list";
-import { MOCK_MEETINGS } from "@/lib/mock-data";
+import { db } from "@/lib/db";
 import { CONTACT } from "@/lib/constants";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Meetings & Minutes",
   description: "Board meeting schedule, agendas, public notices, and approved minutes.",
 };
 
-export default function MeetingsPage() {
-  const upcoming = MOCK_MEETINGS.filter((m) => new Date(m.meetingDate) >= new Date());
-  const past = MOCK_MEETINGS.filter((m) => new Date(m.meetingDate) < new Date());
+export default async function MeetingsPage() {
+  const allMeetings = await db.query.meetings.findMany({
+    where: (meetings, { eq }) => eq(meetings.isPublished, true),
+    orderBy: (meetings, { desc }) => [desc(meetings.meetingDate)],
+    with: { documents: true },
+  });
+
+  const now = new Date();
+  const upcoming = allMeetings.filter((m) => new Date(m.meetingDate) >= now);
+  const past = allMeetings.filter((m) => new Date(m.meetingDate) < now);
 
   return (
     <>

@@ -4,6 +4,7 @@ export const SITE_URL = process.env.AUTH_URL || "https://lsbd.org";
 
 export const CONTACT = {
   phone: "225-219-7330",
+  fax: "225-219-0707",
   mailingAddress: "P.O. Box 5256, Baton Rouge, Louisiana 70821-5256",
   physicalAddress: "18212 East Petroleum Drive, Suite 2-B, Baton Rouge, Louisiana 70809",
   email: "admin@lsbd.org",

@@ -24,14 +24,14 @@ const SECTIONS = [
   {
     title: "License Renewal",
     description:
-      "All dental licenses expire on December 31 each year. Renew online through the licensee portal before the deadline to avoid late fees.",
+      "All dental licenses expire on December 31 of even-numbered years. Submit biennial renewal applications by mail before the deadline to avoid late fees.",
     href: "/dentists/renewal",
     icon: RefreshCw,
   },
   {
     title: "Continuing Education",
     description:
-      "Dentists must complete a minimum of 20 hours of approved continuing education annually, including BLS certification and opioid management.",
+      "Dentists must complete a minimum of 40 hours of approved continuing education per biennial renewal cycle, including BLS certification. Opioid management CE is a one-time requirement.",
     href: "/dentists/continuing-ed",
     icon: GraduationCap,
   },

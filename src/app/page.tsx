@@ -10,7 +10,11 @@ import { AnimatedStats } from "@/components/content/animated-stats";
 import { ParallaxMission } from "@/components/content/parallax-mission";
 import { PostCard } from "@/components/content/post-card";
 import { MeetingList } from "@/components/content/meeting-list";
-import { MOCK_ALERTS, MOCK_POSTS, MOCK_MEETINGS } from "@/lib/mock-data";
+import { db } from "@/lib/db";
+import { alerts, posts, meetings } from "@/lib/db/schema";
+import { eq, desc, gte } from "drizzle-orm";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Louisiana State Board of Dentistry",
@@ -18,12 +22,17 @@ export const metadata: Metadata = {
     "Protecting the public by regulating the professions of dentistry and dental hygiene in Louisiana since 1894. Apply for a license, renew, verify professionals, and access resources.",
 };
 
-export default function HomePage() {
-  const activeAlerts = MOCK_ALERTS.filter((a) => a.isActive);
-  const recentPosts = MOCK_POSTS.slice(0, 3);
-  const upcomingMeetings = MOCK_MEETINGS.filter(
-    (m) => new Date(m.meetingDate) >= new Date()
-  ).slice(0, 3);
+export default async function HomePage() {
+  const [activeAlerts, recentPosts, upcomingMeetings] = await Promise.all([
+    db.select().from(alerts).where(eq(alerts.isActive, true)).orderBy(alerts.sortOrder),
+    db.select().from(posts).where(eq(posts.status, "published")).orderBy(desc(posts.publishedAt)).limit(3),
+    db.query.meetings.findMany({
+      where: (meetings, { eq, gte, and }) => and(eq(meetings.isPublished, true), gte(meetings.meetingDate, new Date())),
+      orderBy: (meetings, { asc }) => [asc(meetings.meetingDate)],
+      limit: 3,
+      with: { documents: true },
+    }),
+  ]);
 
   return (
     <>

@@ -40,10 +40,11 @@ export default function DentistLicensurePage() {
                 {[
                   "Graduation from a CODA-accredited dental school",
                   "Successful completion of the National Board Dental Examinations (NBDE Part I & II or INBDE)",
-                  "Successful completion of a regional clinical examination (ADEX, CRDTS, SRTA, or WREB)",
-                  "Current BLS certification from an approved provider",
+                  "ADEX clinical examination completed within 5 years of application",
+                  "Current BLS certification (American Heart Association BLS Provider or American Red Cross BLS only)",
+                  "Criminal fingerprint background check",
                   "Jurisprudence examination administered by the Board",
-                  "Application fee: $300.00",
+                  "Application fee: $350.00",
                 ].map((req, i) => (
                   <li key={i} className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-1 shrink-0" aria-hidden="true" />
@@ -81,13 +82,15 @@ export default function DentistLicensurePage() {
               <ul className="space-y-2">
                 {[
                   "Active, unrestricted dental license in another U.S. state or territory",
-                  "Minimum of five (5) years of active clinical practice",
+                  "Minimum of three (3) years of active clinical practice (minimum 1,000 hours per year)",
                   "No disciplinary actions or pending complaints in any jurisdiction",
                   "Graduation from a CODA-accredited dental school",
-                  "Current BLS certification from an approved provider",
+                  "ADEX clinical examination completed within 5 years of application",
+                  "Current BLS certification (American Heart Association BLS Provider or American Red Cross BLS only)",
+                  "Criminal fingerprint background check",
                   "Jurisprudence examination administered by the Board",
                   "Verification of licensure from all states where licensed",
-                  "Application fee: $500.00",
+                  "Application fee: $2,050.00",
                 ].map((req, i) => (
                   <li key={i} className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-1 shrink-0" aria-hidden="true" />
@@ -125,14 +128,27 @@ export default function DentistLicensurePage() {
               weeks for LBC applications. Incomplete applications will not be processed.
             </p>
             <p>
-              For questions about the licensure process, contact the Board office at{" "}
+              For questions about <strong>LBE applications</strong>, contact Iris Pourciau at{" "}
               <a
-                href="mailto:admin@lsbd.org"
+                href="mailto:iris@lsbd.org"
                 className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded"
               >
-                admin@lsbd.org
-              </a>{" "}
-              or{" "}
+                iris@lsbd.org
+              </a>
+              .
+            </p>
+            <p>
+              For questions about <strong>LBC applications</strong>, contact Alexx Smith at{" "}
+              <a
+                href="mailto:alexx@lsbd.org"
+                className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded"
+              >
+                alexx@lsbd.org
+              </a>
+              .
+            </p>
+            <p>
+              You may also reach the Board office by phone at{" "}
               <a
                 href="tel:2252197330"
                 className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded"

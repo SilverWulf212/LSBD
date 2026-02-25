@@ -3,15 +3,21 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PdfLink } from "@/components/shared/pdf-link";
 import { Newspaper } from "lucide-react";
-import { MOCK_PUBLICATIONS } from "@/lib/mock-data";
+import { db } from "@/lib/db";
+import { publications } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Publications",
   description: "The Bulletin newsletter archive and other publications from the Louisiana State Board of Dentistry.",
 };
 
-export default function PublicationsPage() {
-  const grouped = MOCK_PUBLICATIONS.reduce<Record<number, typeof MOCK_PUBLICATIONS>>((acc, pub) => {
+export default async function PublicationsPage() {
+  const pubs = await db.select().from(publications).where(eq(publications.isPublished, true)).orderBy(desc(publications.year));
+
+  const grouped = pubs.reduce<Record<number, typeof pubs>>((acc, pub) => {
     if (!acc[pub.year]) acc[pub.year] = [];
     acc[pub.year].push(pub);
     return acc;

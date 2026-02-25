@@ -45,7 +45,7 @@ export default function RulemakingPage() {
               <li className="border-b border-gray-100 pb-3">
                 <p className="font-medium text-[#005f8f]">Opioid Management CE Requirements Update</p>
                 <p className="text-xs text-gray-500">Effective January 1, 2026</p>
-                <p className="mt-1">Increased mandatory opioid management CE to three (3) hours annually for all licensees.</p>
+                <p className="mt-1">Established a one-time mandatory three (3) hour opioid management CE requirement for dentists.</p>
               </li>
               <li className="border-b border-gray-100 pb-3">
                 <p className="font-medium text-[#005f8f]">Revised Anesthesia Permit Standards</p>

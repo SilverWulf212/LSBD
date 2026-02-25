@@ -1,8 +1,10 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL, NAV_ITEMS } from "@/lib/constants";
-import { MOCK_POSTS } from "@/lib/mock-data";
+import { db } from "@/lib/db";
+import { posts } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = SITE_URL;
 
   // Static pages
@@ -33,15 +35,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     return pages;
   });
 
-  // Blog posts
-  const postPages: MetadataRoute.Sitemap = MOCK_POSTS
-    .filter((p) => p.status === "published")
-    .map((post) => ({
-      url: `${baseUrl}/news/${post.slug}`,
-      lastModified: new Date(post.updatedAt),
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    }));
+  // Blog posts from database
+  const publishedPosts = await db.select().from(posts).where(eq(posts.status, "published"));
+
+  const postPages: MetadataRoute.Sitemap = publishedPosts.map((post) => ({
+    url: `${baseUrl}/news/${post.slug}`,
+    lastModified: post.updatedAt,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
 
   return [...staticPages, ...navPages, ...postPages];
 }
