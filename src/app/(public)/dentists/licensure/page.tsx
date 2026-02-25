@@ -55,7 +55,7 @@ export default function DentistLicensurePage() {
                 asChild
                 className="w-full bg-[#0077B6] hover:bg-[#005f8f] text-white font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] mt-4"
               >
-                <a href={EXTERNAL_LINKS.licenseeLogin} target="_blank" rel="noopener noreferrer">
+                <a href={EXTERNAL_LINKS.dentistLogin} target="_blank" rel="noopener noreferrer">
                   <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
                   Apply for LBE
                   <span className="sr-only"> (opens in a new tab)</span>
@@ -99,7 +99,7 @@ export default function DentistLicensurePage() {
                 asChild
                 className="w-full bg-[#0077B6] hover:bg-[#005f8f] text-white font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] mt-4"
               >
-                <a href={EXTERNAL_LINKS.licenseeLogin} target="_blank" rel="noopener noreferrer">
+                <a href={EXTERNAL_LINKS.dentistLogin} target="_blank" rel="noopener noreferrer">
                   <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
                   Apply for LBC
                   <span className="sr-only"> (opens in a new tab)</span>

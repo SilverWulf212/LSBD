@@ -53,7 +53,7 @@ export default function DentistsPage() {
                 asChild
                 className="bg-[#0077B6] hover:bg-[#005f8f] text-white font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px]"
               >
-                <a href={EXTERNAL_LINKS.licenseeLogin} target="_blank" rel="noopener noreferrer">
+                <a href={EXTERNAL_LINKS.dentistLogin} target="_blank" rel="noopener noreferrer">
                   <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
                   Apply for a License
                   <span className="sr-only"> (opens in a new tab)</span>
@@ -64,7 +64,7 @@ export default function DentistsPage() {
                 variant="outline"
                 className="border-[#0077B6] text-[#005f8f] hover:bg-[#CAF0F8] font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px]"
               >
-                <a href={EXTERNAL_LINKS.licenseeLogin} target="_blank" rel="noopener noreferrer">
+                <a href={EXTERNAL_LINKS.dentistLogin} target="_blank" rel="noopener noreferrer">
                   <LogIn className="h-4 w-4 mr-2" aria-hidden="true" />
                   Licensee Login
                   <span className="sr-only"> (opens in a new tab)</span>

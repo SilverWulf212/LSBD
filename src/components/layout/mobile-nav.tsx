@@ -82,7 +82,7 @@ export function MobileNav() {
               className="w-full min-h-[44px] bg-[#0077B6] hover:bg-[#005f8f] text-white font-[family-name:var(--font-oswald)] uppercase tracking-wide"
             >
               <a
-                href={EXTERNAL_LINKS.licenseeLogin}
+                href={EXTERNAL_LINKS.dentistLogin}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -97,7 +97,7 @@ export function MobileNav() {
               className="w-full min-h-[44px] border-[#0077B6] text-[#005f8f] font-[family-name:var(--font-oswald)] uppercase tracking-wide"
             >
               <a
-                href={EXTERNAL_LINKS.licenseeLogin}
+                href={EXTERNAL_LINKS.dentistLogin}
                 target="_blank"
                 rel="noopener noreferrer"
               >

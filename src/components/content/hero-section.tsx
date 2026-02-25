@@ -40,7 +40,7 @@ export function HeroSection() {
                 className="bg-white text-[#005f8f] hover:bg-[#CAF0F8] font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] min-w-[44px] text-sm font-semibold shadow-lg"
               >
                 <a
-                  href={EXTERNAL_LINKS.licenseeLogin}
+                  href={EXTERNAL_LINKS.dentistLogin}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -56,7 +56,7 @@ export function HeroSection() {
                 className="border-2 border-white text-white hover:bg-white/10 font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] min-w-[44px] text-sm font-semibold bg-transparent"
               >
                 <a
-                  href={EXTERNAL_LINKS.licenseeLogin}
+                  href={EXTERNAL_LINKS.dentistLogin}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

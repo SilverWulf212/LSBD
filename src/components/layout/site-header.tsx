@@ -53,7 +53,7 @@ export function SiteHeader() {
               className="hidden sm:inline-flex bg-[#0077B6] hover:bg-[#005f8f] text-white font-[family-name:var(--font-oswald)] uppercase tracking-wide text-xs min-h-[44px] min-w-[44px]"
             >
               <a
-                href={EXTERNAL_LINKS.licenseeLogin}
+                href={EXTERNAL_LINKS.dentistLogin}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -70,7 +70,7 @@ export function SiteHeader() {
               className="hidden md:inline-flex border-[#0077B6] text-[#005f8f] hover:bg-[#CAF0F8] font-[family-name:var(--font-oswald)] uppercase tracking-wide text-xs min-h-[44px] min-w-[44px]"
             >
               <a
-                href={EXTERNAL_LINKS.licenseeLogin}
+                href={EXTERNAL_LINKS.dentistLogin}
                 target="_blank"
                 rel="noopener noreferrer"
               >

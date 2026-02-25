@@ -10,9 +10,11 @@ export const CONTACT = {
 } as const;
 
 export const EXTERNAL_LINKS = {
-  licenseeLogin: "https://lsbd.diversifiedtech.com", // external licensee portal
-  licenseVerification: "https://lsbd.diversifiedtech.com/verify", // placeholder - confirm actual URL
-  ceBroker: "https://cebroker.com",
+  dentistLogin: "https://www.membersbase.com/lsbd/dentist",
+  hygienistLogin: "https://www.membersbase.com/lsbd/hygienist",
+  licenseVerification: "https://www.member-base.net/lsbdweb/licenseverification.htm",
+  ceBroker: "https://www.cebroker.com/la/account_options",
+  reportFraud: "https://www.ReportFraud.La",
 } as const;
 
 export const NAV_ITEMS = [

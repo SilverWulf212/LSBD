@@ -23,7 +23,7 @@ export default function HygienistRenewalPage() {
               <p className="mt-1 text-white/90 text-sm">Log in to the licensee portal to complete your annual renewal.</p>
             </div>
             <Button asChild size="lg" className="bg-white text-[#005f8f] hover:bg-[#CAF0F8] font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] shrink-0">
-              <a href={EXTERNAL_LINKS.licenseeLogin} target="_blank" rel="noopener noreferrer">
+              <a href={EXTERNAL_LINKS.hygienistLogin} target="_blank" rel="noopener noreferrer">
                 <LogIn className="h-5 w-5 mr-2" aria-hidden="true" />Licensee Portal<span className="sr-only"> (opens in a new tab)</span>
               </a>
             </Button>
