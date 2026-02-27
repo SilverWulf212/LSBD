@@ -25,7 +25,7 @@ export function SiteHeader() {
                 alt="LSBD"
                 width={40}
                 height={40}
-                className="h-8 w-auto lg:hidden"
+                className="h-8 w-auto lg:hidden transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(0,119,182,0.4)]"
                 priority
               />
               {/* Full logo for desktop */}
@@ -34,7 +34,7 @@ export function SiteHeader() {
                 alt="Louisiana State Board of Dentistry"
                 width={200}
                 height={60}
-                className="h-12 w-auto hidden lg:block"
+                className="h-12 w-auto hidden lg:block transition-all duration-300 hover:drop-shadow-[0_0_10px_rgba(0,119,182,0.35)]"
                 priority
               />
             </Link>
