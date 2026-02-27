@@ -16,7 +16,7 @@ export function StaffDirectory({ staff }: { staff: StaffMember[] }) {
       {staff.map((member) => (
         <Card key={member.id} className="h-full">
           <CardHeader>
-            <CardTitle className="font-[family-name:var(--font-oswald)] text-lg text-[#005f8f] uppercase tracking-wide">
+            <CardTitle className="font-[family-name:var(--font-oswald)] text-base sm:text-lg text-[#005f8f] uppercase tracking-wide break-words">
               {member.name}
             </CardTitle>
             <p className="text-sm font-medium text-[#495057]">{member.title}</p>
@@ -28,7 +28,7 @@ export function StaffDirectory({ staff }: { staff: StaffMember[] }) {
             <div className="flex flex-col gap-1.5">
               <a
                 href={`mailto:${member.email}`}
-                className="inline-flex items-center gap-2 text-sm text-[#005f8f] hover:text-[#003f5f] transition-colors focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded"
+                className="inline-flex items-center gap-2 text-sm text-[#005f8f] hover:text-[#003f5f] transition-colors focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded break-all"
               >
                 <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
                 {member.email}

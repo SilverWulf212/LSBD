@@ -60,7 +60,7 @@ export function MeetingList({ meetings }: { meetings: Meeting[] }) {
                     />
                   </div>
                   <div>
-                    <CardTitle className="font-[family-name:var(--font-oswald)] text-base text-[#005f8f] uppercase tracking-wide">
+                    <CardTitle className="font-[family-name:var(--font-oswald)] text-sm sm:text-base text-[#005f8f] uppercase tracking-wide break-words">
                       {meeting.title}
                     </CardTitle>
                     <p className="text-sm text-[#495057]">

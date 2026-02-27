@@ -28,7 +28,7 @@ export function PostCard({ title, slug, excerpt, publishedAt }: PostCardProps) {
               </>
             )}
           </div>
-          <CardTitle className="font-[family-name:var(--font-oswald)] text-lg text-[#005f8f] uppercase tracking-wide group-hover:text-[#003f5f] transition-colors">
+          <CardTitle className="font-[family-name:var(--font-oswald)] text-base sm:text-lg text-[#005f8f] uppercase tracking-wide group-hover:text-[#003f5f] transition-colors break-words">
             {title}
           </CardTitle>
         </CardHeader>

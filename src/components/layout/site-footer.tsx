@@ -116,18 +116,18 @@ export function SiteFooter() {
               <p className="text-sm text-gray-300">
                 &copy; {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-300 mt-1">
                 Established 1894 &mdash; Protecting the public for over 130 years.
               </p>
             </div>
-            <div className="flex items-center gap-4 text-sm text-gray-300">
+            <div className="flex items-center gap-4 text-sm text-gray-200">
               <Link
                 href="/about/policies"
                 className="hover:text-[#CAF0F8] transition-colors focus-visible:ring-2 focus-visible:ring-[#CAF0F8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#495057] focus-visible:outline-none rounded py-1"
               >
                 Accessibility Statement
               </Link>
-              <span aria-hidden="true" className="text-gray-500">|</span>
+              <span aria-hidden="true" className="text-gray-400">|</span>
               <Link
                 href="/sitemap.xml"
                 className="hover:text-[#CAF0F8] transition-colors focus-visible:ring-2 focus-visible:ring-[#CAF0F8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#495057] focus-visible:outline-none rounded py-1"

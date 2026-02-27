@@ -95,7 +95,7 @@ export function FeatureCards() {
                         aria-hidden="true"
                       />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="font-[family-name:var(--font-oswald)] font-semibold text-[#005f8f] uppercase tracking-wide text-base">
                         {feature.title}
                       </h3>

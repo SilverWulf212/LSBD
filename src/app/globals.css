@@ -110,6 +110,8 @@
 
 .prose-content {
   @apply leading-relaxed;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .prose-content h2 {
   @apply text-2xl font-bold mt-8 mb-4;
@@ -142,7 +144,11 @@
   @apply border-l-4 border-[#0077B6] pl-4 italic my-4 text-gray-600;
 }
 .prose-content table {
-  @apply w-full border-collapse my-4;
+  @apply border-collapse my-4;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 .prose-content table th {
   @apply border border-gray-300 bg-gray-50 p-2 text-left font-semibold;

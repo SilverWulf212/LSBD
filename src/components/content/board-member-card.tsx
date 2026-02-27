@@ -33,7 +33,7 @@ export function BoardMemberCard({
     <Card className="h-full">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="font-[family-name:var(--font-oswald)] text-lg text-[#005f8f] uppercase tracking-wide">
+          <CardTitle className="font-[family-name:var(--font-oswald)] text-base sm:text-lg text-[#005f8f] uppercase tracking-wide break-words">
             {fullName}
           </CardTitle>
         </div>

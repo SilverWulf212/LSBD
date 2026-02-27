@@ -81,7 +81,7 @@ function StatCard({
   return (
     <div
       className={cn(
-        "group relative text-center p-6 sm:p-8 rounded-2xl transition-all duration-700",
+        "group relative text-center p-4 sm:p-6 lg:p-8 rounded-2xl transition-all duration-700",
         "bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-lg hover:bg-white",
         "transform hover:-translate-y-1",
         isVisible
@@ -97,10 +97,10 @@ function StatCard({
         <Icon className="h-7 w-7" aria-hidden="true" />
       </div>
 
-      <div className="font-[family-name:var(--font-oswald)] text-4xl sm:text-5xl font-bold text-[#005f8f] tracking-tight">
+      <div className="font-[family-name:var(--font-oswald)] text-3xl sm:text-4xl lg:text-5xl font-bold text-[#005f8f] tracking-tight">
         {count.toLocaleString()}{suffix}
       </div>
-      <div className="mt-2 font-[family-name:var(--font-oswald)] text-sm font-semibold text-[#495057] uppercase tracking-wider">
+      <div className="mt-2 font-[family-name:var(--font-oswald)] text-xs sm:text-sm font-semibold text-[#495057] uppercase tracking-wide sm:tracking-wider leading-tight">
         {label}
       </div>
       <p className="mt-1 text-xs text-[#6b7280] leading-relaxed">
@@ -167,7 +167,7 @@ export function AnimatedStats() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {STATS.map((stat, i) => (
             <StatCard key={stat.label} {...stat} index={i} isVisible={isVisible} />
           ))}

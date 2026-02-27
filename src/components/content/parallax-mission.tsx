@@ -57,7 +57,7 @@ export function ParallaxMission() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#003049]/20 via-transparent to-[#003049]/20" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 sm:py-20 lg:py-28">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left — Mission quote + portrait */}
           <div
@@ -79,7 +79,7 @@ export function ParallaxMission() {
                 </p>
               </blockquote>
               <div className="mt-6 pl-6">
-                <p className="text-[#CAF0F8] font-[family-name:var(--font-oswald)] text-sm uppercase tracking-[0.2em]">
+                <p className="text-[#CAF0F8] font-[family-name:var(--font-oswald)] text-sm uppercase tracking-widest sm:tracking-[0.2em]">
                   Our Mission
                 </p>
                 <p className="text-white/70 text-sm mt-1">
@@ -89,8 +89,8 @@ export function ParallaxMission() {
             </div>
 
             {/* Portrait */}
-            <div className="mt-10 flex items-center gap-6">
-              <div className="relative w-20 h-20 rounded-full overflow-hidden ring-2 ring-[#CAF0F8]/30 ring-offset-4 ring-offset-[#003049] shrink-0">
+            <div className="mt-10 flex items-center gap-4 sm:gap-6">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden ring-2 ring-[#CAF0F8]/30 ring-offset-4 ring-offset-[#003049] shrink-0">
                 <Image
                   src="/images/people/professional-female-wide.png"
                   alt="Dental professional representing Louisiana's dental community"

@@ -159,15 +159,15 @@ export function HeroCarousel() {
 
       {/* CTA Buttons — persistent across slides */}
       <div className="absolute bottom-0 left-0 right-0 z-30">
-        <div className="bg-gradient-to-t from-[#003049]/95 to-transparent pt-16 pb-8">
+        <div className="bg-gradient-to-t from-[#003049]/95 to-transparent pt-6 pb-3 sm:pt-12 sm:pb-6 lg:pt-16 lg:pb-8">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* Primary CTAs */}
               <div className="flex flex-wrap gap-3">
                 <Button
                   asChild
                   size="lg"
-                  className="bg-white text-[#005f8f] hover:bg-[#CAF0F8] font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[48px] px-6 text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
+                  className="bg-white text-[#005f8f] hover:bg-[#CAF0F8] font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] px-3 text-xs sm:min-h-[48px] sm:px-6 sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
                 >
                   <a
                     href={EXTERNAL_LINKS.dentistLogin}
@@ -182,7 +182,7 @@ export function HeroCarousel() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-[#0077B6] text-white hover:bg-[#005f8f] border-2 border-white/30 font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[48px] px-6 text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
+                  className="bg-[#0077B6] text-white hover:bg-[#005f8f] border-2 border-white/30 font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] px-3 text-xs sm:min-h-[48px] sm:px-6 sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
                 >
                   <a
                     href={EXTERNAL_LINKS.dentistLogin}
@@ -197,7 +197,7 @@ export function HeroCarousel() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-[#0077B6] text-white hover:bg-[#005f8f] border-2 border-white/30 font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[48px] px-6 text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
+                  className="bg-[#0077B6] text-white hover:bg-[#005f8f] border-2 border-white/30 font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] px-3 text-xs sm:min-h-[48px] sm:px-6 sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
                 >
                   <Link href="/public/verify">
                     <Search className="h-5 w-5 mr-2" aria-hidden="true" />
@@ -207,7 +207,7 @@ export function HeroCarousel() {
               </div>
 
               {/* Carousel controls */}
-              <div className="flex items-center gap-2 sm:ml-auto">
+              <div className="flex items-center gap-1 sm:gap-2 ml-auto">
                 <button
                   onClick={togglePause}
                   aria-label={isPaused ? "Play carousel" : "Pause carousel"}
