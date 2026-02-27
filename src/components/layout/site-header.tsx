@@ -21,7 +21,7 @@ export function SiteHeader() {
             >
               {/* Small logo for mobile */}
               <Image
-                src="/images/logos/lsbd-logo-small.png"
+                src="/images/logos/lsbd-logo-small.webp"
                 alt="LSBD"
                 width={40}
                 height={40}
@@ -30,7 +30,7 @@ export function SiteHeader() {
               />
               {/* Full logo for desktop */}
               <Image
-                src="/images/logos/lsbd-logo.png"
+                src="/images/logos/lsbd-logo.webp"
                 alt="Louisiana State Board of Dentistry"
                 width={200}
                 height={60}
