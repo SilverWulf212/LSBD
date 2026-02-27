@@ -27,7 +27,7 @@ async function seed() {
 
   // 1. Admin user
   const password = process.env.INITIAL_ADMIN_PASSWORD || "changeme123";
-  const passwordHash = await hash(password, 12);
+  const passwordHash = await hash(password, 10);
   const [adminUser] = await db.insert(users).values({
     email: "erin@lsbd.org",
     passwordHash,

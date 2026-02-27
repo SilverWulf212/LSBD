@@ -20,7 +20,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .where(eq(users.email, credentials.email as string))
           .limit(1);
         if (!user) return null;
-        const isValid = await compare(credentials.password as string, user.passwordHash);
+        const isValid = await compare(
+          credentials.password as string,
+          user.passwordHash
+        );
         if (!isValid) return null;
         return { id: String(user.id), email: user.email, name: user.name };
       },
