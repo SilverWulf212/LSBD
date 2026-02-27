@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.public.blob.vercel-storage.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none'",
+          },
         ],
       },
       {
@@ -67,6 +71,9 @@ const nextConfig: NextConfig = {
       { source: "/rulemaking.htm", destination: "/resources/rulemaking", permanent: true },
       { source: "/search.htm", destination: "/", permanent: true },
       { source: "/contactus.htm", destination: "/about/staff", permanent: true },
+      { source: "/contact", destination: "/about/staff", permanent: true },
+      { source: "/privacy-policy", destination: "/about/policies", permanent: true },
+      { source: "/privacy", destination: "/about/policies", permanent: true },
     ];
   },
 };

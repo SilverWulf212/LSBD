@@ -35,7 +35,7 @@ export default function PoliciesPage() {
             <p><strong>Feedback:</strong> If you encounter accessibility barriers on this website, please contact us at <a href="mailto:admin@lsbd.org" className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded">admin@lsbd.org</a> or <a href="tel:2252197330" className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded">225-219-7330</a>. We welcome your feedback.</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card id="privacy">
           <CardHeader>
             <div className="flex items-center gap-2"><Lock className="h-5 w-5 text-[#0077B6]" aria-hidden="true" /><CardTitle className="font-[family-name:var(--font-oswald)] text-xl text-[#005f8f] uppercase tracking-wide">Privacy Policy</CardTitle></div>
           </CardHeader>

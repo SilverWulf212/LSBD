@@ -7,7 +7,7 @@ import { EXTERNAL_LINKS } from "@/lib/constants";
 import { GraduationCap, Heart, Pill, Clock, BookOpen, Syringe, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Dentist Continuing Education",
+  title: "Dentist CE Requirements",
   description: "Continuing education requirements for Louisiana-licensed dentists, including BLS, ACLS/PALS, and opioid management.",
 };
 

@@ -7,7 +7,7 @@ import { EXTERNAL_LINKS } from "@/lib/constants";
 import { FileText, CheckCircle2, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Hygienist Licensure Pathways",
+  title: "Hygienist Licensure",
   description: "Learn about pathways to dental hygiene licensure in Louisiana: Licensure by Examination (LBE) and Licensure by Credentials (LBC).",
 };
 
@@ -26,7 +26,7 @@ export default function HygienistLicensurePage() {
               <p className="text-sm text-[#495057]">For graduates of CODA-accredited dental hygiene programs</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <h3 className="font-[family-name:var(--font-oswald)] text-base font-semibold text-[#005f8f] uppercase tracking-wide">Requirements</h3>
+              <h2 className="font-[family-name:var(--font-oswald)] text-base font-semibold text-[#005f8f] uppercase tracking-wide">Requirements</h2>
               <ul className="space-y-2">
                 {["Graduation from a CODA-accredited dental hygiene program", "Successful completion of the National Board Dental Hygiene Examination (NBDHE)", "Successful completion of a regional clinical examination (ADEX, CRDTS, SRTA, or WREB)", "Current BLS certification (American Heart Association BLS Provider or American Red Cross BLS)", "Criminal fingerprint background check", "ADEX clinical examination completed within 3 years of application", "Jurisprudence examination administered by the Board", "Application fee: $180.00"].map((req, i) => (
                   <li key={i} className="flex items-start gap-2">
@@ -49,7 +49,7 @@ export default function HygienistLicensurePage() {
               <p className="text-sm text-[#495057]">For dental hygienists currently licensed in another U.S. state</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <h3 className="font-[family-name:var(--font-oswald)] text-base font-semibold text-[#005f8f] uppercase tracking-wide">Requirements</h3>
+              <h2 className="font-[family-name:var(--font-oswald)] text-base font-semibold text-[#005f8f] uppercase tracking-wide">Requirements</h2>
               <ul className="space-y-2">
                 {["Active, unrestricted dental hygiene license in another U.S. state", "Minimum of one (1) year of active clinical practice (minimum 1,000 hours)", "No disciplinary actions or pending complaints", "Graduation from a CODA-accredited dental hygiene program", "Current BLS certification (American Heart Association BLS Provider or American Red Cross BLS)", "Criminal fingerprint background check", "ADEX clinical examination completed within 3 years of application", "Jurisprudence examination administered by the Board", "Verification of licensure from all states where licensed", "Application fee: $830.00"].map((req, i) => (
                   <li key={i} className="flex items-start gap-2">

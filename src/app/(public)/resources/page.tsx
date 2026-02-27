@@ -24,7 +24,7 @@ export default function ResourcesPage() {
       <PageHeader
         title="Resources"
         description="Access laws, rules, fees, forms, meeting records, and publications from the Board."
-        image="/images/heroes/hero-clinical.png"
+        image="/images/heroes/hero-clinical.webp"
         imageAlt="Clinical dental tools and equipment"
       />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">

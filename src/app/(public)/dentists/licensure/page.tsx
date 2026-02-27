@@ -8,7 +8,7 @@ import { EXTERNAL_LINKS } from "@/lib/constants";
 import { FileText, CheckCircle2, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Dentist Licensure Pathways",
+  title: "Dentist Licensure",
   description:
     "Learn about the two pathways to dental licensure in Louisiana: Licensure by Examination (LBE) and Licensure by Credentials (LBC).",
 };
@@ -33,9 +33,9 @@ export default function DentistLicensurePage() {
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <h3 className="font-[family-name:var(--font-oswald)] text-base font-semibold text-[#005f8f] uppercase tracking-wide">
+              <h2 className="font-[family-name:var(--font-oswald)] text-base font-semibold text-[#005f8f] uppercase tracking-wide">
                 Requirements
-              </h3>
+              </h2>
               <ul className="space-y-2">
                 {[
                   "Graduation from a CODA-accredited dental school",
@@ -76,9 +76,9 @@ export default function DentistLicensurePage() {
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <h3 className="font-[family-name:var(--font-oswald)] text-base font-semibold text-[#005f8f] uppercase tracking-wide">
+              <h2 className="font-[family-name:var(--font-oswald)] text-base font-semibold text-[#005f8f] uppercase tracking-wide">
                 Requirements
-              </h3>
+              </h2>
               <ul className="space-y-2">
                 {[
                   "Active, unrestricted dental license in another U.S. state or territory",

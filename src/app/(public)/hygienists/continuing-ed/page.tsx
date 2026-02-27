@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink } from "@/components/shared/external-link";
@@ -6,7 +7,7 @@ import { EXTERNAL_LINKS } from "@/lib/constants";
 import { Heart, Clock, BookOpen } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Hygienist Continuing Education",
+  title: "Hygienist CE",
   description: "Continuing education requirements for Louisiana-licensed dental hygienists, including BLS certification.",
 };
 
@@ -65,6 +66,9 @@ export default function HygienistContinuingEdPage() {
               <ExternalLink href={EXTERNAL_LINKS.ceBroker} className="font-medium">Visit CE Broker</ExternalLink>
             </CardContent>
           </Card>
+        </div>
+        <div className="mt-8 bg-[#CAF0F8]/30 rounded-xl p-6 text-sm text-[#495057]">
+          <p><strong>See also:</strong> <Link href="/hygienists/renewal" className="text-[#0077B6] hover:text-[#005f8f] font-medium transition-colors">Hygienist License Renewal</Link> &middot; <Link href="/hygienists/licensure" className="text-[#0077B6] hover:text-[#005f8f] font-medium transition-colors">Hygienist Licensure Pathways</Link></p>
         </div>
       </div>
     </>

@@ -7,7 +7,7 @@ import { EXTERNAL_LINKS } from "@/lib/constants";
 import { LogIn, DollarSign, CheckCircle2, AlertTriangle, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Hygienist License Renewal",
+  title: "Hygienist Renewal",
   description: "Biennial dental hygiene license renewal process, deadlines, fees, and CE requirements.",
 };
 
@@ -101,6 +101,9 @@ export default function HygienistRenewalPage() {
               </div>
             </div>
           </div>
+        </div>
+        <div className="mt-8 bg-[#CAF0F8]/30 rounded-xl p-6 text-sm text-[#495057]">
+          <p><strong>See also:</strong> <Link href="/hygienists/continuing-ed" className="text-[#0077B6] hover:text-[#005f8f] font-medium transition-colors">Hygienist CE Requirements</Link> &middot; <Link href="/hygienists/licensure" className="text-[#0077B6] hover:text-[#005f8f] font-medium transition-colors">Hygienist Licensure Pathways</Link></p>
         </div>
       </div>
     </>

@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -56,7 +57,7 @@ export function Breadcrumbs() {
           const label = LABEL_MAP[segment] || segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
 
           return (
-            <span key={href} className="contents">
+            <React.Fragment key={href}>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 {isLast ? (
@@ -67,7 +68,7 @@ export function Breadcrumbs() {
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
-            </span>
+            </React.Fragment>
           );
         })}
       </BreadcrumbList>

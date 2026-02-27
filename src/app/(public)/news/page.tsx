@@ -49,9 +49,9 @@ export default async function NewsPage() {
               className="rounded-lg"
             />
             <div className="bg-[#CAF0F8]/30 rounded-xl p-5">
-              <h3 className="font-[family-name:var(--font-oswald)] text-sm font-bold text-[#005f8f] uppercase tracking-wide mb-2">
+              <h2 className="font-[family-name:var(--font-oswald)] text-sm font-bold text-[#005f8f] uppercase tracking-wide mb-2">
                 RSS Feed
-              </h3>
+              </h2>
               <p className="text-xs text-[#495057] mb-3">
                 Subscribe to our news feed to get the latest updates.
               </p>

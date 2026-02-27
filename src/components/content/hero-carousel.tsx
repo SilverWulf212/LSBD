@@ -175,9 +175,15 @@ export function HeroCarousel() {
                         Established 1894 &bull; Baton Rouge, Louisiana
                       </span>
                     </div>
-                    <h2 className="font-[family-name:var(--font-oswald)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white uppercase tracking-wide leading-[1.1]">
-                      {slide.headline}
-                    </h2>
+                    {i === 0 ? (
+                      <h1 className="font-[family-name:var(--font-oswald)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white uppercase tracking-wide leading-[1.1]">
+                        {slide.headline}
+                      </h1>
+                    ) : (
+                      <h2 className="font-[family-name:var(--font-oswald)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white uppercase tracking-wide leading-[1.1]">
+                        {slide.headline}
+                      </h2>
+                    )}
                     <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-white/85 leading-relaxed max-w-xl">
                       {slide.subtext}
                     </p>

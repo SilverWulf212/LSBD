@@ -46,8 +46,8 @@ export function ParallaxMission() {
       {/* Parallax background image */}
       <div className="absolute inset-0 -top-20 -bottom-20" aria-hidden="true">
         <Image
-          src="/images/heroes/hero-consultation.png"
-          alt=""
+          src="/images/heroes/hero-consultation.webp"
+          alt="Dental professionals in a collaborative setting"
           fill
           className="object-cover"
           style={{ transform: `translateY(${scrollY}px)` }}

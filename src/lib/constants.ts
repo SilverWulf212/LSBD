@@ -1,6 +1,6 @@
 export const SITE_NAME = "Louisiana State Board of Dentistry";
 export const SITE_DESCRIPTION = "Protecting the public by regulating the professions of dentistry and dental hygiene in Louisiana.";
-export const SITE_URL = process.env.AUTH_URL || "https://lsbd.org";
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "https://lsbd.org";
 
 export const CONTACT = {
   phone: "225-219-7330",

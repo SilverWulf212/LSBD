@@ -30,6 +30,7 @@ const FOOTER_LINKS = [
       { label: "Staff Directory", href: "/about/staff" },
       { label: "Meeting Schedule", href: "/resources/meetings" },
       { label: "News & Updates", href: "/news" },
+      { label: "Contact Us", href: "/about/staff" },
       { label: "Accessibility", href: "/about/policies" },
     ],
   },
@@ -121,6 +122,13 @@ export function SiteFooter() {
               </p>
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-200">
+              <Link
+                href="/about/policies"
+                className="hover:text-[#CAF0F8] transition-colors focus-visible:ring-2 focus-visible:ring-[#CAF0F8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#495057] focus-visible:outline-none rounded py-1"
+              >
+                Privacy Policy
+              </Link>
+              <span aria-hidden="true" className="text-gray-400">|</span>
               <Link
                 href="/about/policies"
                 className="hover:text-[#CAF0F8] transition-colors focus-visible:ring-2 focus-visible:ring-[#CAF0F8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#495057] focus-visible:outline-none rounded py-1"

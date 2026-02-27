@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink } from "@/components/shared/external-link";
 import { PdfLink } from "@/components/shared/pdf-link";
-import { Scale, BookOpen, FileText } from "lucide-react";
+import { Scale, BookOpen, FileText, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Laws & Rules",
@@ -43,9 +44,13 @@ export default function LawsAndRulesPage() {
                 <li>Chapter 11: Disciplinary Proceedings</li>
               </ul>
             </div>
-            <ExternalLink href="https://www.sos.la.gov/OtherServices/SearchPublicRecords/Pages/SearchRegisterAndCode.aspx" className="font-medium">Louisiana Administrative Code</ExternalLink>
+            <ExternalLink href="https://www.doa.la.gov/doa/osr/louisiana-administrative-code/" className="font-medium">Louisiana Administrative Code</ExternalLink>
           </CardContent>
         </Card>
+        <div className="bg-[#CAF0F8]/30 rounded-xl p-6 text-sm text-[#495057]">
+          <p className="font-medium text-[#005f8f] mb-2">Related Resources</p>
+          <p>For information about proposed rule changes and the rulemaking process, visit the <Link href="/resources/rulemaking" className="text-[#0077B6] hover:text-[#005f8f] font-medium transition-colors">Rulemaking</Link> page. You can also browse the <Link href="/resources/publications" className="text-[#0077B6] hover:text-[#005f8f] font-medium transition-colors">Publications</Link> archive for Board newsletters and bulletins.</p>
+        </div>
       </div>
     </>
   );

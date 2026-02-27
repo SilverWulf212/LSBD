@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { MeetingList } from "@/components/content/meeting-list";
 import { db } from "@/lib/db";
@@ -40,6 +41,7 @@ export default async function MeetingsPage() {
           <p><strong>Meeting Location:</strong> Unless otherwise noted, meetings are held at the Board offices at {CONTACT.physicalAddress}.</p>
           <p><strong>Open Meetings Law:</strong> All meetings of the Board are conducted in compliance with the Louisiana Open Meetings Law (R.S. 42:11-28). Agendas are posted at least 24 hours before each meeting.</p>
           <p><strong>Public Attendance:</strong> Members of the public are welcome to attend all open sessions of Board meetings.</p>
+          <p className="pt-2">For Board newsletters and other resources, visit the <Link href="/resources/publications" className="text-[#0077B6] hover:text-[#005f8f] font-medium transition-colors">Publications</Link> archive.</p>
         </div>
       </div>
     </>

@@ -20,6 +20,7 @@ export function PageHeader({ title, description, children, image, imageAlt }: Pa
             fill
             className="object-cover opacity-15"
             sizes="100vw"
+            priority
           />
           <div className="absolute inset-0 bg-gradient-to-r from-white/90 to-white/70" />
         </div>

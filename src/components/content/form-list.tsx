@@ -114,9 +114,9 @@ export function FormList({ forms }: { forms: DownloadableForm[] }) {
         <div className="space-y-8">
           {Object.entries(grouped).map(([category, categoryForms]) => (
             <div key={category}>
-              <h3 className="font-[family-name:var(--font-oswald)] text-lg font-semibold text-[#005f8f] uppercase tracking-wide mb-3 border-b border-[#CAF0F8] pb-2">
+              <h2 className="font-[family-name:var(--font-oswald)] text-lg font-semibold text-[#005f8f] uppercase tracking-wide mb-3 border-b border-[#CAF0F8] pb-2">
                 {categoryLabel(category)}
-              </h3>
+              </h2>
               <ul className="space-y-2">
                 {categoryForms.map((form) => (
                   <li

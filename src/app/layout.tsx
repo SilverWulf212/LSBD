@@ -25,7 +25,10 @@ export const metadata: Metadata = {
   },
   description:
     "Protecting the public by regulating the professions of dentistry and dental hygiene in Louisiana in accordance with the Dental Practice Act.",
-  metadataBase: new URL(process.env.AUTH_URL || "https://lsbd.org"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "https://lsbd.org"),
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -34,6 +37,14 @@ export const metadata: Metadata = {
     title: "Louisiana State Board of Dentistry",
     description:
       "Protecting the public by regulating the professions of dentistry and dental hygiene in Louisiana in accordance with the Dental Practice Act.",
+    images: [
+      {
+        url: "/images/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Louisiana State Board of Dentistry",
+      },
+    ],
   },
 };
 

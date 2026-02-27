@@ -19,7 +19,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Louisiana State Board of Dentistry",
   description:
-    "Protecting the public by regulating the professions of dentistry and dental hygiene in Louisiana since 1894. Apply for a license, renew, verify professionals, and access resources.",
+    "Regulating dentistry and dental hygiene in Louisiana since 1894. Apply for a license, renew, verify professionals, and access Board resources.",
 };
 
 export default async function HomePage() {

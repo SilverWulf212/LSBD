@@ -21,7 +21,7 @@ export default function AboutPage() {
       <PageHeader
         title="About the Board"
         description="The Louisiana State Board of Dentistry has regulated the dental profession since 1894."
-        image="/images/heroes/hero-consultation.png"
+        image="/images/heroes/hero-consultation.webp"
         imageAlt="Dental professionals in a consultation"
       />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
