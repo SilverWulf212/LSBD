@@ -56,7 +56,7 @@ const SLIDES = [
   },
 ];
 
-const INTERVAL = 6000;
+const INTERVAL = 8000;
 
 export function HeroCarousel() {
   const [current, setCurrent] = React.useState(0);
@@ -119,7 +119,7 @@ export function HeroCarousel() {
             aria-label={`Slide ${i + 1} of ${SLIDES.length}: ${slide.headline}`}
             aria-hidden={i !== current}
             className={cn(
-              "absolute inset-0 transition-all duration-700 ease-in-out",
+              "absolute inset-0 transition-all duration-1200 ease-in-out",
               i === current
                 ? "opacity-100 translate-x-0 z-10"
                 : direction === "right"
@@ -160,7 +160,7 @@ export function HeroCarousel() {
                 <div className="max-w-2xl">
                   <div
                     className={cn(
-                      "transition-all duration-700 delay-200",
+                      "transition-all duration-1000 delay-300",
                       i === current
                         ? "opacity-100 translate-y-0"
                         : "opacity-0 translate-y-8"
@@ -217,7 +217,7 @@ export function HeroCarousel() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-[#0077B6] text-white hover:bg-[#005f8f] border-2 border-white/30 font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] px-3 text-xs sm:min-h-[48px] sm:px-6 sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
+                  className="bg-[#0077B6] text-white hover:bg-[#005f8f] border-2 border-white/70 font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] px-3 text-xs sm:min-h-[48px] sm:px-6 sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
                 >
                   <a
                     href={EXTERNAL_LINKS.dentistLogin}
@@ -235,7 +235,7 @@ export function HeroCarousel() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-[#0077B6] text-white hover:bg-[#005f8f] border-2 border-white/30 font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] px-3 text-xs sm:min-h-[48px] sm:px-6 sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
+                  className="bg-[#0077B6] text-white hover:bg-[#005f8f] border-2 border-white/70 font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] px-3 text-xs sm:min-h-[48px] sm:px-6 sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
                 >
                   <Link href="/public/verify">
                     <Search
@@ -287,7 +287,7 @@ export function HeroCarousel() {
                           "block rounded-full transition-all duration-300",
                           i === current
                             ? "w-8 h-2 bg-white"
-                            : "w-2 h-2 bg-white/40 hover:bg-white/70"
+                            : "w-2 h-2 bg-white/50 hover:bg-white/80"
                         )}
                       />
                     </button>

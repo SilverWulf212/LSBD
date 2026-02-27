@@ -77,7 +77,7 @@ export function SearchDialog() {
         <span className="hidden xl:inline-flex text-muted-foreground text-sm">
           Search pages...
         </span>
-        <kbd className="pointer-events-none hidden xl:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground ml-auto">
+        <kbd className="pointer-events-none hidden xl:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-[#596169] ml-auto">
           <span className="text-xs">Ctrl</span>K
         </kbd>
       </Button>

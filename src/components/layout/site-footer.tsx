@@ -110,7 +110,7 @@ export function SiteFooter() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-10 pt-8 border-t border-gray-600">
+        <div className="mt-10 pt-8 border-t border-gray-400">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-center sm:text-left">
               <p className="text-sm text-gray-300">

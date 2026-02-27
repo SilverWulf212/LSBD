@@ -165,7 +165,7 @@ function MobileNavCollapsible({
         />
       </button>
       {expanded && (
-        <ul className="ml-4 mt-1 space-y-1 border-l-2 border-[#CAF0F8] pl-3">
+        <ul className="ml-4 mt-1 space-y-1 border-l-2 border-[#0077B6] pl-3">
           {item.children.map((child) => (
             <li key={child.href}>
               <Link

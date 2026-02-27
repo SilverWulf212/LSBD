@@ -7,7 +7,7 @@ export const CONTACT = {
   fax: "225-219-0707",
   mailingAddress: "P.O. Box 5256, Baton Rouge, Louisiana 70821-5256",
   physicalAddress: "18212 East Petroleum Drive, Suite 2-B, Baton Rouge, Louisiana 70809",
-  email: "admin@lsbd.org",
+  email: "info@lsbd.org",
 } as const;
 
 export const EXTERNAL_LINKS = {

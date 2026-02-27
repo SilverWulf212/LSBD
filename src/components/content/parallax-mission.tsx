@@ -140,7 +140,7 @@ export function ParallaxMission() {
                 href={card.href}
                 className={cn(
                   "group block p-6 rounded-xl backdrop-blur-md transition-all duration-500",
-                  "bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/25",
+                  "bg-white/10 hover:bg-white/20 border border-white/40 hover:border-white/60",
                   "focus-visible:ring-2 focus-visible:ring-[#CAF0F8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#003049] focus-visible:outline-none",
                   isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                 )}

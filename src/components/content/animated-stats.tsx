@@ -103,7 +103,7 @@ function StatCard({
       <div className="mt-2 font-[family-name:var(--font-oswald)] text-xs sm:text-sm font-semibold text-[#495057] uppercase tracking-wide sm:tracking-wider leading-tight">
         {label}
       </div>
-      <p className="mt-1 text-xs text-[#6b7280] leading-relaxed">
+      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
         {description}
       </p>
     </div>
