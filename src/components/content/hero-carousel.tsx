@@ -3,35 +3,52 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, FileText, LogIn, Search, Shield, Pause, Play } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  LogIn,
+  Search,
+  Shield,
+  Pause,
+  Play,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { EXTERNAL_LINKS } from "@/lib/constants";
 
 const SLIDES = [
   {
-    image: "/images/heroes/hero-dentist-patient.png",
+    image: "/images/heroes/hero-dentist-patient.webp",
+    mobileImage: "/images/heroes/hero-dentist-patient-mobile.webp",
+    blurColor: "#1a5c5c",
     alt: "Dentist consulting with a patient using a digital tablet",
     headline: "Protecting Louisiana's Public Health",
     subtext:
       "Regulating the professions of dentistry and dental hygiene in the State of Louisiana since 1894.",
   },
   {
-    image: "/images/people/hygienist-smiling.png",
-    alt: "Dental hygienist smiling in a modern clinical setting",
+    image: "/images/heroes/hero-consultation.webp",
+    mobileImage: "/images/heroes/hero-consultation-mobile.webp",
+    blurColor: "#2a4a6b",
+    alt: "Dental professionals reviewing patient information on a tablet",
     headline: "Licensing Louisiana's Dental Professionals",
     subtext:
       "Streamlined pathways for dentists, hygienists, and dental assistants to serve communities across the state.",
   },
   {
-    image: "/images/heroes/hero-consultation.png",
-    alt: "Dental professional reviewing patient information on a tablet",
+    image: "/images/heroes/hero-office.webp",
+    mobileImage: "/images/heroes/hero-office-mobile.webp",
+    blurColor: "#3a5a7b",
+    alt: "Modern dental office environment with professional equipment",
     headline: "Standards of Excellence in Dental Care",
     subtext:
       "Continuing education, professional oversight, and public accountability for over 4,500 licensed practitioners.",
   },
   {
-    image: "/images/heroes/hero-clinical.png",
+    image: "/images/heroes/hero-clinical.webp",
+    mobileImage: "/images/heroes/hero-clinical-mobile.webp",
+    blurColor: "#1a6b6b",
     alt: "Modern dental clinical environment with professional equipment",
     headline: "Committed to Modern Regulation",
     subtext:
@@ -111,16 +128,28 @@ export function HeroCarousel() {
             )}
           >
             {/* Background image with overlay */}
-            <div className="absolute inset-0">
+            <div className="absolute inset-0" style={{ backgroundColor: slide.blurColor }}>
+              {/* Desktop image */}
               <Image
                 src={slide.image}
                 alt={slide.alt}
                 fill
-                className="object-cover"
+                className="object-cover hidden sm:block"
                 priority={i === 0}
                 sizes="100vw"
+                quality={85}
               />
-              {/* Gradient overlay for text legibility */}
+              {/* Mobile image (smaller file) */}
+              <Image
+                src={slide.mobileImage}
+                alt={slide.alt}
+                fill
+                className="object-cover sm:hidden"
+                priority={i === 0}
+                sizes="100vw"
+                quality={80}
+              />
+              {/* Gradient overlays for text legibility */}
               <div className="absolute inset-0 bg-gradient-to-r from-[#003049]/90 via-[#003049]/70 to-transparent" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#003049]/60 via-transparent to-[#003049]/30" />
             </div>
@@ -138,7 +167,10 @@ export function HeroCarousel() {
                     )}
                   >
                     <div className="flex items-center gap-2 mb-4">
-                      <Shield className="h-5 w-5 text-[#CAF0F8]" aria-hidden="true" />
+                      <Shield
+                        className="h-5 w-5 text-[#CAF0F8]"
+                        aria-hidden="true"
+                      />
                       <span className="text-[#CAF0F8] text-xs sm:text-sm font-medium uppercase tracking-[0.2em]">
                         Established 1894 &bull; Baton Rouge, Louisiana
                       </span>
@@ -174,7 +206,10 @@ export function HeroCarousel() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <FileText className="h-5 w-5 mr-2" aria-hidden="true" />
+                    <FileText
+                      className="h-5 w-5 mr-2"
+                      aria-hidden="true"
+                    />
                     Apply for a License
                     <span className="sr-only"> (opens in a new tab)</span>
                   </a>
@@ -189,7 +224,10 @@ export function HeroCarousel() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <LogIn className="h-5 w-5 mr-2" aria-hidden="true" />
+                    <LogIn
+                      className="h-5 w-5 mr-2"
+                      aria-hidden="true"
+                    />
                     Licensee Login
                     <span className="sr-only"> (opens in a new tab)</span>
                   </a>
@@ -200,7 +238,10 @@ export function HeroCarousel() {
                   className="bg-[#0077B6] text-white hover:bg-[#005f8f] border-2 border-white/30 font-[family-name:var(--font-oswald)] uppercase tracking-wide min-h-[44px] px-3 text-xs sm:min-h-[48px] sm:px-6 sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
                 >
                   <Link href="/public/verify">
-                    <Search className="h-5 w-5 mr-2" aria-hidden="true" />
+                    <Search
+                      className="h-5 w-5 mr-2"
+                      aria-hidden="true"
+                    />
                     Verify a License
                   </Link>
                 </Button>
@@ -227,7 +268,11 @@ export function HeroCarousel() {
                   <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                 </button>
                 {/* Dots */}
-                <div className="flex gap-2" role="tablist" aria-label="Carousel slides">
+                <div
+                  className="flex gap-2"
+                  role="tablist"
+                  aria-label="Carousel slides"
+                >
                   {SLIDES.map((_, i) => (
                     <button
                       key={i}
@@ -235,9 +280,7 @@ export function HeroCarousel() {
                       aria-selected={i === current}
                       aria-label={`Go to slide ${i + 1}`}
                       onClick={() => goTo(i)}
-                      className={cn(
-                        "transition-all duration-300 rounded-full focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#003049] min-h-[44px] min-w-[44px] flex items-center justify-center",
-                      )}
+                      className="transition-all duration-300 rounded-full focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#003049] min-h-[44px] min-w-[44px] flex items-center justify-center"
                     >
                       <span
                         className={cn(
