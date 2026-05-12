@@ -8,6 +8,13 @@
       "when": 1778608466392,
       "tag": "0000_initial_lsbd",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778620620121,
+      "tag": "0001_user_roles",
+      "breakpoints": true
     }
   ]
 }

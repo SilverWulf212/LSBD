@@ -19,6 +19,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import type { LsbdRole } from "@/lib/auth-roles";
 import {
   Menu,
   ExternalLink,
@@ -29,9 +30,10 @@ import {
 interface AdminHeaderProps {
   userName?: string | null;
   userEmail?: string | null;
+  userRole?: LsbdRole;
 }
 
-export function AdminHeader({ userName, userEmail }: AdminHeaderProps) {
+export function AdminHeader({ userName, userEmail, userRole }: AdminHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -51,7 +53,7 @@ export function AdminHeader({ userName, userEmail }: AdminHeaderProps) {
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation Menu</SheetTitle>
           </SheetHeader>
-          <AdminSidebar onNavigate={() => setMobileOpen(false)} />
+          <AdminSidebar onNavigate={() => setMobileOpen(false)} userRole={userRole} />
         </SheetContent>
       </Sheet>
 

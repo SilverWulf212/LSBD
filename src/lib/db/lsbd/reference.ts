@@ -17,7 +17,7 @@
 // HUMAN REVIEW flagged inline with "// REVIEW:" comments.
 
 import {
-  pgSchema, serial,
+  serial,
   integer,
   smallint,
   text,
@@ -27,11 +27,13 @@ import {
   numeric,
   index,
 } from "drizzle-orm/pg-core";
-
-// All legacy LSBD tables live in the "lsbd" Postgres schema,
-// separate from the website CMS tables in public.
-export const lsbdSchema = pgSchema("lsbd");
 import { relations } from "drizzle-orm";
+
+// All legacy LSBD tables share the `lsbd` Postgres schema (declared in ./core).
+// licenseStatusEnum / licenseClassEnum are also canonical in ./core; re-import
+// them here so we don't double-declare and shadow each other.
+import { lsbdSchema, licenseStatusEnum, licenseClassEnum } from "./core";
+export { licenseStatusEnum, licenseClassEnum };
 
 // =============================================================================
 // ENUMS â€” for stable, code-based lookups
@@ -42,37 +44,6 @@ export const personTypeEnum = lsbdSchema.enum("person_type", [
   "H", // Hygienist
   "E", // EDDA
   "O", // Office
-]);
-
-// tblStatus â€” license/affiliation status. Stable enough; values are hard-coded
-// across the legacy app. Kept all 13 even though some are unused.
-export const licenseStatusEnum = lsbdSchema.enum("license_status", [
-  "ACT", // Active
-  "SUS", // Suspended
-  "REV", // Revoked
-  "REP", // Reprimanded
-  "ARC", // Archived
-  "PRB", // Probation
-  "DEC", // Deceased
-  "EXP", // Expired
-  "OTH", // Other
-  "TMP", // Temporary
-  "INA", // Inactive
-  "RET", // Retired
-  "VOL", // Voluntary
-]);
-
-// tblClass â€” licensee class. Stable.
-export const licenseClassEnum = lsbdSchema.enum("license_class", [
-  "L",  // Licensee
-  "A",  // Applicant
-  "I",  // Intern
-  "P",  // Provisional
-  "T",  // Instructor
-  "O",  // Other
-  "C",  // Credentialing
-  "V",  // Volunteer
-  "NL", // Non-Licensee
 ]);
 
 // tblSpecialties (11 values) â€” clinical specialties. Stable.

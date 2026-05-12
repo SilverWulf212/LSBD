@@ -15,9 +15,18 @@ import {
   BookOpen,
   UserCog,
   Layers,
+  Shield,
 } from "lucide-react";
+import type { LsbdRole } from "@/lib/auth-roles";
 
-const sidebarItems = [
+type SidebarItem = {
+  label: string;
+  href: string;
+  icon: typeof LayoutDashboard;
+  adminOnly?: boolean;
+};
+
+const sidebarItems: SidebarItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Posts", href: "/admin/posts", icon: FileText },
   { label: "Alerts", href: "/admin/alerts", icon: AlertTriangle },
@@ -28,13 +37,18 @@ const sidebarItems = [
   { label: "Publications", href: "/admin/publications", icon: BookOpen },
   { label: "Staff", href: "/admin/staff", icon: UserCog },
   { label: "Page Content", href: "/admin/pages", icon: Layers },
-] as const;
+  { label: "Users", href: "/admin/users", icon: Shield, adminOnly: true },
+];
 
 interface AdminSidebarProps {
   onNavigate?: () => void;
+  userRole?: LsbdRole;
 }
 
-export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
+export function AdminSidebar({ onNavigate, userRole }: AdminSidebarProps) {
+  const visibleItems = sidebarItems.filter(
+    (item) => !item.adminOnly || userRole === "admin"
+  );
   const pathname = usePathname();
 
   function isActive(href: string): boolean {
@@ -58,7 +72,7 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="flex flex-col gap-1" role="list">
-          {sidebarItems.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
             return (

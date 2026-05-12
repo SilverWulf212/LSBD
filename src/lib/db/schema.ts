@@ -12,12 +12,17 @@ export const boardRoleEnum = pgEnum("board_role", [
   "hygienist_representative", "consumer_member",
 ]);
 
+export const lsbdRoleEnum = pgEnum("lsbd_role", [
+  "admin", "staff", "discipline", "finance", "inspector", "board",
+]);
+
 // Users (admin)
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
+  role: lsbdRoleEnum("role").default("staff").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

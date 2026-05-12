@@ -17,14 +17,14 @@
 // column names. See `relations()` block at the bottom for in-slice joins.
 
 import {
-  pgSchema, serial, integer, smallint, text, boolean,
+  serial, integer, smallint, text, boolean,
   timestamp, numeric, doublePrecision,
 } from "drizzle-orm/pg-core";
-
-// All legacy LSBD tables live in the "lsbd" Postgres schema,
-// separate from the website CMS tables in public.
-export const lsbdSchema = pgSchema("lsbd");
 import { relations } from "drizzle-orm";
+
+// All legacy LSBD tables live in the "lsbd" Postgres schema, declared once
+// in ./core and re-imported here so slices share the same schema instance.
+import { lsbdSchema } from "./core";
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PERMITS

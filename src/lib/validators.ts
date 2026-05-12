@@ -1,4 +1,21 @@
 import { z } from "zod";
+import { LSBD_ROLES } from "@/lib/auth-roles";
+
+export const userRoleSchema = z.enum(LSBD_ROLES);
+
+export const userCreateSchema = z.object({
+  email: z.string().email("Must be a valid email").max(255),
+  name: z.string().min(1, "Name is required").max(255),
+  role: userRoleSchema,
+  password: z.string().min(8, "Password must be at least 8 characters").max(200),
+});
+
+export const userUpdateSchema = z.object({
+  email: z.string().email("Must be a valid email").max(255),
+  name: z.string().min(1, "Name is required").max(255),
+  role: userRoleSchema,
+  password: z.string().min(8).max(200).optional().or(z.literal("")),
+});
 
 export const postSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),

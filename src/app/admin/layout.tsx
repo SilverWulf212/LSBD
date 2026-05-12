@@ -30,7 +30,7 @@ export default async function AdminLayout({
     <div className="flex h-screen overflow-hidden bg-muted/30">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-border lg:bg-background">
-        <AdminSidebar />
+        <AdminSidebar userRole={session.user.role} />
       </aside>
 
       {/* Main content area */}
@@ -38,6 +38,7 @@ export default async function AdminLayout({
         <AdminHeader
           userName={session.user.name}
           userEmail={session.user.email}
+          userRole={session.user.role}
         />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}

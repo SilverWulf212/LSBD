@@ -25,13 +25,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           user.passwordHash
         );
         if (!isValid) return null;
-        return { id: String(user.id), email: user.email, name: user.name };
+        return {
+          id: String(user.id),
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
       },
     }),
   ],
   session: { strategy: "jwt" },
   pages: { signIn: "/admin/login" },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id!;
+        token.role = user.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+      }
+      return session;
+    },
     authorized({ auth, request }) {
       const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
       const isLoginPage = request.nextUrl.pathname === "/admin/login";
