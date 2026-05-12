@@ -13,7 +13,7 @@ export const CONTACT = {
 export const EXTERNAL_LINKS = {
   dentistLogin: "https://www.membersbase.com/lsbd/dentist",
   hygienistLogin: "https://www.membersbase.com/lsbd/hygienist",
-  licenseVerification: "https://www.member-base.net/lsbdweb/licenseverification.htm",
+  licenseVerification: "/public/verify",
   ceBroker: "https://www.cebroker.com/la/account_options",
   reportFraud: "https://www.ReportFraud.La",
 } as const;
