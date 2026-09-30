@@ -165,6 +165,9 @@ The row hash is still computed on the source's plaintext, so change detection st
 - **Order.** Upserts run parents → children; deletes run children → parents. Everything happens in one transaction, so readers never see a half-applied state.
 - **Stable keys.** Every `lsbd` table must have a unique **legacy key**: the source PK, or for the `tblDenHyg` split, `license_id` / the source row key. Tables whose PK is generated with no legacy key get a `legacy_id` column plus a unique constraint (migration `0001`). App-facing IDs must stay stable across runs.
 - **Orphans.** The source has no FKs, but `lsbd` does. Orphan children are skipped and counted in the run report; they are not fatal.
+- **Time zones.** MSSQL datetimes are naive America/Chicago local time. `lsbd_raw` keeps them as `timestamp`, and every conversion into `lsbd` `timestamptz` uses `AT TIME ZONE 'America/Chicago'`. The May ETL did a bare cast, which shifted dates by 5–6 hours.
+- **Deletes use `NOT EXISTS`, never `NOT IN`.** With `NOT IN`, a NULL key in the subquery silently deletes nothing.
+- **Incremental transforms.** Quick mode runs only the domains whose source tables changed, looked up in `lsbd._transform_registry`. Full mode runs every domain.
 
 ### 4.3 Bookkeeping, monitoring, safety
 
@@ -174,6 +177,9 @@ The row hash is still computed on the source's plaintext, so change detection st
 - **Locking.** `pg_try_advisory_lock(hashtext('lsbd_sync'))`. A second concurrent run exits 0 with "already running".
 - **Security of `lsbd_raw`.** `REVOKE ALL` from `anon` and `authenticated`, with RLS enabled and no policies. Only the `postgres` role (used by the runner and the transforms) can read it. It holds DOB and SSN-HMACs.
 - **Secrets.** Moved to `C:\ProgramData\lsbd-sync\secrets.env`, readable by SYSTEM + Administrators only. The scheduled task runs as SYSTEM.
+- **Release worktree.** The scheduled tasks run from `C:\ProgramData\lsbd-sync\app`, a git worktree pinned to a `sync-vN` tag. They never run from the dev working copy, so in-progress edits can't touch live data.
+- **Bridge.** The bridge opens one persistent PowerShell Direct session per run. Every VM query is wrapped in `BEGIN TRAN … ROLLBACK` at READ UNCOMMITTED, which makes it impossible to commit a write to the source.
+- **Schema drift.** A new source column triggers an automatic `ADD COLUMN`. Any other drift fails only the affected table, and the run records it.
 - **Interim writes.** Until cutover the sync owns `lsbd.*`, so any UAT edit made in `/admin` is overwritten by the next transform (by design). `npm run uat:reset` re-runs transforms on demand.
 - **Consistency.** Tables are snapshotted one at a time, so interim runs may see cross-table skew for a few seconds. The final cutover run happens with MSSQL read-only, so it is consistent.
 

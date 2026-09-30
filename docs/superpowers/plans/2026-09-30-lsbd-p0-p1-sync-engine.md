@@ -23,14 +23,20 @@
 - Excluded source tables: `VSAuth`, `VsCapture`, `dtproperties`. Dropped columns: `tblDenHyg.password`, `Users.Password`. HMAC'd columns: `SSN` on `tblDenHyg`, `Individual`, `tblRndDentists`, `tblRndHygienists`.
 - License identity is `tblDenHyg.Key` (one source row = one license). `LICENSEID` is only unique per `Type`, and 17 `(Type, LICENSEID)` groups are duplicates. Never dedupe on `license_id` alone.
 - Every commit ends with the line `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+- MSSQL `datetime` and `smalldatetime` values are naive **America/Chicago** local time. `lsbd_raw` stores them as `timestamp` unchanged. Every conversion into a `timestamptz` column of `lsbd.*` is written `(<col> AT TIME ZONE 'America/Chicago')`. A bare cast is forbidden, because Supabase sessions run in UTC.
+- Transform delete passes use `NOT EXISTS`, never `NOT IN (subquery)`: a single NULL key makes `NOT IN` delete nothing.
+- The scheduled sync runs from a dedicated release worktree, `C:\ProgramData\lsbd-sync\app` (a `git worktree` of this repo checked out at a tag `sync-vN`), never from the dev working copy `C:\Users\Administrator\LSBD-work\LSBD`.
+- Every query the bridge runs in the VM executes as `SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; BEGIN TRAN; <sql>; ROLLBACK;`, so a write can never commit even if the SELECT-only check is bypassed.
 
 ## Review Focus
 
-1. **NULL vs empty vs whitespace strings.** The source hash must distinguish NULL from `''` from `' '`. A column changed from NULL to `''` must be detected as an update (pinned in Task 4).
-2. **Key normalisation across systems.** uuid PKs come back uppercase or lowercase depending on the path, and nvarchar keys can carry trailing spaces. `keyOf()` lowercases uuids and preserves nvarchar exactly, and a row must never be seen as delete + insert because of key formatting (pinned in Task 5).
-3. **Bridge returns nothing.** A VM or credential hiccup that yields 0 keys must not soft-delete a whole table. The mass-delete guard applies when a table with >100 live rows would lose >50% (pinned in Task 5, enforced in Task 8).
-4. **Overlapping or crashed runs.** A second run while one is active exits 0 without touching data. A crash mid-table leaves that raw table exactly as before, because each table is written in its own transaction (pinned in Task 8).
-5. **Numeric and date fidelity.** `money` and `decimal` travel as strings, never JS floats. `datetime` values like `2026-09-30T09:58:18.4770000` land in `timestamp` unchanged at millisecond precision (pinned in Task 6).
+1. **Timezone shift on dates.** A source `DateUntil` of `2027-12-31 00:00` must read as Dec 31, 2027 in Central time on `/verify`, not Dec 30 at 6 PM (pinned in Task 11 test (e)).
+2. **NULL vs empty vs whitespace strings.** The source hash must distinguish NULL from `''` from `' '`. A column changed from NULL to `''` must be detected as an update (pinned in Task 4).
+3. **Key normalisation across systems.** uuid PKs come back uppercase or lowercase depending on the path, and nvarchar keys can carry trailing spaces. `keyOf()` lowercases uuids and preserves nvarchar exactly. A row must never be seen as delete + insert because of key formatting, and a key duplicated by a NOLOCK read counts once (pinned in Task 5).
+4. **Bridge returns nothing.** A VM or credential hiccup that yields 0 keys must not soft-delete a whole table. The mass-delete guard applies when a table with >100 live rows would lose >50%, and it blocks only that table while the others still sync (pinned in Task 5, enforced in Task 8).
+5. **Overlapping or crashed runs.** A second run while one is active exits 0 without touching data. A crash mid-table leaves that raw table exactly as before, because each table is written in its own transaction (pinned in Task 8).
+
+Numeric fidelity (money/decimal as strings; datetime `.fff` round-trip) is pinned in Task 6's own tests.
 
 ---
 
@@ -174,7 +180,7 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
   - **`policyFor("Office")`** is `{}`.
   - **`rowHashExpr`** for `[a nvarchar, b datetime, c ntext, d image, e float]`:
     - It contains `CONVERT(nvarchar(30), [b], 126)`, `CAST([c] AS nvarchar(max))`, `CONVERT(nvarchar(max), CAST([d] AS varbinary(max)), 2)`, `CONVERT(nvarchar(30), [e], 3)`, `NCHAR(31)` and `HASHBYTES('SHA2_256'`.
-    - It wraps each column in `ISNULL(…, N'␀')` so NULL ≠ `''` (Review Focus 1).
+    - It wraps each column in `ISNULL(…, N'␀')` so NULL ≠ `''` (Review Focus 2).
   - **`rowsSql(t, ["O'Brien"])`** contains `N'O''Brien'`.
   - **`rowsSql(intPkTable, ["12"])`** contains `IN (12)`.
   - **`rowsSql(intPkTable, ["12; DROP"])`** throws `Invalid integer key`.
@@ -201,7 +207,8 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
     - `keyOf("ABCDEF00-0000-0000-0000-000000000001","uniqueidentifier") === "abcdef00-0000-0000-0000-000000000001"`.
     - `keyOf("A1 ","nvarchar") === "A1 "`.
     - `keyOf(12,"int") === "12"`.
-  - **uuid round trip:** after `keyOf`, a source key in uppercase and a target key in lowercase produce an empty diff (Review Focus 2).
+  - **uuid round trip:** after `keyOf`, a source key in uppercase and a target key in lowercase produce an empty diff (Review Focus 3).
+  - **Duplicate source key** (possible under NOLOCK): source `[{k:"1",h:"a"},{k:"1",h:"a"}]` vs target `[{k:"1",h:"a"}]` → empty diff, and `inserted` never contains a key twice.
   - **`massDeleteGuard`:**
     - `massDeleteGuard(19285, 19285) === true`.
     - `massDeleteGuard(19285, 40) === false`.
@@ -217,10 +224,13 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
 - Create: `scripts/sync/bridge.ps1`, `scripts/sync/mssql.ts`, `tests/it/bridge.test.ts`
 
 **Interfaces:**
-- **`bridge.ps1` parameters:** `-Mode schema|query`, `-SqlFile <path>` (used with `query`), `-Database LSBDDB`.
-  - It loads the VM credentials via the secrets file.
-  - It opens `Invoke-Command -VMName $env:MSSQL_VM_NAME`.
-  - Inside the VM it runs the SQL through `System.Data.SqlClient` (Integrated Security, `ApplicationIntent=ReadOnly`, `CommandTimeout=900`) and writes **one compact JSON object per row to stdout**.
+- **`bridge.ps1` is one long-lived process per sync run** (`-Mode serve -Database LSBDDB`). Opening a PowerShell Direct session costs seconds, so it is opened once, not once per query.
+  - It loads the VM credentials via the secrets file and opens **one** `New-PSSession -VMName $env:MSSQL_VM_NAME`.
+  - It then loops reading one request per stdin line, `{"id":n,"sql":"…"}`, and for each runs `Invoke-Command -Session $s`.
+  - Inside the VM it runs the SQL through `System.Data.SqlClient` (Integrated Security, `ApplicationIntent=ReadOnly`, `CommandTimeout=900`), wrapped as `SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; BEGIN TRAN; <sql>; ROLLBACK;` (Global Constraints).
+  - For each row it writes `{"id":n,"row":{…}}` to stdout, then `{"id":n,"done":true,"count":k}`. On error it writes `{"id":n,"error":"…"}` and keeps serving.
+  - It exits and removes the session on stdin EOF or the request `{"id":n,"quit":true}`.
+  - Requests are processed one at a time, in order.
   - **Value encoding:**
 
     | Source value | Encoded as |
@@ -233,19 +243,20 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
     | `bool` | `true` / `false` |
     | everything else | native |
 
-  - **`schema` mode** emits one object per table: `{name, pk, rowCount, columns:[…SourceColumn]}`. Composite-PK tables report `pk:null`, but they are excluded anyway.
-  - The script refuses any `-SqlFile` whose text matches `(?i)\b(insert|update|delete|merge|drop|alter|create|truncate|exec|grant)\b` outside of string literals, with exit code 3 and the message `bridge: non-SELECT refused`.
+  - The schema is read with an ordinary request: `readSchema()` sends the catalog SELECT (tables, single-column PKs, columns, row counts) and assembles `SourceTable[]` in TS. Composite-PK tables report `pk:null`; they are excluded anyway.
+  - A request whose SQL matches `(?i)\b(insert|update|delete|merge|drop|alter|create|truncate|exec|grant)\b` outside of string literals gets the reply `{"id":n,"error":"bridge: non-SELECT refused"}` and is not sent to the VM. This is defence in depth; the ROLLBACK wrapper is the hard guarantee.
 - **`mssql.ts` produces:**
   - `readSchema(): Promise<SourceTable[]>`
-  - `query<T>(sql: string): AsyncIterable<T>`. It writes the SQL to a temp file under `os.tmpdir()`, spawns `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/sync/bridge.ps1 -Mode query -SqlFile <tmp>`, streams stdout line by line through `JSON.parse`, rejects on a non-zero exit with the stderr text, and deletes the temp file.
+  - `query<T>(sql: string): AsyncIterable<T>`. On first use it lazily spawns one `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/sync/bridge.ps1 -Mode serve`. Each call writes one request line and yields the matching `row` objects; it rejects on an `error` reply, or if the process exits with its stderr text.
+  - `closeBridge(): Promise<void>` sends `quit` and awaits exit. The runner calls it in `finally`.
 
 - [ ] **Step 1: Write the failing integration test** in `tests/it/bridge.test.ts`, gated on `LSBD_IT=1`:
   - `readSchema()` returns ≥ 80 tables; `tblDenHyg` has `pk === "Key"` and a column `SSN`.
   - `query("SELECT TOP 1 CAST('2026-09-30T09:58:18.477' AS datetime) AS d, CAST(12.3400 AS money) AS m, CAST(NULL AS nvarchar(5)) AS n")` yields `{d:"2026-09-30T09:58:18.477", m:"12.3400", n:null}` (Review Focus 5).
   - `query("DELETE FROM tblFees")` rejects with `non-SELECT refused`.
 - [ ] **Step 2: Run the test and confirm it fails.** Run `$env:LSBD_IT='1'; npx vitest run tests/it/bridge.test.ts`. Expected: FAIL.
-- [ ] **Step 3: Implement.** For large results, don't collect a list inside the VM. Have the VM script build JSON strings incrementally and return a `string[]` per 5,000-row page (loop with `OFFSET/FETCH` or reader chunking), so remoting serialises strings, not hashtables.
-- [ ] **Step 4: Run the test and confirm it passes.** Expected: PASS. Also record the time `query("SELECT * FROM tblTransSplits")` takes to stream all rows, and note it in the commit message. It is the throughput baseline for spec risk #3.
+- [ ] **Step 3: Implement.** For large results, don't collect a list inside the VM. Have the VM script build JSON strings incrementally and return a `string[]` per 5,000-row page (reader chunking across repeated `Invoke-Command -Session` calls on the same session), so remoting serialises strings, not hashtables.
+- [ ] **Step 4: Run the test and confirm it passes.** Expected: PASS. Also add an IT assertion that two consecutive `query()` calls reuse one bridge process: the second call's latency is < 50% of the first's. Record in the commit message the time `query("SELECT * FROM tblTransSplits")` takes to stream all rows; it is the throughput baseline for spec risk #3.
 - [ ] **Step 5: Commit.** Message: `feat(sync): PowerShell Direct read-only bridge (baseline: tblTransSplits Ns)`.
 
 ### Task 7: Bootstrap `lsbd_raw` + raw writer
@@ -263,8 +274,8 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
   - `replaceTable(c, t, rows): Promise<number>`: `DELETE FROM` then insert, in the caller's transaction
   - `rowToRaw(row): Record<string, unknown>`, which moves `__h` to `_row_hash`
 
-- [ ] **Step 1: Write the failing integration test** (`LSBD_IT=1`). Inside `BEGIN … ROLLBACK`:
-  - Create a temporary table shaped like the generated `lsbd_raw."tblFees"`, then `upsertRaw` two rows.
+- [ ] **Step 1: Write the failing integration test** (`LSBD_IT=1`), run against the real `lsbd_raw."tblFees"` after the bootstrap, inside `BEGIN … ROLLBACK`. The red run may precede the bootstrap; the green run follows it.
+  - `upsertRaw` two rows with synthetic keys ≥ 900000000.
   - Upsert one of them again with a different `__h` → `_row_hash` is updated.
   - `softDelete` the other → `readRawKeys` returns 1 key.
   - Upsert the deleted key again → `_deleted_at` is NULL.
@@ -287,33 +298,43 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
 **Interfaces:**
 - **CLI:** `run.ts --mode quick|full [--tables A,B | --tables none] [--no-transform] [--allow-mass-delete]`. `--tables none` skips the sync and only runs transforms.
 - **Exit codes:** 0 = ok or "already running"; 1 = failure; 2 = mass-delete guard tripped.
-- Produces: `runSync(opts: { mode: "quick"|"full"; tables?: string[] | "none"; transform: boolean; allowMassDelete: boolean }, deps?: { readSchema: typeof readSchema; query: typeof query }): Promise<RunSummary>`.
-  - `deps` defaults to the real bridge (Task 6) and exists so tests can inject a fake source.
-  - `RunSummary = { runId: number; status: "ok"|"failed"|"blocked"|"skipped"; tablesChanged: string[]; inserted: number; updated: number; deleted: number; orphansSkipped: number }`.
+- Produces: `runSync(opts: { mode: "quick"|"full"; tables?: string[] | "none"; transform: boolean; allowMassDelete: boolean }, deps?: { readSchema: typeof readSchema; query: typeof query; db?: () => Promise<pg.Client> }): Promise<RunSummary>`.
+  - `deps` defaults to the real bridge (Task 6) and a session-pooler client, and exists so tests can inject a fake source.
+  - `RunSummary = { runId: number; status: "ok"|"failed"|"blocked"|"skipped"; tablesChanged: string[]; blockedTables: string[]; inserted: number; updated: number; deleted: number; orphansSkipped: number; schemaDrift: string[] }`.
 
-- [ ] **Step 1a: Write the failing unit test** (`tests/sync/run-guard.test.ts`; uses a real `pg` connection inside `BEGIN … ROLLBACK`, so it is gated like the IT tests):
-  - Set up raw state: seed 200 live rows into a scratch copy of `lsbd_raw."tblTypes"`.
-  - Call `runSync({mode:"full", tables:["tblTypes"], transform:false, allowMassDelete:false}, fakeDeps)`, where the fake returns a schema containing `tblTypes` and 0 keys.
-  - Expected: `status === "blocked"`, the live raw row count is still 200, and the CLI maps this to exit code 2 (Review Focus 3).
+- [ ] **Step 1a: Write the failing guard test** (`tests/it/run-guard.test.ts`, `LSBD_IT=1`):
+  - Pick an int-PK raw table (e.g. `lsbd_raw."tblTransTypes"`) and **commit** 200 synthetic rows with keys ≥ 900000000.
+  - Call `runSync({mode:"full", tables:[thatTable, "tblFees"], transform:false, allowMassDelete:false}, fakeDeps)`. The fake returns a schema containing both tables, 0 keys for the first, and the real keys and rows for `tblFees`.
+  - Expected:
+    - `status === "blocked"` and `blockedTables` equals `[thatTable]`.
+    - The first table's live count is unchanged, and `tblFees` still synced.
+    - The CLI maps this to exit code 2 (Review Focus 4).
+  - `afterAll` deletes the synthetic rows.
 - [ ] **Step 1b: Write the failing integration tests** (`LSBD_IT=1`):
   - `runSync({mode:"full", tables:["tblFees","tblTypes"], transform:false})` returns a summary. Afterwards `lsbd_raw."tblTypes"` live count equals the source count from `query("SELECT COUNT(*) n FROM tblTypes")`.
   - A second immediate `runSync({mode:"quick", tables:["tblTypes"]})` reports `tablesChanged: []`.
-  - While a session holds `pg_advisory_lock(hashtext('lsbd_sync'))`, `runSync` resolves with `runId: -1` and does not write `_sync_runs` (Review Focus 4).
+  - While a session holds `pg_advisory_lock(hashtext('lsbd_sync'))`, `runSync` resolves with `runId: -1` and does not write `_sync_runs` (Review Focus 5).
+  - **Schema drift:** a fake schema adds a column `ZZTest nvarchar` to `tblFees`. The run issues `ALTER TABLE lsbd_raw."tblFees" ADD COLUMN "ZZTest" text` and reports `schemaDrift: ["tblFees.ZZTest added"]`. `afterAll` drops the column.
 - [ ] **Step 2: Run the tests and confirm they fail.** Expected: FAIL.
 - [ ] **Step 3: Implement the flow:**
   1. Take the advisory lock, or return `-1`.
   2. Insert a `_sync_runs` row with status `running`.
-  3. `readSchema()`. Warn about any source table not in `lsbd_raw` (schema drift) without failing, and include it in the run error field.
+  3. `readSchema()`, then compare it with `lsbd_raw` via `information_schema.columns`:
+     - A new source **table** is skipped with a drift note.
+     - A new source **column** gets `ALTER TABLE … ADD COLUMN` with the mapped type, unless the policy drops it, and a drift note.
+     - A removed column or a changed type fails **that table only**, with a drift note.
+     - All notes go into `schemaDrift` and the run's error field.
   4. **Quick mode:** run `fingerprintSql` and compare `(n, fp)` against `_sync_tables`. Tables that differ, plus all no-PK tables, become the work list. **Full mode:** every table goes on the work list.
-  5. **For each table, in its own transaction:**
-     - For PK tables: `keysSql` → `diffKeys` against `readRawKeys`, with the mass-delete guard (a block without `--allow-mass-delete` marks the table `blocked` and sets exit 2 without writing).
+  5. **For each table, in its own transaction.** A per-table failure or block is recorded and the loop **continues** with the next table:
+     - For PK tables: `keysSql` → `diffKeys` against `readRawKeys`, with the mass-delete guard. A block without `--allow-mass-delete` adds the table to `blockedTables` and writes nothing for it.
      - Fetch rows for inserted + updated keys in chunks of 1,000, or use `rowsSql(t,"all")` when changed keys exceed 30% of rows. Apply `applyPolicy` and `upsertRaw`, then `softDelete`.
      - For no-PK tables: `replaceTable`.
      - Update `_sync_tables`.
-  6. Unless `--no-transform`, `CALL lsbd.run_transforms()` (Task 11) and store its orphan count.
-  7. Finish the `_sync_runs` row (`ok` / `failed` / `blocked`).
-  8. On success, if `SYNC_HEALTHCHECK_URL` is set, `fetch` it.
-  9. On failure, write to the Windows event log via `powershell -Command "Write-EventLog -LogName Application -Source LSBD-Sync -EventId 1001 -EntryType Error -Message …"`. The source is registered by Task 12.
+  6. Unless `--no-transform`, run `SET statement_timeout = 0` and then `CALL lsbd.run_transforms(changed_sources => <array of changed source table names, or NULL in full mode / --tables none>)` (Task 11), and store its orphan count.
+  7. Finish the `_sync_runs` row: `failed` if any table failed, otherwise `blocked` if any table was blocked, otherwise `ok`.
+  8. On `ok`, if `SYNC_HEALTHCHECK_URL` is set, `fetch` it. On `failed` or `blocked`, `fetch` `${SYNC_HEALTHCHECK_URL}/fail` if set.
+  9. On `failed` or `blocked`, write to the Windows event log via `powershell -Command "Write-EventLog -LogName Application -Source LSBD-Sync -EventId 1001 -EntryType Error -Message …"`. This is **best-effort**: swallow and `console.error` any failure, because the source is only registered by Task 12.
+  10. `closeBridge()` in `finally`.
 - [ ] **Step 4: Run the tests and confirm they pass,** then run `npm run sync:full -- --no-transform`. Expected: exit 0; `_sync_runs` shows `ok`; every table's live raw count equals its source count. Record the duration in the commit message.
 - [ ] **Step 5: Commit.** Message: `feat(sync): quick/full runner with lock, guard, bookkeeping (full run: Ns)`.
 
@@ -324,15 +345,20 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
 - Modify: `package.json` (script `"sync:reconcile"`), `.gitignore` (add `reports/`)
 
 **Interfaces:**
-- Produces: `compareTable(sourceCount: number, source: KeyHash[], raw: KeyHash[]): { countMatch: boolean; setMatch: boolean; missing: number; extra: number; hashMismatch: number }`, plus the CLI, which writes `reports/reconcile-<yyyyMMdd-HHmm>.md`. The report is a table of name, source count, raw live count and PASS/FAIL, with counts only and no values. The CLI exits 1 on any FAIL.
+- Produces: `compareTable(sourceCount: number, source: KeyHash[], raw: KeyHash[]): { countMatch: boolean; setMatch: boolean; missing: number; extra: number; hashMismatch: number }`, plus the CLI, which writes `reports/reconcile-<yyyyMMdd-HHmm>.md`.
+  - **Section 1 "Reconciliation":** a table of name, source count, raw live count and PASS/FAIL, with counts only. No-PK tables are compared on counts only. The CLI exits 1 on any FAIL.
+  - **Section 2 "Data quality for staff review"** (informational, never fails the run):
+    - `(Type, LICENSEID)` groups with more than one `tblDenHyg` row: list Type, LICENSEID and row count (license numbers only; no names).
+    - The latest run's orphan counts per transform relation, read from `_sync_runs`.
+    - Rows whose SSN failed normalisation: a count per table.
 
 - [ ] **Step 1: Write failing unit tests for `compareTable`:**
   - Identical sets → all true, zeros.
   - One key missing and one hash differing → `missing:1, hashMismatch:1, setMatch:false`.
   - A source count that differs from the number of source keys → `countMatch:false`.
 - [ ] **Step 2: Run the tests and confirm they fail.** Expected: FAIL.
-- [ ] **Step 3: Implement** by reusing `keysSql`, `readRawKeys` and `diffKeys`.
-- [ ] **Step 4: Run the tests and confirm they pass,** then run `npm run sync:reconcile`. Expected: every synced table PASS and exit 0.
+- [ ] **Step 3: Implement** by reusing `keysSql`, `readRawKeys` and `diffKeys`. The duplicate-group query runs against `lsbd_raw."tblDenHyg"` (live rows).
+- [ ] **Step 4: Run the tests and confirm they pass,** then run `npm run sync:reconcile`. Expected: every synced table PASS, exit 0, and Section 2 lists 17 duplicate groups (the count on 2026-09-30; it may drift slightly).
 - [ ] **Step 5: Commit.** Message: `feat(sync): reconcile report for acceptance criteria 1–2`.
 
 ### Task 10: Legacy keys on `lsbd.*` (fixes the license collapse)
@@ -356,18 +382,24 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
 - [ ] **Step 4: Verify.** Query `information_schema.table_constraints` to confirm a UNIQUE or PK constraint exists on the documented key of every `lsbd` table (script prints `86/86`), and that no unique constraint on `license(license_id)` alone remains.
 - [ ] **Step 5: Commit.** Message: `fix(schema): legacy upsert keys; license identity is tblDenHyg.Key`.
 
-### Task 11: Set-based transforms `lsbd_raw` → `lsbd`
+### Task 11: Transforms I — framework, reference data, people and licenses (the public path)
+
+Transforms are split in two so that licensees, scheduling and `/verify` go live before the long tail of operational domains (Task 14).
 
 **Files:**
-- Create: `supabase/transforms/00_helpers.sql`, `10_lookups.sql`, `20_geography.sql`, `30_entities.sql`, `40_denhyg_pii.sql`, `50_relationships.sql`, `60_operational.sql`, `70_financial.sql`, `80_compliance.sql`, `99_run.sql`
+- Create: `supabase/transforms/00_helpers.sql`, `10_lookups.sql`, `20_geography.sql`, `30_entities.sql`, `40_denhyg_pii.sql`, `99_run.sql`
 - Create: `scripts/sync/apply-transforms.ts`, `tests/it/transforms.test.ts`
-- Modify: `package.json` (scripts `"sync:transforms:apply"`, `"uat:reset": "tsx scripts/sync/run.ts --mode quick --tables none"`; with `--tables none` the runner goes straight to transforms)
+- Modify: `package.json` (scripts `"sync:transforms:apply"`, `"uat:reset": "tsx scripts/sync/run.ts --mode quick --tables none"`)
 
 **Interfaces:**
 - Consumes: `lsbd_raw.*` (Task 7) and the legacy keys (Task 10).
 - Produces:
-  - `lsbd.transform_<domain>() RETURNS integer` (orphans skipped) for each of `lookups`, `geography`, `entities`, `denhyg_pii`, `relationships`, `operational`, `financial`, `compliance`.
-  - `PROCEDURE lsbd.run_transforms(INOUT orphans integer DEFAULT 0)`. It calls the functions in that order inside the caller's transaction, then runs the delete passes in reverse order.
+  - `lsbd.transform_<domain>() RETURNS integer` (orphans skipped) for `lookups`, `geography`, `entities`, `denhyg_pii`.
+  - `lsbd._transform_registry(domain text PRIMARY KEY, fn regproc NOT NULL, sort_order int NOT NULL, source_tables text[] NOT NULL)`. Each domain file upserts its own row, so Task 14 adds domains without editing `99_run.sql`.
+  - `PROCEDURE lsbd.run_transforms(changed_sources text[] DEFAULT NULL, INOUT orphans integer DEFAULT 0)`.
+    - It runs, in `sort_order`, every registered domain whose `source_tables` overlap `changed_sources`. When `changed_sources` is NULL, it runs all of them (full mode, `--tables none`).
+    - Delete passes run in reverse `sort_order`. It runs in the caller's transaction.
+    - A domain also runs when an upstream domain it depends on ran. `source_tables` lists the parent tables too, so for example `denhyg_pii` lists `tblDenHyg` and `Individual`.
   - **Mapping source of truth:**
 
     | Transform file | Ported from |
@@ -376,40 +408,50 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
     | `20_geography` | `etl-b1a-geography.ts` |
     | `30_entities` | `etl-b2-entities.ts` |
     | `40_denhyg_pii` | `etl-tbldenhyg.ts` + `etl-b2-pii.ts`, **except** one `person` + one `license` per `tblDenHyg` row keyed by `Key` (no license-id dedupe); `licensee_pii.ssn_hash` comes straight from `lsbd_raw."tblDenHyg"."SSN"` (already HMAC'd) |
-    | `50_relationships` / `60_operational` / `70_financial` | `etl-b3.ts` groups |
-    | `80_compliance` | `etl-b4.ts` |
 
   - **Every upsert:** `INSERT … SELECT … FROM lsbd_raw.<src> WHERE _deleted_at IS NULL [AND parent exists] ON CONFLICT (<key>) DO UPDATE SET … WHERE (<target cols>) IS DISTINCT FROM (<excluded cols>)`.
-  - **Every delete:** `DELETE FROM lsbd.<t> WHERE <key> NOT IN (SELECT <key expr> FROM lsbd_raw.<src> WHERE _deleted_at IS NULL)`.
+  - **Every delete:** `DELETE FROM lsbd.<t> t WHERE NOT EXISTS (SELECT 1 FROM lsbd_raw.<src> s WHERE s._deleted_at IS NULL AND <key match>)` (Global Constraints: never `NOT IN`).
+  - **Every timestamptz target:** `(<raw col> AT TIME ZONE 'America/Chicago')` (Global Constraints).
   - **Orphans** (children whose parent key doesn't exist) are counted with `GET DIAGNOSTICS` against a pre-count and are not inserted.
   - **Serial sequences** are bumped with `setval` to `MAX(id)` at the end of `run_transforms`.
 
 - [ ] **Step 1: Write the failing integration tests** (`LSBD_IT=1`). Each runs inside `BEGIN … ROLLBACK` on synthetic keys ≥ 900000000:
   - **(a) Insert/update:** insert two `lsbd_raw."tblDenHyg"` rows with the same `LICENSEID` "900001" but `Type` 'D' and 'H', then `CALL lsbd.run_transforms()`. `lsbd.license` has 2 rows with `license_id='900001'` (types D and H), and `lsbd.person` has 2 rows. Update `LastName` on one raw row and re-run → the person's `last_name` changes and the row count stays 2.
   - **(b) Delete:** set `_deleted_at=now()` on one raw row and re-run → its license and person are gone. The row's `licensee_pii` is removed by cascade.
-  - **(c) Orphans:** a raw `OfficeAffiliation` row pointing at a nonexistent office → the orphan count returned is ≥ 1, and no row is inserted.
-  - **(d) Idempotence:** running `run_transforms` twice leaves `pg_stat_user_tables.n_tup_upd` for `lsbd.license` unchanged on the second run (the `IS DISTINCT FROM` guard works).
+  - **(c) Orphans:** a raw `tblDenHyg` row whose individual reference points at a nonexistent `Individual` → the orphan count returned is ≥ 1, and no person row is inserted for it. If `tblDenHyg` has no such FK in the port, use any parent/child pair within this task's domains and name it in the test.
+  - **(d) Idempotence:** running `run_transforms` twice leaves `pg_stat_xact_user_tables.n_tup_upd` for `lsbd.license` unchanged across the second call (Ruling R5).
+  - **(e) Timezone** (Review Focus 1): a raw row with `DateUntil = '2027-12-31 00:00:00'` → `SELECT (date_until AT TIME ZONE 'America/Chicago')::date` equals `2027-12-31`, and `date_until` equals `'2027-12-31 06:00:00+00'`.
+  - **(f) Incremental skip:** `CALL lsbd.run_transforms(ARRAY['Zipcodes'])` does not execute `transform_denhyg_pii`. Assert via `pg_stat_xact_user_tables.n_tup_ins + n_tup_upd + n_tup_del` for `lsbd.license` staying 0 in that call.
 - [ ] **Step 2: Run the tests and confirm they fail.** Expected: FAIL (the procedure doesn't exist yet).
 - [ ] **Step 3: Implement the files in numeric order.** `apply-transforms.ts` applies `supabase/transforms/*.sql` in filename order, each file in one transaction; the files use `CREATE OR REPLACE`. Run `npm run sync:transforms:apply`.
 - [ ] **Step 4: Run the tests and confirm they pass,** then do the real load: `npm run sync -- --mode quick --tables none`. Expected:
   - `lsbd.license` count equals the `lsbd_raw."tblDenHyg"` live count (~19,285, not 8,985).
   - The run's orphan count is logged.
-  - Counts for other tables match the ETL-era totals within the source's growth since May.
-- [ ] **Step 5: Commit.** Message: `feat(transform): set-based lsbd_raw→lsbd transforms, idempotent`.
+  - Lookup, geography and entity table counts match their raw sources.
+  - Record the transform duration.
+- [ ] **Step 5: Commit.** Message: `feat(transform): framework + lookups/geography/entities/denhyg transforms`.
 
 ### Task 12: Schedule it + move secrets
 
 **Files:**
 - Create: `scripts/sync/install-task.ps1`
 
+**Files:**
+- Create: `scripts/sync/install-task.ps1`, `scripts/sync/release.ps1`
+
 **Interfaces:**
-- `install-task.ps1` must be run elevated. It is idempotent: it unregisters and re-registers the tasks.
+- **`release.ps1 -Tag sync-vN`** (elevated, idempotent) deploys the release worktree (Global Constraints):
+  1. `git tag sync-vN` at HEAD, if the tag is absent.
+  2. `git worktree add C:\ProgramData\lsbd-sync\app sync-vN` the first time; afterwards `git -C C:\ProgramData\lsbd-sync\app checkout --detach sync-vN`.
+  3. `npm ci --omit=dev` there. Keep `tsx` available: if `--omit=dev` drops it, use plain `npm ci`.
+  4. Print the deployed tag and commit.
+- **`install-task.ps1`** must be run elevated. It is idempotent: it unregisters and re-registers the tasks.
   1. Create `C:\ProgramData\lsbd-sync\` and copy the secrets file there. ACL it with `icacls` `/inheritance:r` and grant only `SYSTEM:F` and `Administrators:F`.
   2. Register the event source with `New-EventLog -LogName Application -Source LSBD-Sync`, ignoring "already exists".
-  3. Register the task **`LSBD Sync Quick`**: runs as SYSTEM every 15 minutes from 07:00 to 19:00, Monday–Friday. Action: `C:\Program Files\nodejs\node.exe` with the tsx CLI resolved as `node_modules\tsx\dist\cli.mjs scripts\sync\run.ts --mode quick`. Working dir `C:\Users\Administrator\LSBD-work\LSBD`. `MultipleInstances IgnoreNew`, execution time limit 20 minutes.
-  4. Register the task **`LSBD Sync Full`**: runs as SYSTEM daily at 02:00 with `--mode full`, then `sync:reconcile`. Time limit 60 minutes.
+  3. Register the task **`LSBD Sync Quick`**: runs as SYSTEM every 15 minutes from 07:00 to 19:00, Monday–Friday. Action: `C:\Program Files\nodejs\node.exe` with the tsx CLI resolved as `node_modules\tsx\dist\cli.mjs scripts\sync\run.ts --mode quick`. Working dir **`C:\ProgramData\lsbd-sync\app`**. `MultipleInstances IgnoreNew`, execution time limit 20 minutes.
+  4. Register the task **`LSBD Sync Full`**: runs as SYSTEM daily at 02:00 with `--mode full`, then `sync:reconcile`. Working dir as above. Time limit 60 minutes.
 
-- [ ] **Step 1: Implement and run** `powershell -ExecutionPolicy Bypass -File scripts\sync\install-task.ps1`. Expected: `Get-ScheduledTask 'LSBD Sync*'` lists 2 tasks in state Ready.
+- [ ] **Step 1: Implement and run.** Run `powershell -ExecutionPolicy Bypass -File scripts\sync\release.ps1 -Tag sync-v1`, then `powershell -ExecutionPolicy Bypass -File scripts\sync\install-task.ps1`. Expected: `Get-ScheduledTask 'LSBD Sync*'` lists 2 tasks in state Ready, each with working dir `C:\ProgramData\lsbd-sync\app`, and `git -C C:\ProgramData\lsbd-sync\app describe --tags` prints `sync-v1`.
 - [ ] **Step 2: Trigger** with `Start-ScheduledTask 'LSBD Sync Quick'` and wait for completion. Expected: `LastTaskResult` 0, and a new `_sync_runs` row with status `ok` and `tables_changed` listing only recently edited tables.
 - [ ] **Step 3: Verify secrets hygiene.** `icacls C:\ProgramData\lsbd-sync\secrets.env` shows only SYSTEM and Administrators.
 - [ ] **Step 4: Commit.** Message: `ops(sync): Task Scheduler install (quick 15m business hours, full nightly)`.
@@ -432,9 +474,37 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
 - [ ] **Step 2: Verify locally.** Run `npm run build` → build succeeds. Run `npm run dev`, then:
   - `/admin/sync` as the admin user shows runs.
   - `/verify` searching a number held by both a D and an H licensee (pick one with `SELECT license_id FROM lsbd.license GROUP BY 1 HAVING COUNT(DISTINCT type)>1 LIMIT 1`) shows both.
-- [ ] **Step 3: Commit.** Message: `feat(admin): sync status page; verify disambiguates license type`.
+  - The expiry dates shown equal the Access values (no off-by-one day).
+- [ ] **Step 3: Verify the deployed test site.**
+  - Using the Vercel MCP (`list_projects` → `get_project` → `filter_project_envs`, names only, never decrypt values), confirm the lsbd-sigma project has a Postgres URL env var set for Production and Preview.
+  - With `web_fetch_vercel_url`, load `https://lsbd-sigma.vercel.app/public/verify?q=<a license number from the query above>`. Expected: both types appear.
+  - If the env is missing or points elsewhere, report DONE_WITH_CONCERNS naming the variable. Do **not** change Vercel env; the controller asks the user.
+- [ ] **Step 4: Commit.** Message: `feat(admin): sync status page; verify disambiguates license type`.
 
-### Task 14: P0/P1 exit check
+### Task 14: Transforms II — relationships, operational, financial, compliance
+
+**Files:**
+- Create: `supabase/transforms/50_relationships.sql`, `60_operational.sql`, `70_financial.sql`, `80_compliance.sql`, `tests/it/transforms-2.test.ts`
+
+**Interfaces:**
+- Consumes: the Task 11 framework (`_transform_registry`, the `run_transforms` contract, and the upsert/delete/timezone rules, all identical).
+- Produces: `lsbd.transform_relationships`, `transform_operational`, `transform_financial` and `transform_compliance`, each registering itself in `_transform_registry` with its `source_tables`:
+
+  | File | Ported from |
+  |---|---|
+  | `50_relationships` / `60_operational` / `70_financial` | `scripts/etl-b3.ts` groups |
+  | `80_compliance` | `scripts/etl-b4.ts` |
+
+- [ ] **Step 1: Write the failing integration tests** (`LSBD_IT=1`, `BEGIN … ROLLBACK`, synthetic keys ≥ 900000000):
+  - **(a) Orphans:** a raw `OfficeAffiliation` row pointing at a nonexistent office → orphan count ≥ 1 and no row inserted.
+  - **(b) Delete propagation:** soft-delete a raw `tblTransSplits` row → its `lsbd` counterpart is removed on the next `run_transforms`.
+  - **(c) Money fidelity:** a raw `tblTransactions` amount of `12.3400` lands as numeric `12.34` exactly.
+- [ ] **Step 2: Run the tests and confirm they fail.** Expected: FAIL.
+- [ ] **Step 3: Implement** the four files, then run `npm run sync:transforms:apply`.
+- [ ] **Step 4: Run the tests and confirm they pass,** then run `npm run sync -- --mode quick --tables none`. Expected: every `lsbd` table's count matches its raw source minus the logged orphans, and `npm run sync:reconcile` Section 2 lists the orphan counts per relation. Record the full transform duration; if it exceeds 5 minutes, report DONE_WITH_CONCERNS.
+- [ ] **Step 5: Commit, then redeploy.** Message: `feat(transform): relationships/operational/financial/compliance transforms`. Then run `release.ps1 -Tag sync-v2` so the scheduler picks the new domains up.
+
+### Task 15: P0/P1 exit check
 
 - [ ] **Step 1: Freshness.** After a staff edit in Access (ask Erin to change one test-safe field, or watch `tblDenHyg` last update), the next quick run's `_sync_runs.tables_changed` includes that table and `/verify` reflects the change within 15 minutes.
 - [ ] **Step 2: Reconcile.** The nightly full run and `reports/reconcile-*.md` show all tables PASS for two consecutive nights.
@@ -444,6 +514,11 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
 - [ ] **Step 4: Commit.** Message: `docs: P1 exit — sync live, reconcile passing`.
 
 ---
+
+## Deferred optimisations (build only on a measured trigger)
+
+- **Bucketed fingerprints.** If a quick run exceeds 5 minutes, measured in `_sync_runs`, add per-bucket (`pk / 1000`) fingerprints so tier 2 fetches only the keys of changed buckets. Busy tables like `Logins` (98k rows) currently re-send all keys whenever one row changes.
+- **Separate integration-test database.** Once the project is on Pro, point integration tests at a Supabase branch via `LSBD_IT_DB_URL`, instead of the only project. They are safe today (synthetic keys ≥ 900000000 plus rollback) but share the database that becomes production at cutover.
 
 ## Out of this plan (next plans, written after the parity inventory)
 
@@ -463,3 +538,4 @@ git commit -m "ops: one-shot wipe of stale lsbd.* data"
 - Push `feat/lsbd-schema` to GitHub: provide a PAT here, or pull the branch from a dev box.
 - Upgrade Supabase project `ynqprnuwoznpkrwfmtyx` to Pro and enable PITR.
 - Ask Erin and Vincent the P1b questions (spec §5).
+- Create a free healthchecks.io check with an email alert, and put its ping URL in the secrets file as `SYNC_HEALTHCHECK_URL`. Nobody watches the Windows event log, so this is the real alert channel.
