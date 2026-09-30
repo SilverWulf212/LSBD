@@ -29,6 +29,18 @@ export function applyPolicy(
 ): Record<string, unknown> {
   const out: Record<string, unknown> = { ...row };
   const policy = policyFor(table);
+  // Fail closed: a key that matches a policy column only ignoring case would otherwise
+  // pass through unprotected (for example a plaintext SSN).
+  for (const key of Object.keys(row)) {
+    if (Object.prototype.hasOwnProperty.call(policy, key)) continue;
+    const lower = key.toLowerCase();
+    const policyCol = Object.keys(policy).find((c) => c.toLowerCase() === lower);
+    if (policyCol !== undefined) {
+      throw new Error(
+        `applyPolicy: column ${key} on ${table} case-mismatches policy column ${policyCol}`,
+      );
+    }
+  }
   for (const [column, action] of Object.entries(policy)) {
     if (!Object.prototype.hasOwnProperty.call(out, column)) continue;
     if (action === "drop") {

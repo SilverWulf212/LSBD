@@ -5,7 +5,8 @@ import type { SourceColumn, SourceTable } from "./types";
  * and reads with NOLOCK. Pure string building: no database access.
  */
 
-const NULL_SENTINEL = "N'␀'";
+// U+2400, written as NCHAR so it survives any transport encoding.
+const NULL_SENTINEL = "NCHAR(9216)";
 const SEP = "NCHAR(31)";
 const INT_PK_TYPES = new Set(["int", "smallint", "tinyint"]);
 
@@ -29,6 +30,8 @@ function textForm(c: SourceColumn): string {
     case "float":
       return `CONVERT(nvarchar(30), ${n}, 3)`;
     case "money":
+      // Style 2 keeps all 4 decimal places; style 0 would round to 2 and hide small edits.
+      return `CONVERT(nvarchar(40), ${n}, 2)`;
     case "decimal":
       return `CONVERT(nvarchar(40), ${n})`;
     case "ntext":

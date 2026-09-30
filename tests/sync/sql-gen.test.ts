@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { rowHashExpr, fingerprintSql, keysSql, rowsSql } from "../../scripts/sync/sql-gen";
 import type { SourceColumn, SourceTable } from "../../scripts/sync/types";
 
-const NUL = "N'␀'";
+const NUL = "NCHAR(9216)";
 
 function col(name: string, type: string, ordinal = 1): SourceColumn {
   return { name, type, maxLength: 0, precision: 0, scale: 0, nullable: true, ordinal };
@@ -53,11 +53,22 @@ describe("rowHashExpr", () => {
       col("ti", "tinyint"),
       col("sd", "smalldatetime"),
     ]);
-    expect(e).toContain("CONVERT(nvarchar(40), [m])");
+    expect(e).toContain("CONVERT(nvarchar(40), [m], 2)");
     expect(e).toContain("CONVERT(nvarchar(40), [d])");
     expect(e).toContain("CONVERT(nvarchar(36), [g])");
     for (const c of ["bt", "i", "si", "ti"]) expect(e).toContain(`CONVERT(nvarchar(20), [${c}])`);
     expect(e).toContain("CONVERT(nvarchar(30), [sd], 126)");
+  });
+  it("uses style 2 for money (4dp) but not for decimal", () => {
+    const m = rowHashExpr([col("m", "money")]);
+    const d = rowHashExpr([col("d", "decimal")]);
+    expect(m).toContain("CONVERT(nvarchar(40), [m], 2)");
+    expect(d).toContain("CONVERT(nvarchar(40), [d])");
+    expect(d).not.toContain("[d], 2)");
+  });
+  it("uses the encoding-proof NCHAR(9216) sentinel, never a literal U+2400", () => {
+    expect(expr).toContain("NCHAR(9216)");
+    expect(expr).not.toContain("␀");
   });
   it("widens varchar/char so the unicode sentinel is not mangled to '?'", () => {
     const e = rowHashExpr([col("v", "varchar"), col("c", "char"), col("n", "nchar")]);

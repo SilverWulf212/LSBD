@@ -70,8 +70,23 @@ describe("applyPolicy", () => {
     expect(out).toEqual(row);
     expect(out).not.toBe(row);
   });
-  it("ignores policy columns absent from the row and matches names case-sensitively", () => {
-    const out = applyPolicy("tblDenHyg", { ssn: "123-45-6789", Password: "keep" }, key);
-    expect(out).toEqual({ ssn: "123-45-6789", Password: "keep" });
+  it("ignores policy columns absent from the row", () => {
+    const out = applyPolicy("tblDenHyg", { LastName: "A" }, key);
+    expect(out).toEqual({ LastName: "A" });
+  });
+  it("fails closed when a row key case-mismatches a policy column", () => {
+    expect(() => applyPolicy("tblDenHyg", { ssn: "123-45-6789" }, key)).toThrow(
+      "applyPolicy: column ssn on tblDenHyg case-mismatches policy column SSN",
+    );
+    expect(() => applyPolicy("tblDenHyg", { Password: "x" }, key)).toThrow(
+      "applyPolicy: column Password on tblDenHyg case-mismatches policy column password",
+    );
+    expect(() => applyPolicy("Users", { PASSWORD: "x" }, key)).toThrow(
+      "applyPolicy: column PASSWORD on Users case-mismatches policy column Password",
+    );
+  });
+  it("still works with exact-case columns alongside other columns", () => {
+    const out = applyPolicy("Users", { Password: "p", passwordHint: "h" }, key);
+    expect(out).toEqual({ passwordHint: "h" });
   });
 });
