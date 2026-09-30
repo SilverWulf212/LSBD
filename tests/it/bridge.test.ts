@@ -102,6 +102,17 @@ describe.skipIf(process.env.LSBD_IT !== "1")("mssql bridge (live, read-only)", (
     await expect(
       collect(query("EXECUTE ('SELECT 1')")),
     ).rejects.toThrow("non-SELECT refused");
+    // A keyword glued to a numeric literal is still a keyword to T-SQL (1DELETE = 1 DELETE).
+    await expect(
+      collect(query("SELECT 1DELETE FROM dbo.__lsbd_no_such_table SELECT 1COMMIT")),
+    ).rejects.toThrow("non-SELECT refused");
+    await expect(collect(query("SELECT 1 AS [delete]"))).resolves.toEqual([{ delete: 1 }]);
+  }, 180_000);
+
+  it("surfaces an error from a later statement in the batch", async () => {
+    await expect(collect(query("SELECT 1 AS x; SELECT 1/0"))).rejects.toThrow(/Divide by zero/i);
+    // ...and keeps serving.
+    expect(await collect(query("SELECT 3 AS x"))).toEqual([{ x: 3 }]);
   }, 180_000);
 
   it("keeps serving after a SQL error and after an early break", async () => {
@@ -119,13 +130,13 @@ describe.skipIf(process.env.LSBD_IT !== "1")("mssql bridge (live, read-only)", (
     expect(rows[0].n).toBeGreaterThan(0);
   }, 180_000);
 
-  it("rejects the in-flight query if the bridge dies, then respawns on the next query", async () => {
+  it("respawns a new bridge process after the old one is killed", async () => {
+    // In-flight death is covered by the fake-child unit test (tests/sync/mssql.test.ts);
+    // here we kill an idle bridge so no VM-side reader is ever stranded.
     await collect(query("SELECT 1 AS warm"));
     const pid = bridgePid()!;
-    // WAITFOR touches no user table, so killing the host mid-request strands nothing.
-    const pending = collect(query("WAITFOR DELAY '00:00:03'; SELECT 1 AS x"));
-    setTimeout(() => process.kill(pid), 1_000);
-    await expect(pending).rejects.toThrow(/bridge exited/);
+    process.kill(pid);
+    await new Promise((r) => setTimeout(r, 1_000));
     const rows = await collect(query<{ x: number }>("SELECT 7 AS x"));
     expect(rows).toEqual([{ x: 7 }]);
     expect(bridgePid()).not.toBe(pid);
@@ -151,6 +162,23 @@ describe.skipIf(process.env.LSBD_IT !== "1")("mssql bridge (live, read-only)", (
       });
       console.log(`BASELINE tblTransSplits: ${n} rows in ${(ms / 1000).toFixed(1)} s`);
       expect(n).toBeGreaterThan(100_000);
+    },
+    900_000,
+  );
+
+  it.skipIf(process.env.LSBD_IT_BASELINE !== "1")(
+    "verification: streams all of tblDenHyg (103 columns) in 5,000-row pages",
+    async () => {
+      let n = 0;
+      let cols = 0;
+      const [, ms] = await timed(async () => {
+        for await (const r of query<Record<string, unknown>>("SELECT * FROM dbo.tblDenHyg")) {
+          if (n++ === 0) cols = Object.keys(r).length;
+        }
+      });
+      console.log(`BASELINE tblDenHyg: ${n} rows x ${cols} cols in ${(ms / 1000).toFixed(1)} s`);
+      expect(cols).toBeGreaterThanOrEqual(100);
+      expect(n).toBeGreaterThan(10_000);
     },
     900_000,
   );

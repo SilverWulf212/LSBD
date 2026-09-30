@@ -13,7 +13,13 @@
   Every query runs inside the VM through System.Data.SqlClient as
     SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; BEGIN TRAN; <sql>; ROLLBACK;
   so nothing can ever commit. SQL whose code (outside string literals and quoted
-  identifiers) contains a write/DDL keyword is refused before it reaches the VM.
+  identifiers) contains a write/DDL keyword, pass-through call, lock hint or isolation
+  override is refused before it reaches the VM (keywords glued to numeric literals such as
+  1DELETE count). Errors from any statement in the batch, not only the first result set,
+  are returned as the request error (except 3903 from the wrapper ROLLBACK).
+
+  -Mode guard is an offline self-test of the refusal rules: stdin {"sql":"..."} lines are
+  answered with {"refused":bool}. It needs no secrets and never touches the VM.
 
   Rows are serialised to JSON inside the VM by a small C# helper and returned to the host
   as string[] pages of 5,000 rows (reader state lives in the persistent session), so
@@ -23,12 +29,16 @@
   Windows PowerShell 5.1 compatible. Secrets are read from the secrets file and never printed.
 #>
 param(
-  [Parameter(Mandatory = $true)][ValidateSet('serve')][string]$Mode,
+  [Parameter(Mandatory = $true)][ValidateSet('serve', 'guard')][string]$Mode,
   [string]$Database
 )
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
+# Only protocol lines may reach stdout: silence host-UI streams that powershell.exe prints there.
+$WarningPreference = 'SilentlyContinue'
+$VerbosePreference = 'SilentlyContinue'
+$InformationPreference = 'SilentlyContinue'
 $PageSize = 5000
 $CommandTimeout = 900
 
@@ -104,17 +114,34 @@ namespace LsbdBridge
 
     public static class Guard
     {
-        // Brief regex, plus keywords that could end/escape the ROLLBACK wrapper
-        // (commit, into, execute) or are non-transactional (backup, restore, dbcc, kill, ...).
+        // Brief keyword list, plus:
+        //  - keywords that could end or escape the ROLLBACK wrapper (commit, into, execute),
+        //  - non-transactional statements (backup, restore, dbcc, kill, shutdown, ...),
+        //  - pass-through / side-effecting reads (openquery, openrowset, opendatasource,
+        //    next value for, waitfor),
+        //  - lock-escalating hints and isolation overrides.
+        const string Keywords =
+            "insert|update|delete|merge|drop|alter|create|truncate|exec|grant" +
+            "|execute|commit|into|revoke|deny|dbcc|backup|restore|reconfigure|shutdown|kill" +
+            "|updatetext|writetext|enable|disable|waitfor" +
+            @"|openquery|openrowset|opendatasource|next\s+value\s+for" +
+            "|updlock|xlock|holdlock|tablockx|tablock|paglock|serializable|repeatableread" +
+            @"|readcommittedlock|set\s+transaction";
+
+        // Leading boundary: the keyword must not continue an identifier. T-SQL splits a
+        // numeric literal from a following word (1DELETE = 1 DELETE, 0xAINSERT = 0xA INSERT,
+        // 1EXEC may be 1E XEC or 1 EXEC), so a word run that starts with a digit is refused
+        // when ANY suffix of it is a keyword. '$' is not an identifier start ($ alone is a
+        // money literal), so $DELETE is refused too. Trailing boundary: no letter, digit or _.
         static readonly Regex Refuse = new Regex(
-            @"\b(insert|update|delete|merge|drop|alter|create|truncate|exec|grant" +
-            @"|execute|commit|into|revoke|deny|dbcc|backup|restore|reconfigure|shutdown|kill" +
-            @"|updatetext|writetext|enable|disable)\b",
+            @"(?<![\p{L}\p{N}_@#])(?:\p{N}[\p{L}\p{N}_@#$]*?)?(?:" + Keywords + @")(?![\p{L}\p{N}_])",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-        // Blanks out string literals and quoted identifiers ('..', [..], "..") and keeps the
-        // text of comments (-- and nested /* */) so a quote inside a comment cannot hide code.
-        public static string CodeOnly(string sql)
+        // Blanks out string literals and quoted identifiers ('..', [..], "..") so their
+        // contents are never scanned. Comments (-- and nested /* */) are either kept as text
+        // (keepComments: keywords inside them are refused, quotes inside them cannot open a
+        // literal) or blanked (so multi-word patterns match across a comment).
+        public static string CodeOnly(string sql, bool keepComments)
         {
             var sb = new StringBuilder(sql.Length);
             int i = 0, n = sql.Length;
@@ -142,7 +169,8 @@ namespace LsbdBridge
                 {
                     int s = i;
                     while (i < n && sql[i] != '\n') i++;
-                    sb.Append(' ').Append(sql, s + 2, i - s - 2).Append(' ');
+                    sb.Append(' ');
+                    if (keepComments) sb.Append(sql, s + 2, i - s - 2).Append(' ');
                     continue;
                 }
                 if (c == '/' && i + 1 < n && sql[i + 1] == '*')
@@ -155,7 +183,8 @@ namespace LsbdBridge
                         else if (sql[i] == '*' && i + 1 < n && sql[i + 1] == '/') { depth--; i += 2; }
                         else i++;
                     }
-                    sb.Append(' ').Append(sql, s + 2, i - s - 2).Append(' ');
+                    sb.Append(' ');
+                    if (keepComments) sb.Append(sql, s + 2, i - s - 2).Append(' ');
                     continue;
                 }
                 sb.Append(c);
@@ -167,7 +196,7 @@ namespace LsbdBridge
         public static bool IsRefused(string sql)
         {
             if (sql == null) return true;
-            return Refuse.IsMatch(CodeOnly(sql));
+            return Refuse.IsMatch(CodeOnly(sql, true)) || Refuse.IsMatch(CodeOnly(sql, false));
         }
     }
 
@@ -245,11 +274,34 @@ namespace LsbdBridge
             return list.ToArray();
         }
 
-        // Normal end: closing the reader runs the rest of the batch (the ROLLBACK).
+        // Normal end: drain every remaining result set explicitly (this runs the rest of the
+        // batch, including the wrapper ROLLBACK) so an error in a later statement surfaces as
+        // the request error instead of being swallowed by Close(). Only error 3903 (ROLLBACK
+        // without a transaction, i.e. the wrapper after a doomed transaction) is ignored.
         void Finish()
         {
             Done = true;
+            try
+            {
+                while (rdr.NextResult())
+                {
+                    while (rdr.Read()) { }
+                }
+            }
+            catch (SqlException ex)
+            {
+                if (!OnlyWrapperRollbackError(ex)) throw;
+            }
             Dispose();
+        }
+
+        static bool OnlyWrapperRollbackError(SqlException ex)
+        {
+            foreach (SqlError e in ex.Errors)
+            {
+                if (e.Class > 10 && e.Number != 3903) return false;
+            }
+            return true;
         }
 
         // Error / abandon: cancel instead of draining the remaining rows.
@@ -414,6 +466,20 @@ function Invoke-Request($id, [string]$sql) {
 
 # --- main -------------------------------------------------------------------------------
 Add-Type -TypeDefinition $HelperSource -ReferencedAssemblies System.Data, System.Xml | Out-Null
+
+if ($Mode -eq 'guard') {
+  # Offline self-check of the SELECT-only guard (no secrets, no VM): each stdin line
+  # {"sql":"..."} is answered with {"refused":true|false}. Used by tests/sync.
+  while ($true) {
+    $line = $stdin.ReadLine()
+    if ($null -eq $line) { break }
+    if ($line.Trim().Length -eq 0) { continue }
+    $req = ConvertFrom-Json -InputObject $line
+    if ([LsbdBridge.Guard]::IsRefused([string]$req.sql)) { Send-Line '{"refused":true}' }
+    else { Send-Line '{"refused":false}' }
+  }
+  exit 0
+}
 
 $script:Secrets = Read-Secrets
 foreach ($k in @('MSSQL_VM_NAME', 'MSSQL_USER', 'MSSQL_PASSWORD')) {
