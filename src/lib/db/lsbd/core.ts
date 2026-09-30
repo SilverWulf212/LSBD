@@ -29,6 +29,7 @@ import {
   doublePrecision,
   index,
   uniqueIndex,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // All legacy LSBD tables live in the "lsbd" Postgres schema,
@@ -71,6 +72,9 @@ export const addressTypeEnum = lsbdSchema.enum("address_type", [
 //  Plus FK to canonical Individual (uniqueidentifier in source).
 export const person = lsbdSchema.table("person", {
   id: serial("id").primaryKey(),
+  // Legacy upsert key: source tblDenHyg.Key. ONE person per tblDenHyg row
+  // (one source row = one license = one person; never dedupe on license_id).
+  legacyKey: integer("legacy_key").notNull().unique(),
   individualId: uuid("individual_id"), // FK -> individual.individual_id
   firstName: text("first_name"),
   middleName: text("middle_name"),
@@ -105,8 +109,10 @@ export const person = lsbdSchema.table("person", {
 //  ACTIVE (Y/N) was redundant with STATUS=ACT -- dropped.
 export const license = lsbdSchema.table("license", {
   id: serial("id").primaryKey(),
-  legacyKey: integer("legacy_key"), // source tblDenHyg.Key
-  licenseId: text("license_id").notNull(), // source LICENSEID, the public number
+  legacyKey: integer("legacy_key").notNull().unique(), // source tblDenHyg.Key -- THE license identity
+  // source LICENSEID, the public number. NOT unique: only unique per Type, and
+  // even (Type, LICENSEID) has duplicate groups in source. Never upsert on it.
+  licenseId: text("license_id").notNull(),
   personId: integer("person_id").references(() => person.id),
   type: licenseTypeEnum("type"),
   class: licenseClassEnum("class").default("L"),
@@ -128,8 +134,7 @@ export const license = lsbdSchema.table("license", {
   auditYear: text("audit_year"),
   credentialExam: text("credential_exam"),
 }, (t) => ({
-  licenseIdIdx: uniqueIndex("license_license_id_idx").on(t.licenseId),
-  legacyKeyIdx: uniqueIndex("license_legacy_key_idx").on(t.legacyKey),
+  typeLicenseIdIdx: index("license_type_license_id_idx").on(t.type, t.licenseId), // non-unique
   statusIdx: index("license_status_idx").on(t.status),
   typeIdx: index("license_type_idx").on(t.type),
   personIdx: index("license_person_idx").on(t.personId),
@@ -143,16 +148,15 @@ export const license = lsbdSchema.table("license", {
 //  Access controlled via Supabase RLS to the `staff_pii` role only.
 export const licenseePii = lsbdSchema.table("licensee_pii", {
   id: serial("id").primaryKey(),
-  personId: integer("person_id").notNull().references(() => person.id, { onDelete: "cascade" }),
+  // Upsert key: one PII row per person (= per tblDenHyg row).
+  personId: integer("person_id").notNull().unique().references(() => person.id, { onDelete: "cascade" }),
   ssnHash: text("ssn_hash"),             // pgcrypto digest of normalized SSN
   dob: timestamp("dob", { withTimezone: true }),
   sex: text("sex"),
   race: text("race"),
   background: boolean("background").default(false),
   passwordHash: text("password_hash"),   // bcrypt; MUST be force-reset on first login
-}, (t) => ({
-  personIdx: uniqueIndex("licensee_pii_person_idx").on(t.personId),
-}));
+});
 
 // person_address: three address sets in tblDenHyg become rows here.
 //  type='home'      <- Address1, Address2, Address3, CITY, STATE, ZIP, COUNTY, Country, AddrType
@@ -177,7 +181,8 @@ export const personAddress = lsbdSchema.table("person_address", {
   // xref: address.id (canonical ADDRESS table, geography slice)
   addressId: integer("address_id"),
 }, (t) => ({
-  personTypeIdx: uniqueIndex("person_address_person_type_idx")
+  // Upsert key: (person_id, address_type) = (tblDenHyg.Key via person, bucket).
+  personTypeUnique: unique("person_address_person_id_address_type_unique")
     .on(t.personId, t.addressType),
   cityIdx: index("person_address_city_idx").on(t.city),
   zipIdx: index("person_address_zip_idx").on(t.zip),
@@ -189,7 +194,8 @@ export const personAddress = lsbdSchema.table("person_address", {
 //  by the education slice; this row stays for tblDenHyg cutover parity.
 export const personEducation = lsbdSchema.table("person_education", {
   id: serial("id").primaryKey(),
-  personId: integer("person_id").notNull().references(() => person.id, { onDelete: "cascade" }),
+  // Upsert key: one row per person (= per tblDenHyg row).
+  personId: integer("person_id").notNull().unique().references(() => person.id, { onDelete: "cascade" }),
   schoolName: text("school_name"),    // xref: school.id (education slice)
   schoolState: text("school_state"),
   gradYear: smallint("grad_year"),
@@ -205,7 +211,8 @@ export const personEducation = lsbdSchema.table("person_education", {
 //  ntext Notes -> text. Float counts -> doublePrecision (source is float).
 export const personPracticeStats = lsbdSchema.table("person_practice_stats", {
   id: serial("id").primaryKey(),
-  personId: integer("person_id").notNull().references(() => person.id, { onDelete: "cascade" }),
+  // Upsert key: one row per person (= per tblDenHyg row).
+  personId: integer("person_id").notNull().unique().references(() => person.id, { onDelete: "cascade" }),
   hoursWorked: doublePrecision("hours_worked"),       // HRSWK
   patientsPerWeek: doublePrecision("patients_per_week"), // PATIENTCR
   numDentists: doublePrecision("num_dentists"),       // NUMDENT
@@ -239,7 +246,8 @@ export const personPracticeStats = lsbdSchema.table("person_practice_stats", {
 //  source col `Location` already lives on practice_stats; not duplicated here.
 export const personMeta = lsbdSchema.table("person_meta", {
   id: serial("id").primaryKey(),
-  personId: integer("person_id").notNull().references(() => person.id, { onDelete: "cascade" }),
+  // Upsert key: one row per person (= per tblDenHyg row).
+  personId: integer("person_id").notNull().unique().references(() => person.id, { onDelete: "cascade" }),
   updatedBy: text("updated_by"),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
   dateUpdated: timestamp("date_updated", { withTimezone: true }),
@@ -290,9 +298,8 @@ export const individual = lsbdSchema.table("individual", {
     .references(() => individualStatus.individualStatusUuid),
   legacyId: integer("legacy_id"),       // ID
   status: text("status"),
-  indvId: integer("indv_id").notNull(), // INDVID, source PK
+  indvId: integer("indv_id").notNull().unique(), // INDVID, source PK -- upsert key
 }, (t) => ({
-  indvIdIdx: uniqueIndex("individual_indv_id_idx").on(t.indvId),
   lastNameIdx: index("individual_last_name_idx").on(t.lastName),
 }));
 
@@ -311,7 +318,7 @@ export const professional = lsbdSchema.table("professional", {
   csNone: boolean("cs_none"),
   csDispense: boolean("cs_dispense"),
   csAdminister: boolean("cs_administer"),
-  legacyId: integer("legacy_id"),                // Professional_ID
+  legacyId: integer("legacy_id").notNull().unique(), // Professional_ID, source PK -- upsert key
   professionalType: text("professional_type"),   // denormalized text
   practiceType: text("practice_type"),           // denormalized text
   individualLegacyId: text("individual_legacy_id"), // source nvarchar(100), oddly typed
@@ -367,7 +374,7 @@ export const disciplinary = lsbdSchema.table("disciplinary", {
   goodStanding: boolean("good_standing"),
   updatedBy: uuid("updated_by"),
   individualLegacyId: integer("individual_legacy_id"),
-  legacyId: integer("legacy_id"), // Disciplinary_ID (the int PK in source)
+  legacyId: integer("legacy_id").notNull().unique(), // Disciplinary_ID (the int PK in source) -- upsert key
 }, (t) => ({
   individualIdx: index("disciplinary_individual_idx").on(t.individualId),
 }));
@@ -378,7 +385,7 @@ export const disciplinary = lsbdSchema.table("disciplinary", {
 // inline rather than split because they don't recur.
 export const complaint = lsbdSchema.table("complaint", {
   id: serial("id").primaryKey(),
-  legacyKey: integer("legacy_key"), // source Key
+  legacyKey: integer("legacy_key").notNull().unique(), // source tblComplaints.Key (PK) -- upsert key
   licenseId: text("license_id"),    // xref: license.licenseId
   logNo: text("log_no"),
   logDate: timestamp("log_date", { withTimezone: true }),
@@ -440,7 +447,6 @@ export const complaint = lsbdSchema.table("complaint", {
   complainantFax: text("complainant_fax"),
   licenseType: text("license_type"),
 }, (t) => ({
-  legacyKeyIdx: uniqueIndex("complaint_legacy_key_idx").on(t.legacyKey),
   licenseIdx: index("complaint_license_idx").on(t.licenseId),
   statusIdx: index("complaint_status_idx").on(t.status),
   logNoIdx: index("complaint_log_no_idx").on(t.logNo),
@@ -452,6 +458,7 @@ export const complaint = lsbdSchema.table("complaint", {
 
 export const complAction = lsbdSchema.table("compl_action", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblComplActions.ID, as text
   action: text("action").notNull(),       // e.g. DIS, SUS, REV, REP, PRB
   description: text("description"),
 }, (t) => ({
@@ -460,6 +467,7 @@ export const complAction = lsbdSchema.table("compl_action", {
 
 export const complClosure = lsbdSchema.table("compl_closure", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblComplClosure.ID, as text
   closure: text("closure").notNull(),     // e.g. NV, IE, SR, LC
   description: text("description"),
 }, (t) => ({
@@ -468,6 +476,7 @@ export const complClosure = lsbdSchema.table("compl_closure", {
 
 export const complDecision = lsbdSchema.table("compl_decision", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblComplDecisions.ID, as text
   decision: text("decision").notNull(),   // e.g. C, F, R, LC, SS
   description: text("description"),
 }, (t) => ({
@@ -476,6 +485,7 @@ export const complDecision = lsbdSchema.table("compl_decision", {
 
 export const complHearing = lsbdSchema.table("compl_hearing", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblComplHearings.ID, as text
   hearing: text("hearing").notNull(),
   description: text("description"),
 }, (t) => ({
@@ -484,6 +494,7 @@ export const complHearing = lsbdSchema.table("compl_hearing", {
 
 export const complProbation = lsbdSchema.table("compl_probation", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblComplProbation.ID, as text
   probation: text("probation").notNull(),
   description: text("description"),
 }, (t) => ({
@@ -494,6 +505,7 @@ export const complProbation = lsbdSchema.table("compl_probation", {
 // `code` as the surfaced lookup value.
 export const complStatus = lsbdSchema.table("compl_status", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblComplStatus.ID, as text
   code: text("code").notNull(),           // source `Status` (e.g. '1','100')
   description: text("description"),       // e.g. "Decision Pending"
 }, (t) => ({
@@ -502,6 +514,7 @@ export const complStatus = lsbdSchema.table("compl_status", {
 
 export const disposition = lsbdSchema.table("disposition", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblDisposition.ID, as text
   code: text("code").notNull(),           // 1..14 in source
   description: text("description"),
 }, (t) => ({

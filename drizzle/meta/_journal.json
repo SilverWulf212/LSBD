@@ -15,6 +15,13 @@
       "when": 1778620620121,
       "tag": "0001_user_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790795131850,
+      "tag": "0003_legacy_keys",
+      "breakpoints": true
     }
   ]
 }

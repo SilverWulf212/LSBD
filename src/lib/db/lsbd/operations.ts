@@ -49,6 +49,7 @@ export const permits = lsbdSchema.table("permits", {
 // PermitType: lookup for kinds of permits (Anesthesia I/II/III, Sedation, etc.).
 export const permitType = lsbdSchema.table("permit_type", {
   id: serial("id").primaryKey(),                                        // was PermitType_ID (int)
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: PermitType.PermitType_ID, as text
   permitType: text("permit_type"),
   description: text("description"),
   personalFee: numeric("personal_fee", { precision: 19, scale: 4 }),
@@ -177,6 +178,7 @@ export const professionalLlc = lsbdSchema.table("professional_llc", {
 // tblSedLevels: sedation level lookup (4 rows).
 export const sedLevel = lsbdSchema.table("sed_level", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblSedLevels.ID (source has no PK; ID int NOT NULL), as text
   sLevel: text("s_level"),                                              // short code (e.g. "I","II","III","DS")
   description: text("description"),
 });
@@ -224,6 +226,7 @@ export const renewalDetails = lsbdSchema.table("renewal_details", {
 // RenewalSettings: per-cycle policy table (4 rows â€” one per LicenseType).
 export const renewalSettings = lsbdSchema.table("renewal_settings", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: RenewalSettings.ID, as text
   licenseType: text("license_type").notNull(),                          // 1-char code (D/H/...)
   expirationDate: timestamp("expiration_date", { withTimezone: true }).notNull(),
   renewalDate: timestamp("renewal_date", { withTimezone: true }).notNull(),
@@ -296,6 +299,7 @@ export const transactionSplits = lsbdSchema.table("transaction_splits", {
 // Duplicate=5, Misc.=6, WellBeing=7.
 export const transType = lsbdSchema.table("trans_type", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblTransTypes.ID, as text
   transType: text("trans_type").notNull(),
 });
 
@@ -324,6 +328,7 @@ export const fee = lsbdSchema.table("fee", {
 // tblChargeCategory: 37 rows. CHARGE_CAT short code + description.
 export const chargeCategory = lsbdSchema.table("charge_category", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblChargeCategory.ID, as text
   chargeCat: text("charge_cat"),
   description: text("description"),                                     // was DESCRIPT
 });
@@ -331,6 +336,7 @@ export const chargeCategory = lsbdSchema.table("charge_category", {
 // tblChargeInt: 20 rows. INT_CHRG short code + description.
 export const chargeInt = lsbdSchema.table("charge_int", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblChargeInt.ID, as text
   intCharge: text("int_charge"),                                        // was INT_CHRG
   description: text("description"),                                     // was DESCRIPT
 });
@@ -433,12 +439,14 @@ export const education = lsbdSchema.table("education", {
 // EducationType: 6-row lookup (DDS/DMD/RDH/etc.).
 export const educationType = lsbdSchema.table("education_type", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: EducationType.EducationType_ID, as text
   educationType: text("education_type"),
 });
 
 // tblExamsDent: dental licensure exam scores + applicant document checklist (347 rows).
 export const dentExam = lsbdSchema.table("dent_exam", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblExamsDent.ID (NOT Key1 -- Key1 is legacy_key, nullable), as text
   legacyKey: integer("legacy_key"),                                     // was Key1
   licenseId: text("license_id"),
   prepAmal: numeric("prep_amal", { precision: 6, scale: 2 }),
@@ -472,6 +480,7 @@ export const dentExam = lsbdSchema.table("dent_exam", {
 // Source had numeric scores as nvarchar(26) (sloppy schema); kept as text.
 export const hygExam = lsbdSchema.table("hyg_exam", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblExamsHyg.ID (NOT Key1 -- Key1 is legacy_key, nullable), as text
   legacyKey: integer("legacy_key"),                                     // was Key1
   licenseId: text("license_id"),
   clinical: text("clinical"),

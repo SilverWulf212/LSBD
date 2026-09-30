@@ -80,12 +80,14 @@ export const reportTypeEnum = lsbdSchema.enum("report_type", ["Cheshire", "Avery
 // =============================================================================
 export const countries = lsbdSchema.table("countries", {
   id: serial("id").primaryKey(), // was Country_ID (int) in source
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: Countries.Country_ID, as text
   legacyUid: uuid("legacy_uid"), // was CountryID (uniqueidentifier)
   country: text("country").notNull(),
 });
 
 export const states = lsbdSchema.table("states", {
   id: serial("id").primaryKey(), // was State_ID
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: States.State_ID, as text
   legacyUid: uuid("legacy_uid"), // was StateID
   state: text("state").notNull(),
 });
@@ -93,6 +95,7 @@ export const states = lsbdSchema.table("states", {
 // Louisiana parishes (LA's "counties"). 66 rows.
 export const parishes = lsbdSchema.table("parishes", {
   id: serial("id").primaryKey(), // was Parish_ID
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: Parishes.Parish_ID, as text
   legacyUid: uuid("legacy_uid"), // was ParishID
   parish: text("parish").notNull(),
 });
@@ -104,12 +107,14 @@ export const parishes = lsbdSchema.table("parishes", {
 // in the meantime we translate it for completeness.
 export const tblCounties = lsbdSchema.table("tbl_counties", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblCounties.ID, as text
   county: text("county"),       // short code (was nvarchar(10))
   countyName: text("county_name"),
 });
 
 export const cities = lsbdSchema.table("cities", {
   id: serial("id").primaryKey(), // was City_ID
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: Cities.City_ID, as text
   legacyUid: uuid("legacy_uid"), // was CityID
   city: text("city").notNull(),
 });
@@ -118,6 +123,7 @@ export const zipcodes = lsbdSchema.table(
   "zipcodes",
   {
     id: serial("id").primaryKey(),
+    legacyId: text("legacy_id").notNull().unique(), // upsert key: Zipcodes.ID, as text
     city: text("city"),
     state: text("state"),
     zip: text("zip"),
@@ -136,6 +142,7 @@ export const zipcodes = lsbdSchema.table(
 
 export const electionDistricts = lsbdSchema.table("election_districts", {
   id: serial("id").primaryKey(), // was ElectionDistrict_ID
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: ElectionDistricts.ElectionDistrict_ID, as text
   legacyUid: uuid("legacy_uid"), // was ElectionDistrictID
   zipCode: text("zip_code"),
   parishId: integer("parish_id"), // FK to parishes (this slice)
@@ -150,6 +157,7 @@ export const electionDistricts = lsbdSchema.table("election_districts", {
 // Keep as a real table rather than an enum.
 export const addressType = lsbdSchema.table("address_type_lookup", {
   id: serial("id").primaryKey(), // was AddressType_ID
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: AddressType.AddressType_ID, as text
   legacyUid: uuid("legacy_uid"), // was AddressTypeID
   addressType: text("address_type").notNull(),
 });
@@ -261,6 +269,7 @@ export const officeAffHistory = lsbdSchema.table("office_aff_history", {
 // stops looking up labels from it.
 export const tblTypes = lsbdSchema.table("tbl_types", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblTypes.ID, as text
   type: text("type").notNull(),       // 1-char code (D/H/E/O)
   typeDesc: text("type_desc"),
 });
@@ -269,6 +278,7 @@ export const tblTypes = lsbdSchema.table("tbl_types", {
 // gate behavior. Real table, not enum-only.
 export const tblStatus = lsbdSchema.table("tbl_status", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblStatus.ID, as text
   statusId: text("status_id").notNull(), // 3-char code (ACT, SUS, ...)
   status: text("status"),                // human label
   loginOk: boolean("login_ok").notNull().default(false),
@@ -278,6 +288,7 @@ export const tblStatus = lsbdSchema.table("tbl_status", {
 // tblClass also has LoginOk/RenewOk side data â€” keep as table.
 export const tblClass = lsbdSchema.table("tbl_class", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblClass.ID, as text
   class: text("class").notNull(),     // L, A, I, P, T, O, C, V, NL
   classDesc: text("class_desc"),
   loginOk: boolean("login_ok").notNull().default(false),
@@ -288,6 +299,7 @@ export const tblClass = lsbdSchema.table("tbl_class", {
 // backward-compat row IDs referenced elsewhere.
 export const tblInactiveStatus = lsbdSchema.table("tbl_inactive_status", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblnactiveStatus.ID, as text
   status: text("status").notNull(),
 });
 
@@ -295,12 +307,14 @@ export const tblInactiveStatus = lsbdSchema.table("tbl_inactive_status", {
 // already reference. Keep as a table; the enum is for new code.
 export const tblSpecialties = lsbdSchema.table("tbl_specialties", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblSpecialties.ID, as text
   specialty: text("specialty").notNull(),
 });
 
 // tblPrinSet â€” 10 rows, "principal setting" lookup (practice settings).
 export const tblPrinSet = lsbdSchema.table("tbl_prin_set", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblPrinSet.ID, as text
   prinSet: text("prin_set"),
 });
 
@@ -313,11 +327,13 @@ export const tblFormEmpl = lsbdSchema.table("tbl_form_empl", {
 // tblReportType â€” 2 rows. Covered by reportTypeEnum; keep table for ID lookups.
 export const tblReportType = lsbdSchema.table("tbl_report_type", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: tblReportType.ID, as text
   reportType: text("report_type").notNull(),
 });
 
 export const professionalType = lsbdSchema.table("professional_type", {
   id: serial("id").primaryKey(), // was ProfessionalType_ID
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: ProfessionalType.ProfessionalType_ID, as text
   legacyUid: uuid("legacy_uid"),
   professionalType: text("professional_type"),
   licsCode: text("lics_code"),
@@ -328,6 +344,7 @@ export const professionalType = lsbdSchema.table("professional_type", {
 
 export const practiceType = lsbdSchema.table("practice_type", {
   id: serial("id").primaryKey(), // was PracticeType_ID
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: PracticeType.PracticeType_ID, as text
   legacyUid: uuid("legacy_uid"),
   practiceType: text("practice_type"),
   specialty: boolean("specialty"),
@@ -337,6 +354,7 @@ export const practiceType = lsbdSchema.table("practice_type", {
 // ETL doesn't silently drop a planned feature.
 export const specialty = lsbdSchema.table("specialty", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: lower(Specialty.SpecialtyID) (source has no PK), as text
   legacyUid: uuid("legacy_uid"),       // SpecialtyID
   professionalUid: uuid("professional_uid"), // ProfessionalD (sic) in source
   professionalId: integer("professional_id"), // FK to professional (core slice)
@@ -415,6 +433,7 @@ export const users = lsbdSchema.table("users", {
 // REVIEW: confirm whether Activity is dead weight; if so, drop.
 export const activity = lsbdSchema.table("activity", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: lower(Activity.ActivityID) (source has no PK), as text
   legacyUid: uuid("legacy_uid"), // ActivityID
   subject: text("subject"),
   details: text("details"),
@@ -474,6 +493,7 @@ export const faqs = lsbdSchema.table("faqs", {
 // disciplinary slice to FK against once populated.
 export const statutes = lsbdSchema.table("statutes", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: lower(Statutes.StatuteID) (source has no PK), as text
   legacyUid: uuid("legacy_uid"),
   statute: text("statute"),
   statuteTitle: text("statute_title"),
@@ -482,6 +502,7 @@ export const statutes = lsbdSchema.table("statutes", {
 
 export const statuteViolations = lsbdSchema.table("statute_violations", {
   id: serial("id").primaryKey(),
+  legacyId: text("legacy_id").notNull().unique(), // upsert key: lower(StatuteViolations.StatuteViolationID) (source has no PK), as text
   legacyUid: uuid("legacy_uid"),
   disciplinaryUid: uuid("disciplinary_uid"), // FK to disciplinary (discipline slice)
   disciplinaryId: integer("disciplinary_id"), // FK to disciplinary (discipline slice)
@@ -498,6 +519,7 @@ export const vsAuth = lsbdSchema.table(
   "vs_auth",
   {
     id: serial("id").primaryKey(),
+    legacyId: text("legacy_id").notNull().unique(), // upsert key: VSAuth.PNREF (source has no PK; table excluded from sync), as text
     dateCreated: timestamp("date_created", { withTimezone: true }),
     amt: text("amt"),                 // amount (kept as text â€” source nvarchar)
     acct: text("acct"),               // masked card number
@@ -527,6 +549,7 @@ export const vsCapture = lsbdSchema.table(
   "vs_capture",
   {
     id: serial("id").primaryKey(),
+    legacyId: text("legacy_id").notNull().unique(), // upsert key: VsCapture.PNREF (source has no PK; table excluded from sync), as text
     dateCreated: timestamp("date_created", { withTimezone: true }),
     origId: text("orig_id"),
     pnref: text("pnref").notNull(),
