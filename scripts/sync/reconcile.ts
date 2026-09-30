@@ -99,7 +99,18 @@ export interface ReportData {
   schemaEmpty?: boolean;
   dupGroups: Guarded<DupGroup[]>;
   orphans: string;
+  /** Per-relation counts from lsbd._transform_quality (Task 14). Absent = not collected. */
+  relations?: Guarded<RelationRow[]>;
   ssn: SsnRow[];
+}
+
+/** One row of lsbd._transform_quality: counts only, never row values. */
+export interface RelationRow {
+  target: string;
+  relation: string;
+  kind: "skipped" | "unlinked";
+  sourceTable: string;
+  n: number;
 }
 
 export interface SchemaCheck {
@@ -171,6 +182,27 @@ export function renderReport(r: ReportData): string {
     }
   }
   out.push(`### Orphans skipped by the latest transform run`, ``, `${r.orphans}`, ``);
+  if (r.relations !== undefined) {
+    out.push(`### Orphans and unlinked references per relation`, ``);
+    if (isError(r.relations)) {
+      out.push(`error: ${cell(r.relations.error)}`, ``);
+    } else {
+      const nonZero = r.relations.filter((x) => x.n > 0);
+      out.push(
+        `From the latest run of each transform domain. "skipped" = live raw rows with no lsbd row (orphan, NULL key, duplicate key); ` +
+          `"unlinked" = rows loaded with a NULL reference because the referenced row does not exist. ` +
+          `${r.relations.length - nonZero.length} relations with a count of 0 are not listed.`,
+        ``,
+      );
+      if (nonZero.length > 0) {
+        out.push(`| lsbd table | Relation | Kind | Source table | Rows |`, `| --- | --- | --- | --- | ---: |`);
+        for (const x of nonZero) {
+          out.push(`| ${cell(x.target)} | ${cell(x.relation)} | ${x.kind} | ${cell(x.sourceTable)} | ${x.n} |`);
+        }
+        out.push(``);
+      }
+    }
+  }
   out.push(`### SSN normalisation failures`, ``);
   out.push(`Rows with a non-empty source SSN minus raw rows with a non-null SSN. Counts only.`, ``);
   out.push(`| Table | Source non-empty SSN | Raw non-null SSN | Failures |`, `| --- | ---: | ---: | ---: |`);
@@ -253,6 +285,15 @@ async function orphanSummary(c: Client): Promise<string> {
   return o.rows.length === 0 ? "n/a (no completed run)" : `${o.rows[0].orphans_skipped ?? 0} (sync run ${o.rows[0].id})`;
 }
 
+async function relationCounts(c: Client): Promise<RelationRow[]> {
+  const t = await c.query<{ ok: boolean }>(`SELECT to_regclass('lsbd._transform_quality') IS NOT NULL AS ok`);
+  if (!t.rows[0].ok) return [];
+  const r = await c.query<{ target: string; relation: string; kind: "skipped" | "unlinked"; source_table: string | null; n: string }>(
+    `SELECT target, relation, kind, source_table, n FROM lsbd._transform_quality ORDER BY kind, target, relation`,
+  );
+  return r.rows.map((x) => ({ target: x.target, relation: x.relation, kind: x.kind, sourceTable: x.source_table ?? "", n: Number(x.n) }));
+}
+
 async function ssnRow(c: Client, name: string): Promise<SsnRow> {
   let source = 0;
   for await (const r of query<{ n: unknown }>(
@@ -267,16 +308,20 @@ async function ssnRow(c: Client, name: string): Promise<SsnRow> {
 }
 
 /** Section 2. Every item is isolated: a failure becomes that item's error text, nothing else. */
-async function dataQuality(c: Client, schema: SourceTable[]): Promise<Pick<ReportData, "dupGroups" | "orphans" | "ssn">> {
+async function dataQuality(
+  c: Client,
+  schema: SourceTable[],
+): Promise<Pick<ReportData, "dupGroups" | "orphans" | "relations" | "ssn">> {
   const dups = await guarded(() => dupGroups(c));
   const o = await guarded(() => orphanSummary(c));
+  const relations = await guarded(() => relationCounts(c));
   const ssn: SsnRow[] = [];
   for (const name of SSN_TABLES) {
     if (!schema.some((t) => t.name === name)) continue;
     const r = await guarded(() => ssnRow(c, name));
     ssn.push(isError(r) ? { table: name, source: 0, raw: 0, failures: 0, error: r.error } : r);
   }
-  return { dupGroups: dups, orphans: typeof o === "string" ? o : `error: ${o.error}`, ssn };
+  return { dupGroups: dups, orphans: typeof o === "string" ? o : `error: ${o.error}`, relations, ssn };
 }
 
 /** lsbd_raw data tables (bookkeeping `_sync_*` and any other `_`-prefixed table excluded) -> live row count. */

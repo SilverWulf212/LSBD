@@ -12,10 +12,14 @@
 --        legacy_id = source ID, NOT a key)
 --   professional.legacy_id = Professional_ID (PK professional_id = ProfessionalID uuid)
 --   specialty / statutes legacy_id = lower(<uuid>::text) (sources have no PK)
--- Parents (orphan = non-NULL reference with no eligible parent: skipped + counted,
+-- Parents, "lookup, not gate" (Task 14, controller carry 1): the row is always loaded;
+-- an unresolved reference is NULL, counted as 'unlinked' in lsbd._transform_quality,
+-- and _unlink() NULLs it in the delete phase before the parent row is deleted, so a
+-- soft-deleted lookup row never deletes or FK-fails the rows under it:
+--   individual.individual_status_uuid -> individual_status (DB FK, nullable)
+--   professional.individual_id        -> individual        (DB FK, nullable)
+-- Parents, gate (orphan = non-NULL reference with no eligible parent: skipped + counted,
 -- never inserted with a NULL FK):
---   individual.individual_status_uuid -> individual_status (DB FK)
---   professional.individual_id        -> individual        (DB FK)
 --   specialty.professional_uid        -> professional (professional_id int := professional.legacy_id)
 --   announcements/faqs.category_uid   -> category (category_id := category.id = CATID)
 -- Columns that are UNIQUE in lsbd besides the key (individual_status_uuid,
@@ -64,15 +68,14 @@ SELECT individual_id, last_name, first_name, middle_name, married_name, license_
          lsbd._s(r."ProcessingGroup") AS processing_group,
          lsbd._s(r."Notes")        AS notes,
          (r."Updated" AT TIME ZONE 'America/Chicago') AS updated_at,
-         r."IndividualStatusID"    AS individual_status_uuid,
+         s.individual_status_uuid  AS individual_status_uuid,  -- lookup: NULL when the status is gone
          r."ID"                    AS legacy_id,
          lsbd._s(r."STATUS")       AS status,
          r."INDVID"                AS indv_id,
          row_number() OVER (PARTITION BY r."IndividualID" ORDER BY r."INDVID") AS rn
     FROM lsbd_raw."Individual" r
     LEFT JOIN lsbd._src_individual_status s ON s.individual_status_uuid = r."IndividualStatusID"
-   WHERE r._deleted_at IS NULL AND r."INDVID" IS NOT NULL AND r."IndividualID" IS NOT NULL
-     AND (r."IndividualStatusID" IS NULL OR s.individual_status_uuid IS NOT NULL)) x
+   WHERE r._deleted_at IS NULL AND r."INDVID" IS NOT NULL AND r."IndividualID" IS NOT NULL) x
  WHERE rn = 1;
 
 CREATE VIEW lsbd._src_professional WITH (security_invoker = true) AS
@@ -83,7 +86,7 @@ SELECT professional_id, professional_type_uuid, practice_type_uuid, individual_i
   SELECT r."ProfessionalID"        AS professional_id,
          r."ProfessionalTypeID"    AS professional_type_uuid,
          r."PracticeTypeID"        AS practice_type_uuid,
-         r."IndividualID"          AS individual_id,
+         i.individual_id           AS individual_id,  -- lookup: NULL when the Individual is gone
          lsbd._s(r."LicenseNumber") AS license_number,
          (r."Original_Lic_Issue_Date" AT TIME ZONE 'America/Chicago') AS original_lic_issue_date,
          lsbd._s(r."Creditial_Exam") AS credential_exam,
@@ -100,8 +103,7 @@ SELECT professional_id, professional_type_uuid, practice_type_uuid, individual_i
          row_number() OVER (PARTITION BY r."ProfessionalID" ORDER BY r."Professional_ID") AS rn
     FROM lsbd_raw."Professional" r
     LEFT JOIN lsbd._src_individual i ON i.individual_id = r."IndividualID"
-   WHERE r._deleted_at IS NULL AND r."Professional_ID" IS NOT NULL AND r."ProfessionalID" IS NOT NULL
-     AND (r."IndividualID" IS NULL OR i.individual_id IS NOT NULL)) x
+   WHERE r._deleted_at IS NULL AND r."Professional_ID" IS NOT NULL AND r."ProfessionalID" IS NOT NULL) x
  WHERE rn = 1;
 
 CREATE VIEW lsbd._src_office WITH (security_invoker = true) AS
@@ -235,7 +237,14 @@ BEGIN
     PERFORM lsbd._delete('lsbd.announcements',     'lsbd._src_announcements',     '{id}');
     PERFORM lsbd._delete('lsbd.specialty',         'lsbd._src_specialty',         '{legacy_id}');
     PERFORM lsbd._delete('lsbd.professional',      'lsbd._src_professional',      '{legacy_id}');
+    -- lookup, not gate: a professional whose Individual is gone keeps its row, with
+    -- individual_id NULL, before the individual row is deleted (NO ACTION FK).
+    PERFORM lsbd._unlink('lsbd.professional', 'individual_id',
+      'SELECT 1 FROM lsbd._src_individual s WHERE s.individual_id = t.individual_id');
     PERFORM lsbd._delete('lsbd.individual',        'lsbd._src_individual',        '{indv_id}');
+    -- same for an individual whose IndividualStatus row is gone
+    PERFORM lsbd._unlink('lsbd.individual', 'individual_status_uuid',
+      'SELECT 1 FROM lsbd._src_individual_status s WHERE s.individual_status_uuid = t.individual_status_uuid');
     PERFORM lsbd._delete('lsbd.individual_status', 'lsbd._src_individual_status', '{id}');
     PERFORM lsbd._delete('lsbd.category',          'lsbd._src_category',          '{id}');
     PERFORM lsbd._delete('lsbd.office',            'lsbd._src_office',            '{id}');
@@ -258,6 +267,10 @@ BEGIN
     o := o + lsbd._upsert('lsbd.board_members',     'lsbd._src_board_members',     '{id}',        'BoardMembers');
     o := o + lsbd._upsert('lsbd.announcements',     'lsbd._src_announcements',     '{id}',        'Announcements');
     o := o + lsbd._upsert('lsbd.faqs',              'lsbd._src_faqs',              '{id}',        'FAQS');
+    PERFORM lsbd._count_unlinked('lsbd.individual', 'individual_status_uuid -> individual_status', 'Individual',
+      'r."INDVID" = t.indv_id', 'r."IndividualStatusID"', 'individual_status_uuid');
+    PERFORM lsbd._count_unlinked('lsbd.professional', 'individual_id -> individual', 'Professional',
+      'r."Professional_ID" = t.legacy_id', 'r."IndividualID"', 'individual_id');
   END IF;
   RETURN o;
 END;

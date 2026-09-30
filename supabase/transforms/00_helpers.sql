@@ -37,6 +37,42 @@ ALTER TABLE lsbd._transform_registry ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON lsbd._transform_registry FROM PUBLIC, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
+-- Per-relation data-quality counts of the latest run of each domain (Task 14),
+-- read by the reconcile report (Section 2). Written inside the run's
+-- transaction, so a failed or rolled-back run leaves the previous values.
+--   kind 'skipped' : live raw rows of source_table with no row in target
+--                    (orphan = gated parent missing, NULL key, duplicate key,
+--                    NULL in a NOT NULL target column). Written by _upsert.
+--   kind 'unlinked': rows loaded with a NULL reference because the referenced
+--                    parent/lookup row does not exist ("lookup, not gate").
+--                    Written by _count_unlinked.
+-- Counts only; never row values.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS lsbd._transform_quality (
+  target       text NOT NULL,
+  relation     text NOT NULL,
+  kind         text NOT NULL CHECK (kind IN ('skipped', 'unlinked')),
+  source_table text,
+  n            bigint NOT NULL,
+  changed_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (target, relation)
+);
+ALTER TABLE lsbd._transform_quality ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON lsbd._transform_quality FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION lsbd._note_quality(target text, relation text, kind text, source_table text, n bigint)
+RETURNS void
+LANGUAGE sql
+SET search_path = ''
+AS $$
+  INSERT INTO lsbd._transform_quality AS q (target, relation, kind, source_table, n)
+  VALUES (target, relation, kind, source_table, n)
+  ON CONFLICT (target, relation) DO UPDATE
+     SET kind = EXCLUDED.kind, source_table = EXCLUDED.source_table, n = EXCLUDED.n, changed_at = now()
+   WHERE (q.kind, q.source_table, q.n) IS DISTINCT FROM (EXCLUDED.kind, EXCLUDED.source_table, EXCLUDED.n);
+$$;
+
+-- ---------------------------------------------------------------------------
 -- Value helpers (inlined by the planner: IMMUTABLE SQL, no SET clause)
 -- ---------------------------------------------------------------------------
 
@@ -154,8 +190,61 @@ BEGIN
       RAISE NOTICE 'transform %: % of % live lsbd_raw.% rows skipped (orphan / unkeyable / duplicate)',
         target, skipped, n_live, count_src;
     END IF;
+    PERFORM lsbd._note_quality(target::text, 'skipped (orphan / unkeyable / duplicate)', 'skipped', count_src, skipped);
   END IF;
   RETURN skipped;
+END;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- lsbd._unlink(target, col, keep): "lookup, not gate" for a nullable FK column.
+--   UPDATE target t SET col = NULL WHERE t.col IS NOT NULL AND NOT EXISTS (keep)
+--   keep is a correlated SELECT over the PARENT's _src_ view (raw eligibility),
+--   referring to the child as t. A domain calls it in its DELETE phase, before
+--   the parent's delete runs (children-first order), so deleting a parent row
+--   never fails on a NO ACTION FK and never deletes or re-creates the child:
+--   the child row stays, with the reference NULL (it re-links if the parent
+--   comes back). The upsert phase computes the same NULL from the same view.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lsbd._unlink(target regclass, col text, keep text)
+RETURNS integer
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  n integer;
+BEGIN
+  EXECUTE format('UPDATE %s AS t SET %I = NULL WHERE t.%I IS NOT NULL AND NOT EXISTS (%s)', target, col, col, keep);
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n > 0 THEN
+    RAISE NOTICE 'transform %: % rows unlinked (%.% parent gone)', target, n, target, col;
+  END IF;
+  RETURN n;
+END;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- lsbd._count_unlinked(target, relation, source_table, join_on, raw_ref, col)
+--   After an upsert: the rows of target whose source row (live lsbd_raw.<source_table> r,
+--   joined with join_on) carries a reference (raw_ref IS NOT NULL) that did not resolve
+--   (t.<col> IS NULL). Recorded as kind 'unlinked' and NOTICEd; never an orphan.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lsbd._count_unlinked(target regclass, relation text, source_table text,
+                                                join_on text, raw_ref text, col text)
+RETURNS bigint
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  n bigint;
+BEGIN
+  EXECUTE format('SELECT count(*) FROM %s AS t JOIN lsbd_raw.%I AS r ON r._deleted_at IS NULL AND (%s) WHERE (%s) IS NOT NULL AND t.%I IS NULL',
+                 target, source_table, join_on, raw_ref, col) INTO n;
+  IF n > 0 THEN
+    RAISE NOTICE 'transform %: % rows loaded with % NULL (unresolved %)', target, n, col, relation;
+  END IF;
+  PERFORM lsbd._note_quality(target::text, relation, 'unlinked', source_table, n);
+  RETURN n;
 END;
 $$;
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Client } from "pg";
 import { loadSecrets } from "../../scripts/lib/secrets";
+import { restoreSyntheticSequences } from "./sequences";
 
 // Live tests of lsbd.run_transforms (Task 11) against the real Supabase project.
 // Every test runs inside BEGIN ... ROLLBACK and uses synthetic tblDenHyg keys
@@ -73,6 +74,7 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms (live)", () =>
       await fn();
     } finally {
       await c.query("ROLLBACK");
+      await restoreSyntheticSequences(c);
     }
   }
 
@@ -182,11 +184,15 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms (live)", () =>
       await c.query(`UPDATE lsbd_raw."IndividualStatus" SET _deleted_at = now() WHERE "IndividualStatus_ID" = $1`, [K1]);
       await run(c);
       const after = await c.query(ids, [[K1, K2]]);
-      // Same person and license ids (not deleted + re-created); only the link is gone.
+      // Same person and license ids (not deleted + re-created).
       expect(after.rows.map((r) => [r.legacy_key, r.person_id, r.license_id])).toEqual(
         before.rows.map((r) => [r.legacy_key, r.person_id, r.license_id]),
       );
-      expect(after.rows.every((r) => r.individual_id === null)).toBe(true);
+      // Task 14 "lookup, not gate": the Individual itself is no longer deleted with its
+      // status (only its individual_status_uuid becomes NULL), so the person stays linked.
+      expect(after.rows.every((r) => r.individual_id === INDV_UUID)).toBe(true);
+      const ind = await c.query(`SELECT individual_status_uuid FROM lsbd.individual WHERE indv_id = $1`, [K1]);
+      expect(ind.rows).toEqual([{ individual_status_uuid: null }]);
     });
   }, T);
 

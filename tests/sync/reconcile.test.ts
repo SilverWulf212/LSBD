@@ -132,6 +132,28 @@ describe("Section 2 isolation", () => {
     expect(md).toContain("error: boom");
     expect(md).toContain("error: bridge down");
   });
+  it("renderReport lists non-zero per-relation orphan / unlinked counts and summarises the zero ones", () => {
+    const md = renderReport({
+      when: new Date(2026, 8, 30, 2, 0),
+      durationSec: 1,
+      rows: [{ name: "A", mode: "keys", sourceCount: 1, rawCount: 1, pass: true, rechecked: false, note: "" }],
+      dupGroups: [],
+      orphans: "1926 (sync run 50)",
+      relations: [
+        { target: "lsbd.office_affiliation", relation: "skipped (orphan / unkeyable / duplicate)", kind: "skipped", sourceTable: "OfficeAffiliation", n: 1926 },
+        { target: "lsbd.transaction_splits", relation: "transaction_id -> transactions", kind: "unlinked", sourceTable: "tblTransSplits", n: 1661 },
+        { target: "lsbd.address", relation: "city_id -> cities", kind: "unlinked", sourceTable: "ADDRESS", n: 0 },
+      ],
+      ssn: [],
+    });
+    expect(md).toContain("### Orphans and unlinked references per relation");
+    expect(md).toContain("| lsbd.office_affiliation | skipped (orphan / unkeyable / duplicate) | skipped | OfficeAffiliation | 1926 |");
+    expect(md).toContain("| lsbd.transaction_splits | transaction_id -> transactions | unlinked | tblTransSplits | 1661 |");
+    expect(md).not.toContain("city_id -> cities");
+    expect(md).toContain("1 relations with a count of 0 are not listed");
+    const err = renderReport({ when: new Date(), durationSec: 0, rows: [], dupGroups: [], orphans: "n/a", relations: { error: "gone" }, ssn: [] });
+    expect(err).toContain("error: gone");
+  });
   it("renderReport for an empty schema says so", () => {
     const md = renderReport({ when: new Date(), durationSec: 0, rows: [], schemaEmpty: true, dupGroups: [], orphans: "n/a", ssn: [] });
     expect(md).toContain("FAIL: source schema empty");

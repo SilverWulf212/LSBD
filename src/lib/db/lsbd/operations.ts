@@ -255,13 +255,15 @@ export const transactions = lsbdSchema.table("transactions", {
   expYear: text("exp_year"),
   refNum: text("ref_num"),
   depositNo: text("deposit_no"),
-  fee: doublePrecision("fee"),
-  penalty: doublePrecision("penalty"),
-  total: doublePrecision("total"),
+  // Money: source is SQL Server float; stored as exact numeric(19,4) (0004_money_numeric).
+  // The transform converts float8 -> numeric (15 significant digits), so 12.34 lands as 12.34.
+  fee: numeric("fee", { precision: 19, scale: 4 }),
+  penalty: numeric("penalty", { precision: 19, scale: 4 }),
+  total: numeric("total", { precision: 19, scale: 4 }),
   type: text("type"),                                                   // textual type (matches trans_type.trans_type)
   ceHours: doublePrecision("ce_hours"),
   printed: boolean("printed"),
-  assFee: doublePrecision("ass_fee"),                                   // association fee
+  assFee: numeric("ass_fee", { precision: 19, scale: 4 }),              // association fee (money)
   dateRenew: timestamp("date_renew", { withTimezone: true }),
   dateTrans: timestamp("date_trans", { withTimezone: true }),
   issued: text("issued"),
@@ -275,7 +277,7 @@ export const transactions = lsbdSchema.table("transactions", {
   pPermitPrinted: timestamp("p_permit_printed", { withTimezone: true }),
   renewalId: integer("renewal_id").references(() => renewals.id),       // resolved from RenewalID guid
   individualId: integer("individual_id"),                               // FK to individual (core slice) â€” was uniqueidentifier
-  wellBeingFee: doublePrecision("well_being_fee"),
+  wellBeingFee: numeric("well_being_fee", { precision: 19, scale: 4 }), // money
 });
 
 // tblTransSplits: per-line breakout of a transaction (125,682 rows).
@@ -290,7 +292,7 @@ export const transactionSplits = lsbdSchema.table("transaction_splits", {
   name: text("name"),
   description: text("description"),
   refNum: text("ref_num"),
-  fee: doublePrecision("fee"),
+  fee: numeric("fee", { precision: 19, scale: 4 }),                     // money (source float), see transactions
   type: text("type"),                                                   // matches trans_type.trans_type
   dateTrans: timestamp("date_trans", { withTimezone: true }),
 });
