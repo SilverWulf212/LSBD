@@ -15,6 +15,8 @@ const MISSING_INDIVIDUAL = 999999999; // no Individual has INDVID 999999999
 
 const T = 600_000; // a full run on an empty lsbd.* is ~20k rows per table
 
+// Individual uuid values in (g) are synthetic too (…000900000001/2).
+
 interface RawDenHyg {
   Key: number;
   LICENSEID: string;
@@ -137,18 +139,77 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms (live)", () =>
     });
   }, T);
 
-  it("(c) tblDenHyg row pointing at a nonexistent Individual (IndividualID_ -> INDVID) is an orphan", async () => {
+  // Ruling R22 (spec 4.2 "App-facing IDs must stay stable"): the licensee path depends only
+  // on the live tblDenHyg row. An unresolved Individual link is "unlinked", never excluded.
+  it("(c) tblDenHyg row pointing at a nonexistent Individual is still inserted, with individual_id NULL", async () => {
     await inTx(async () => {
-      await insertRaw(c, { Key: K3, LICENSEID: LIC, Type: "D", LASTName: "ORPHAN", IndividualID_: MISSING_INDIVIDUAL });
-      const orphans = await run(c);
-      expect(orphans).toBeGreaterThanOrEqual(1);
-      const r = await c.query<{ per: number; lic: number }>(
-        `SELECT (SELECT count(*) FROM lsbd.person WHERE legacy_key = $1)::int AS per,
-                (SELECT count(*) FROM lsbd.license WHERE legacy_key = $1)::int AS lic`,
+      await insertRaw(c, { Key: K3, LICENSEID: LIC, Type: "D", LASTName: "UNLINKED", IndividualID_: MISSING_INDIVIDUAL });
+      await run(c);
+      const r = await c.query<{ individual_id: string | null; lic: number }>(
+        `SELECT p.individual_id, (SELECT count(*) FROM lsbd.license l WHERE l.legacy_key = $1 AND l.person_id = p.id)::int AS lic
+           FROM lsbd.person p WHERE p.legacy_key = $1`,
         [K3],
       );
-      expect(r.rows[0]).toEqual({ per: 0, lic: 0 });
+      expect(r.rows).toHaveLength(1);
+      expect(r.rows[0]).toEqual({ individual_id: null, lic: 1 });
     });
+  }, T);
+
+  it("(g) soft-deleting an Individual's IndividualStatus does not delete its persons or licenses", async () => {
+    const STATUS_UUID = "a0000000-0000-4000-8000-000900000001";
+    const INDV_UUID = "a0000000-0000-4000-8000-000900000002";
+    await inTx(async () => {
+      await c.query(
+        `INSERT INTO lsbd_raw."IndividualStatus" ("IndividualStatus_ID", "IndividualStatusID", "Status", _row_hash)
+         VALUES ($1, $2::uuid, 'IT-TEST', 'it-test')`,
+        [K1, STATUS_UUID],
+      );
+      await c.query(
+        `INSERT INTO lsbd_raw."Individual" ("INDVID", "IndividualID", "IndividualStatusID", "LastName", _row_hash)
+         VALUES ($1, $2::uuid, $3::uuid, 'ALPHA', 'it-test')`,
+        [K1, INDV_UUID, STATUS_UUID],
+      );
+      await insertRaw(c, { Key: K1, LICENSEID: LIC, Type: "D", LASTName: "ALPHA", IndividualID_: K1 });
+      await insertRaw(c, { Key: K2, LICENSEID: LIC, Type: "H", LASTName: "ALPHA", IndividualID_: K1 });
+      await run(c);
+      const ids = `SELECT p.legacy_key, p.id AS person_id, l.id AS license_id, p.individual_id
+                     FROM lsbd.person p JOIN lsbd.license l ON l.person_id = p.id
+                    WHERE p.legacy_key = ANY($1::int[]) ORDER BY p.legacy_key`;
+      const before = await c.query(ids, [[K1, K2]]);
+      expect(before.rows).toHaveLength(2);
+      expect(before.rows.every((r) => r.individual_id === INDV_UUID)).toBe(true);
+
+      await c.query(`UPDATE lsbd_raw."IndividualStatus" SET _deleted_at = now() WHERE "IndividualStatus_ID" = $1`, [K1]);
+      await run(c);
+      const after = await c.query(ids, [[K1, K2]]);
+      // Same person and license ids (not deleted + re-created); only the link is gone.
+      expect(after.rows.map((r) => [r.legacy_key, r.person_id, r.license_id])).toEqual(
+        before.rows.map((r) => [r.legacy_key, r.person_id, r.license_id]),
+      );
+      expect(after.rows.every((r) => r.individual_id === null)).toBe(true);
+    });
+  }, T);
+
+  it("(h) a delete of >50% of a >100-row lsbd table raises and commits nothing; lsbd.allow_mass_delete overrides", async () => {
+    const live = await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM lsbd.schools`);
+    expect(live.rows[0].n).toBeGreaterThan(100);
+
+    await inTx(async () => {
+      await c.query(`UPDATE lsbd_raw."tblSchools" SET _deleted_at = now() WHERE _deleted_at IS NULL`);
+      await expect(run(c, ["tblSchools"])).rejects.toThrow(/mass delete blocked on lsbd\.schools: \d+ of \d+ rows/);
+    });
+    const still = await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM lsbd.schools`);
+    expect(still.rows[0].n).toBe(live.rows[0].n);
+
+    await inTx(async () => {
+      await c.query(`UPDATE lsbd_raw."tblSchools" SET _deleted_at = now() WHERE _deleted_at IS NULL`);
+      await c.query(`SET LOCAL lsbd.allow_mass_delete = 'on'`);
+      await run(c, ["tblSchools"]);
+      const r = await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM lsbd.schools`);
+      expect(r.rows[0].n).toBe(0);
+    });
+    const restored = await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM lsbd.schools`);
+    expect(restored.rows[0].n).toBe(live.rows[0].n);
   }, T);
 
   it("(d) a second run with no source change updates no license rows (R5: pg_stat_xact_user_tables)", async () => {

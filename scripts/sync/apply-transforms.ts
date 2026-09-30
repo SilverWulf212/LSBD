@@ -45,6 +45,11 @@ async function main(): Promise<void> {
   const c = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
   c.on("error", () => undefined);
   await c.connect();
+  // Same key the sync runner takes (pg_try_advisory_lock(hashtext('lsbd_sync'))): a
+  // DROP VIEW ... CASCADE between file transactions must never race a running
+  // sync, so wait for any in-flight run and hold the lock for the whole apply.
+  console.log("waiting for the lsbd_sync advisory lock ...");
+  await c.query("SELECT pg_advisory_lock(hashtext('lsbd_sync'))");
   try {
     await applyTransforms(c);
     const reg = await c.query<{ domain: string; sort_order: number; n: number }>(
@@ -52,6 +57,7 @@ async function main(): Promise<void> {
     );
     for (const r of reg.rows) console.log(`registered ${r.domain.padEnd(12)} order ${r.sort_order} (${r.n} source tables)`);
   } finally {
+    await c.query("SELECT pg_advisory_unlock(hashtext('lsbd_sync'))").catch(() => undefined);
     await c.end();
   }
 }

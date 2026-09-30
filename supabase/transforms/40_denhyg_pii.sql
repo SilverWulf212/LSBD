@@ -28,24 +28,30 @@
 --   tblDenHyg.IndividualID verbatim, individual_legacy_id = IndividualID_.
 --   ACTIVE is dropped (schema: redundant with license.status).
 --
--- Parent: tblDenHyg.IndividualID_ (int) -> Individual.INDVID. (tblDenHyg's
--- IndividualID uuid matches no Individual row in the source, so it is only
--- carried on person_meta.) person.individual_id = that Individual's uuid.
--- A non-NULL IndividualID_ with no eligible Individual is an orphan: the
--- tblDenHyg row produces no person, license or child row, and is counted.
+-- Individual link (ruling R22, spec 4.2 "App-facing IDs must stay stable"):
+-- person, license and every child depend ONLY on the live lsbd_raw."tblDenHyg"
+-- row. person.individual_id is a LEFT JOIN lookup tblDenHyg.IndividualID_ ->
+-- Individual.INDVID (via lsbd._src_individual); when it does not resolve,
+-- individual_id is NULL (lsbd.person has no FK to individual). Unresolved
+-- links are "unlinked": reported by RAISE NOTICE, NOT added to the returned
+-- orphan count, and never excluded or deleted -- an Individual/IndividualStatus
+-- change can only update person.individual_id, never delete a licensee.
+-- (tblDenHyg's IndividualID uuid matches no Individual row in the source, so it
+-- is only carried verbatim on person_meta.)
 -- Timestamps: (<col> AT TIME ZONE 'America/Chicago').
 
 DROP VIEW IF EXISTS lsbd._src_denhyg, lsbd._src_person, lsbd._src_license, lsbd._src_licensee_pii,
   lsbd._src_person_address, lsbd._src_person_education, lsbd._src_person_practice_stats,
   lsbd._src_person_meta CASCADE;
 
--- Eligible live tblDenHyg rows (+ the resolved individual uuid).
+-- Live tblDenHyg rows (+ the resolved individual uuid, NULL when unlinked).
+-- indv_id is unique in _src_individual (INDVID is the source PK), so the LEFT
+-- JOIN never multiplies rows.
 CREATE VIEW lsbd._src_denhyg WITH (security_invoker = true) AS
 SELECT r.*, i.individual_id AS _individual_id
   FROM lsbd_raw."tblDenHyg" r
   LEFT JOIN lsbd._src_individual i ON i.indv_id = r."IndividualID_"
- WHERE r._deleted_at IS NULL AND r."Key" IS NOT NULL
-   AND (r."IndividualID_" IS NULL OR i.indv_id IS NOT NULL);
+ WHERE r._deleted_at IS NULL AND r."Key" IS NOT NULL;
 
 CREATE VIEW lsbd._src_person WITH (security_invoker = true) AS
 SELECT r."Key"                         AS legacy_key,
@@ -192,6 +198,7 @@ SET search_path = ''
 AS $$
 DECLARE
   o integer := 0;
+  unlinked bigint;
 BEGIN
   IF phase NOT IN ('all', 'delete', 'upsert') THEN
     RAISE EXCEPTION 'transform_denhyg_pii: unknown phase %', phase;
@@ -217,13 +224,22 @@ BEGIN
     o := o + lsbd._upsert('lsbd.person_education',      'lsbd._src_person_education',      '{person_id}');
     o := o + lsbd._upsert('lsbd.person_practice_stats', 'lsbd._src_person_practice_stats', '{person_id}');
     o := o + lsbd._upsert('lsbd.person_meta',           'lsbd._src_person_meta',           '{person_id}');
+
+    -- Unlinked: IndividualID_ set but no eligible Individual. Informational
+    -- only (not orphans): the person/license rows exist with individual_id NULL.
+    SELECT count(*) INTO unlinked
+      FROM lsbd._src_denhyg r
+     WHERE r."IndividualID_" IS NOT NULL AND r._individual_id IS NULL;
+    IF unlinked > 0 THEN
+      RAISE NOTICE 'transform lsbd.person: % tblDenHyg rows unlinked (IndividualID_ has no eligible Individual; individual_id NULL)', unlinked;
+    END IF;
   END IF;
   RETURN o;
 END;
 $$;
 
--- Individual / IndividualStatus: person eligibility and person.individual_id
--- depend on them (via lsbd._src_individual).
+-- Individual / IndividualStatus: person.individual_id (a lookup only, never
+-- eligibility) depends on them via lsbd._src_individual.
 INSERT INTO lsbd._transform_registry (domain, fn, sort_order, source_tables)
 VALUES ('denhyg_pii', 'lsbd.transform_denhyg_pii'::regproc, 40, ARRAY['tblDenHyg', 'Individual', 'IndividualStatus'])
 ON CONFLICT (domain) DO UPDATE

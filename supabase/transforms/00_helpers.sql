@@ -167,6 +167,13 @@ $$;
 --   NOT NULL on every target, so '=' is exact.
 --   target_filter: optional SQL predicate on t limiting which target rows the
 --   sync owns (e.g. app_settings keys with a legacy prefix).
+--   Volume guard: when the (filtered) table held more than 100 rows and the
+--   delete removed more than 50% of them, RAISE EXCEPTION 'mass delete blocked
+--   on lsbd.<t>: <n> of <total> rows'. The exception aborts the caller's
+--   transaction, so the delete (and its ON DELETE CASCADE children) and the
+--   whole transform run roll back: a loud failed run, never a silent wipe.
+--   Override for a deliberate purge: SET lsbd.allow_mass_delete = 'on'
+--   (e.g. SET LOCAL in the transaction that calls run_transforms).
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lsbd._delete(target regclass, src regclass, key_cols text[], target_filter text DEFAULT NULL)
 RETURNS integer
@@ -174,14 +181,23 @@ LANGUAGE plpgsql
 SET search_path = ''
 AS $$
 DECLARE
-  n integer;
+  n     integer;
+  total bigint;
+  scope text := CASE WHEN target_filter IS NULL THEN '' ELSE ' AND (' || target_filter || ')' END;
 BEGIN
   PERFORM lsbd._refresh_stats(target, 0);
+  EXECUTE format('SELECT count(*) FROM %s AS t WHERE true%s', target, scope) INTO total;
   EXECUTE format('DELETE FROM %s AS t WHERE NOT EXISTS (SELECT 1 FROM %s AS s WHERE %s)%s',
                  target, src,
                  (SELECT string_agg(format('s.%1$I = t.%1$I', x), ' AND ') FROM unnest(key_cols) AS x),
-                 CASE WHEN target_filter IS NULL THEN '' ELSE ' AND (' || target_filter || ')' END);
+                 scope);
   GET DIAGNOSTICS n = ROW_COUNT;
+  IF total > 100 AND n > 0.5 * total
+     AND COALESCE(current_setting('lsbd.allow_mass_delete', true), '') <> 'on' THEN
+    RAISE EXCEPTION 'mass delete blocked on lsbd.%: % of % rows',
+      (SELECT c.relname FROM pg_catalog.pg_class c WHERE c.oid = target), n, total
+      USING HINT = 'SET lsbd.allow_mass_delete = ''on'' to allow a deliberate purge';
+  END IF;
   PERFORM lsbd._refresh_stats(target, n);
   RETURN n;
 END;
