@@ -449,9 +449,10 @@ Transforms are split in two so that licensees, scheduling and `/verify` go live 
   1. Create `C:\ProgramData\lsbd-sync\` and copy the secrets file there. ACL it with `icacls` `/inheritance:r` and grant only `SYSTEM:F` and `Administrators:F`.
   2. Register the event source with `New-EventLog -LogName Application -Source LSBD-Sync`, ignoring "already exists".
   3. Register the task **`LSBD Sync Quick`**: runs as SYSTEM every 15 minutes from 07:00 to 19:00, Monday–Friday. Action: `C:\Program Files\nodejs\node.exe` with the tsx CLI resolved as `node_modules\tsx\dist\cli.mjs scripts\sync\run.ts --mode quick`. Working dir **`C:\ProgramData\lsbd-sync\app`**. `MultipleInstances IgnoreNew`, execution time limit 20 minutes.
+  3b. Register the task **`LSBD Sync Weekend`**: same action and settings as Quick, but hourly from 07:00 to 19:00 on Saturday and Sunday (user decision 2026-09-30).
   4. Register the task **`LSBD Sync Full`**: runs as SYSTEM daily at 02:00 with `--mode full`, then `sync:reconcile`. Working dir as above. Time limit 60 minutes.
 
-- [ ] **Step 1: Implement and run.** Run `powershell -ExecutionPolicy Bypass -File scripts\sync\release.ps1 -Tag sync-v1`, then `powershell -ExecutionPolicy Bypass -File scripts\sync\install-task.ps1`. Expected: `Get-ScheduledTask 'LSBD Sync*'` lists 2 tasks in state Ready, each with working dir `C:\ProgramData\lsbd-sync\app`, and `git -C C:\ProgramData\lsbd-sync\app describe --tags` prints `sync-v1`.
+- [ ] **Step 1: Implement and run.** Run `powershell -ExecutionPolicy Bypass -File scripts\sync\release.ps1 -Tag sync-v1`, then `powershell -ExecutionPolicy Bypass -File scripts\sync\install-task.ps1`. Expected: `Get-ScheduledTask 'LSBD Sync*'` lists 3 tasks in state Ready, each with working dir `C:\ProgramData\lsbd-sync\app`, and `git -C C:\ProgramData\lsbd-sync\app describe --tags` prints `sync-v1`.
 - [ ] **Step 2: Trigger** with `Start-ScheduledTask 'LSBD Sync Quick'` and wait for completion. Expected: `LastTaskResult` 0, and a new `_sync_runs` row with status `ok` and `tables_changed` listing only recently edited tables.
 - [ ] **Step 3: Verify secrets hygiene.** `icacls C:\ProgramData\lsbd-sync\secrets.env` shows only SYSTEM and Administrators.
 - [ ] **Step 4: Commit.** Message: `ops(sync): Task Scheduler install (quick 15m business hours, full nightly)`.
