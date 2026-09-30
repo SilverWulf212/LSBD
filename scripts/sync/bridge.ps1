@@ -10,7 +10,10 @@
                                       or {"id":n,"error":"..."} (and keeps serving)
     {"id":n,"quit":true} or EOF   ->  removes the session and exits 0
 
-  Every query runs inside the VM through System.Data.SqlClient as
+  Each VM connection first runs EXECUTE AS USER = 'lsbdverify' WITH NO REVERT (a
+  db_datareader / db_denydatawriter user) as its own command, so SQL Server denies writes
+  regardless of the keyword guard; if that fails, the request fails. Then every query runs
+  inside the VM through System.Data.SqlClient as
     SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; BEGIN TRAN; <sql>; ROLLBACK;
   so nothing can ever commit. SQL whose code (outside string literals and quoted
   identifiers) contains a write/DDL keyword, pass-through call, lock hint or isolation
@@ -41,6 +44,9 @@ $VerbosePreference = 'SilentlyContinue'
 $InformationPreference = 'SilentlyContinue'
 $PageSize = 5000
 $CommandTimeout = 900
+# Every VM connection impersonates this LSBDDB user (db_datareader + db_denydatawriter)
+# with EXECUTE AS USER ... WITH NO REVERT before any user SQL runs (ruling R15).
+$ReadOnlyUser = 'lsbdverify'
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 try { [Console]::OutputEncoding = $utf8 } catch { }
@@ -132,9 +138,12 @@ namespace LsbdBridge
         // numeric literal from a following word (1DELETE = 1 DELETE, 0xAINSERT = 0xA INSERT,
         // 1EXEC may be 1E XEC or 1 EXEC), so a word run that starts with a digit is refused
         // when ANY suffix of it is a keyword. '$' is not an identifier start ($ alone is a
-        // money literal), so $DELETE is refused too. Trailing boundary: no letter, digit or _.
+        // money literal), so $DELETE is refused too. The digit-led run may cross '.', so a
+        // float literal (1.e5DELETE, 0.E5INTO, 1.eDELETE) cannot hide a glued keyword; the
+        // lookbehind still stops a run from starting mid-identifier (tbl1.x, t1.[Key]).
+        // Trailing boundary: no letter, digit or _.
         static readonly Regex Refuse = new Regex(
-            @"(?<![\p{L}\p{N}_@#])(?:\p{N}[\p{L}\p{N}_@#$]*?)?(?:" + Keywords + @")(?![\p{L}\p{N}_])",
+            @"(?<![\p{L}\p{N}_@#])(?:\p{N}[\p{L}\p{N}_@#$.]*?)?(?:" + Keywords + @")(?![\p{L}\p{N}_])",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         // Blanks out string literals and quoted identifiers ('..', [..], "..") so their
@@ -209,8 +218,9 @@ namespace LsbdBridge
         public bool Done;
         public int Count;
 
-        public Pager(string database, string sql, int timeout)
+        public Pager(string database, string readOnlyUser, string sql, int timeout)
         {
+            if (string.IsNullOrEmpty(readOnlyUser)) throw new ArgumentException("bridge: read-only user not set");
             var csb = new SqlConnectionStringBuilder();
             csb.DataSource = ".";
             csb.InitialCatalog = database;
@@ -222,6 +232,18 @@ namespace LsbdBridge
             {
                 conn = new SqlConnection(csb.ConnectionString);
                 conn.Open();
+                // Permission backstop (ruling R15): drop to a db_datareader /
+                // db_denydatawriter user before any user SQL runs, so SQL Server itself denies
+                // writes whatever the keyword guard misses. NO REVERT: user SQL cannot switch
+                // back. Its own command; any failure fails the request (never falls back).
+                // Pooling=false + dispose per request, so the context never leaks.
+                using (var imp = conn.CreateCommand())
+                {
+                    imp.CommandTimeout = 60;
+                    imp.CommandText =
+                        "EXECUTE AS USER = N'" + readOnlyUser.Replace("'", "''") + "' WITH NO REVERT;";
+                    imp.ExecuteNonQuery();
+                }
                 cmd = conn.CreateCommand();
                 cmd.CommandTimeout = timeout;
                 // Newlines so a trailing -- comment in <sql> cannot swallow the ROLLBACK.
@@ -342,7 +364,7 @@ namespace LsbdBridge
 # VM-side script blocks. State lives in $global: variables of the persistent session.
 # --------------------------------------------------------------------------------------
 $VmStart = {
-  param($src, $db, $sql, $pageSize, $timeout)
+  param($src, $db, $roUser, $sql, $pageSize, $timeout)
   $ErrorActionPreference = 'Stop'
   if (-not ('LsbdBridge.Pager' -as [type])) {
     Add-Type -TypeDefinition $src -ReferencedAssemblies System.Data, System.Xml | Out-Null
@@ -351,7 +373,7 @@ $VmStart = {
     try { $global:LsbdPager.Abort() } catch { }
     $global:LsbdPager = $null
   }
-  $global:LsbdPager = New-Object LsbdBridge.Pager($db, $sql, $timeout)
+  $global:LsbdPager = New-Object LsbdBridge.Pager($db, $roUser, $sql, $timeout)
   $rows = $global:LsbdPager.Next($pageSize)
   $done = $global:LsbdPager.Done
   if ($done) { $global:LsbdPager = $null }
@@ -440,7 +462,7 @@ function Invoke-Request($id, [string]$sql) {
   $count = 0
   try {
     $page = Invoke-Command -Session $script:Session -ScriptBlock $VmStart `
-      -ArgumentList $HelperSource, $script:Db, $sql, $PageSize, $CommandTimeout
+      -ArgumentList $HelperSource, $script:Db, $ReadOnlyUser, $sql, $PageSize, $CommandTimeout
     while ($true) {
       $rows = [string[]]@()
       if ($null -ne $page.Rows) { $rows = [string[]]@($page.Rows) }

@@ -34,6 +34,15 @@ const CASES: Array<[string, boolean]> = [
   ["SELECT 1 AS x1delete", false],
   ["SELECT 1 AS DELETE1", false],
   ["SELECT 0xDEADBEEF AS b", false],
+  // Float literals spelled <digits>.e<digits> must not hide a glued keyword.
+  ["SELECT 1.e5DELETE FROM dbo.x", true],
+  ["SELECT 1.E5COMMIT", true],
+  ["SELECT 0.E5INTO", true],
+  ["SELECT 1.e5WAITFOR", true],
+  ["SELECT $1.e5delete", true],
+  ["SELECT 1.eDELETE FROM x", true],
+  ["SELECT t1.[Key] FROM dbo.x t1", false],
+  ["SELECT tbl1.x, 1.5 AS f, 2.e3 AS g FROM dbo.tbl1", false],
   // Pass-through, sequences, waits.
   ["SELECT * FROM OPENQUERY(srv, 'SELECT 1')", true],
   ["SELECT * FROM OPENROWSET('SQLNCLI', 'x', 'SELECT 1')", true],

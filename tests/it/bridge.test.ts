@@ -35,6 +35,11 @@ describe.skipIf(process.env.LSBD_IT !== "1")("mssql bridge (live, read-only)", (
     expect(second).toBeLessThan(first * 0.5);
   }, 180_000);
 
+  it("runs every query as the read-only user lsbdverify (EXECUTE AS ... WITH NO REVERT)", async () => {
+    // Permission backstop (ruling R15). Denial is NOT proven by writing: no writes to prod.
+    expect(await collect(query("SELECT USER_NAME() AS u"))).toEqual([{ u: "lsbdverify" }]);
+  }, 180_000);
+
   it("readSchema returns >= 80 tables; tblDenHyg has pk Key and an SSN column", async () => {
     const tables = await readSchema();
     expect(tables.length).toBeGreaterThanOrEqual(80);
