@@ -116,14 +116,15 @@ timestamp-incremental (only ~25 tables have `Updated`, deletes invisible).
 - **Excluded databases:** `LSBD_DEV` and `LSBDBAK`. They are archived as a `.bak` at cutover and not migrated.
 
 **Row hash canonicalisation (T-SQL, generated per table from `sys.columns`):**
-each column becomes `ISNULL(<text form>, N'␀')` joined with `NCHAR(31)`, hashed
+each column becomes `ISNULL(<text form>, NCHAR(9216))` (U+2400, written as NCHAR so it survives any transport encoding) joined with `NCHAR(31)`, hashed
 with `HASHBYTES('SHA2_256', …)`. The text forms are:
 
 | Type | Text form |
 |---|---|
 | datetime, smalldatetime | `CONVERT(nvarchar(30), c, 126)` |
 | float | `CONVERT(nvarchar(30), c, 3)` |
-| money, decimal | `CONVERT(nvarchar(40), c)` |
+| money | `CONVERT(nvarchar(40), c, 2)` (style 2 keeps all 4 decimal places; style 0 would round to 2) |
+| decimal | `CONVERT(nvarchar(40), c)` |
 | ntext | `CAST(c AS nvarchar(max))` |
 | image | `CONVERT(nvarchar(max), CAST(c AS varbinary(max)), 2)` |
 | uniqueidentifier | `CONVERT(nvarchar(36), c)` |
