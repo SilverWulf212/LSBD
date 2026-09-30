@@ -12,7 +12,9 @@
     "sync:bootstrap": "tsx scripts/sync/bootstrap-raw.ts",
     "sync": "tsx scripts/sync/run.ts",
     "sync:full": "tsx scripts/sync/run.ts --mode full",
-    "sync:reconcile": "tsx scripts/sync/reconcile.ts"
+    "sync:reconcile": "tsx scripts/sync/reconcile.ts",
+    "sync:transforms:apply": "tsx scripts/sync/apply-transforms.ts",
+    "uat:reset": "tsx scripts/sync/run.ts --mode quick --tables none"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
