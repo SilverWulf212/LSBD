@@ -33,8 +33,8 @@ export default async function SyncStatusPage() {
   let loadError: string | null = null;
   try {
     status = await loadSyncStatus(async (text) => {
-      const rows = await db.execute(sql.raw(text));
-      return rows as unknown as Record<string, unknown>[];
+      const result = await db.execute(sql.raw(text));
+      return result.rows as Record<string, unknown>[];
     });
   } catch (e) {
     console.error("sync status load failed", e);
