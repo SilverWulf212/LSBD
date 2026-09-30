@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { parseArgs, exitCodeFor, computeDrift, checkColumnSet, redact } from "../../scripts/sync/run";
+import {
+  parseArgs,
+  exitCodeFor,
+  computeDrift,
+  checkColumnSet,
+  redact,
+  fingerprintTrusted,
+  eventLogInvocation,
+} from "../../scripts/sync/run";
 import type { SourceTable } from "../../scripts/sync/types";
 
 const col = (name: string, type: string, ordinal: number) => ({
@@ -116,5 +124,49 @@ describe("redact", () => {
       "Conversion failed when converting the nvarchar value '<redacted>' to data type int.",
     );
     expect(redact('relation "lsbd_raw.x" does not exist')).toBe('relation "lsbd_raw.x" does not exist');
+  });
+  it("redacts every quoted substring except after an identifier context word", () => {
+    expect(redact('value "123456789" is out of range for type integer')).toBe(
+      'value "<redacted>" is out of range for type integer',
+    );
+    expect(redact('column "SSN" of relation "tblDenHyg" does not exist')).toBe(
+      'column "SSN" of relation "tblDenHyg" does not exist',
+    );
+    expect(redact('date/time field value out of range: "1970-13-01"')).toBe(
+      'date/time field value out of range: "<redacted>"',
+    );
+    expect(redact("Truncated value: 'abc'")).toBe("Truncated value: '<redacted>'");
+    expect(redact('duplicate key value violates unique constraint "pk_x"')).toBe(
+      'duplicate key value violates unique constraint "pk_x"',
+    );
+    expect(redact('Key (id)=(42) already exists')).toBe("Key (id)=(<redacted>) already exists");
+    expect(redact('invalid input syntax for type uuid: "x" and "y"')).toBe(
+      'invalid input syntax for type uuid: "<redacted>" and "<redacted>"',
+    );
+  });
+});
+
+describe("fingerprintTrusted", () => {
+  it("trusts a consistent read", () => {
+    expect(fingerprintTrusted({ sourceRows: 10, fpCount: "10", fetched: 3, changed: 3 })).toBe(true);
+    expect(fingerprintTrusted({ sourceRows: 0, fpCount: "0", fetched: 0, changed: 0 })).toBe(true);
+  });
+  it("distrusts a key count that disagrees with the fingerprint count", () => {
+    expect(fingerprintTrusted({ sourceRows: 11, fpCount: "10", fetched: 0, changed: 0 })).toBe(false);
+    expect(fingerprintTrusted({ sourceRows: 10, fpCount: null, fetched: 0, changed: 0 })).toBe(false);
+  });
+  it("distrusts a row fetch that returned fewer rows than changed keys", () => {
+    expect(fingerprintTrusted({ sourceRows: 10, fpCount: "10", fetched: 2, changed: 3 })).toBe(false);
+  });
+});
+
+describe("eventLogInvocation", () => {
+  it("passes the message only through the environment", () => {
+    const msg = "run 7 failed: x'; Remove-Item C:\\ -Recurse; '$(evil)";
+    const inv = eventLogInvocation(msg);
+    expect(inv.args.join(" ")).not.toContain("Remove-Item");
+    expect(inv.args.join(" ")).not.toContain(msg);
+    expect(inv.args[inv.args.length - 1]).toContain("-Message $env:LSBD_SYNC_MSG");
+    expect(inv.env.LSBD_SYNC_MSG).toBe(msg);
   });
 });

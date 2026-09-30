@@ -2,15 +2,16 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Client } from "pg";
 import { loadSecrets } from "../../scripts/lib/secrets";
 import { readSchema, query, closeBridge } from "../../scripts/sync/mssql";
-import { keysSql } from "../../scripts/sync/sql-gen";
+import { keysSql, rowsSql } from "../../scripts/sync/sql-gen";
 import { runSync, exitCodeFor } from "../../scripts/sync/run";
 import type { SourceTable } from "../../scripts/sync/types";
 
-// Mass-delete guard, end to end (Review Focus 4, ruling R3).
-// Commits 200 synthetic rows (keys >= 900000000) into lsbd_raw."tblTransTypes", then runs
-// runSync with a fake source that returns ZERO keys for that table. The guard must block that
-// table only (nothing written), tblFees must still sync, and the CLI maps "blocked" to exit 2.
-// afterAll hard-deletes the synthetic rows.
+// Mass-delete guard and per-table failure isolation, end to end (Review Focus 4 and 5, R3).
+// Test 1 commits 200 synthetic rows (keys >= 900000000) into lsbd_raw."tblTransTypes", then
+// runs runSync with a fake source that returns ZERO keys for that table. The guard must block
+// that table only (nothing written, _sync_tables untouched), tblFees must still sync, and the
+// CLI maps "blocked" to exit 2. afterAll hard-deletes the synthetic rows.
+// Test 2 fails a table mid-read and checks that nothing (data or fingerprint) is stored for it.
 // Run with:  $env:LSBD_IT='1'; npm run test:it
 
 const GUARDED = "tblTransTypes";
@@ -35,14 +36,24 @@ async function sourceCount(t: string): Promise<number> {
   throw new Error("no count row");
 }
 
+async function syncTablesRow(c: Client, t: string): Promise<Record<string, unknown> | null> {
+  const r = await c.query(
+    `SELECT source_count::text, source_fingerprint::text, raw_live_count::text,
+            last_changed_at::text, last_synced_at::text
+     FROM lsbd_raw._sync_tables WHERE table_name = $1`,
+    [t],
+  );
+  return r.rows[0] ?? null;
+}
+
 describe.skipIf(process.env.LSBD_IT !== "1")("runSync mass-delete guard (live)", () => {
   let c: Client;
   let schema: SourceTable[];
 
   beforeAll(async () => {
     c = await connect();
-    schema = (await readSchema()).filter((t) => t.name === GUARDED || t.name === "tblFees");
-    expect(schema.map((t) => t.name).sort()).toEqual(["tblFees", GUARDED].sort());
+    schema = (await readSchema()).filter((t) => [GUARDED, "tblFees", "tblTypes"].includes(t.name));
+    expect(schema.map((t) => t.name).sort()).toEqual(["tblFees", "tblTypes", GUARDED].sort());
     expect(schema.find((t) => t.name === GUARDED)!.pk).toBe("ID");
     const ids = Array.from({ length: SYNTH_N }, (_, i) => SYNTH_MIN + i);
     await c.query(
@@ -64,6 +75,8 @@ describe.skipIf(process.env.LSBD_IT !== "1")("runSync mass-delete guard (live)",
     const zeroKeysSql = keysSql(guarded);
     const before = await liveCount(c, GUARDED);
     expect(before).toBeGreaterThanOrEqual(SYNTH_N);
+    const guardedStateBefore = await syncTablesRow(c, GUARDED);
+    const runStart = (await c.query(`SELECT now() AS t`)).rows[0].t as Date;
 
     const fakeQuery = (async function* (sql: string) {
       if (sql === zeroKeysSql) return; // the "bridge hiccup": no keys at all
@@ -79,7 +92,10 @@ describe.skipIf(process.env.LSBD_IT !== "1")("runSync mass-delete guard (live)",
     expect(summary.blockedTables).toEqual([GUARDED]);
     expect(summary.runId).toBeGreaterThan(0);
     expect(await liveCount(c, GUARDED)).toBe(before);
+    expect(await syncTablesRow(c, GUARDED)).toEqual(guardedStateBefore);
     expect(await liveCount(c, "tblFees")).toBe(await sourceCount("tblFees"));
+    const fees = await c.query(`SELECT last_synced_at FROM lsbd_raw._sync_tables WHERE table_name = 'tblFees'`);
+    expect((fees.rows[0].last_synced_at as Date).getTime()).toBeGreaterThanOrEqual(runStart.getTime());
 
     const run = await c.query(
       `SELECT status, blocked_tables FROM lsbd_raw._sync_runs WHERE id = $1`,
@@ -87,5 +103,42 @@ describe.skipIf(process.env.LSBD_IT !== "1")("runSync mass-delete guard (live)",
     );
     expect(run.rows[0]).toEqual({ status: "blocked", blocked_tables: [GUARDED] });
     expect(exitCodeFor(summary.status)).toBe(2);
+  }, 600_000);
+
+  it("a table that fails mid-read stores neither data nor its fingerprint", async () => {
+    const types = schema.find((t) => t.name === "tblTypes")!;
+    const typesKeys = keysSql(types);
+    const typesRows = rowsSql(types, "all");
+    const hashes = async () =>
+      (await c.query(`SELECT "ID", _row_hash FROM lsbd_raw."tblTypes" ORDER BY "ID"`)).rows;
+    const hashesBefore = await hashes();
+    const stateBefore = await syncTablesRow(c, "tblTypes");
+
+    // Every key looks updated (bogus hash) -> the runner fetches rows -> the "bridge" dies
+    // after one row.
+    const fakeQuery = (async function* (sql: string) {
+      if (sql === typesKeys) {
+        for await (const r of query<{ k: unknown; h: string }>(sql)) yield { ...r, h: "X" } as never;
+        return;
+      }
+      if (sql === typesRows) {
+        let n = 0;
+        for await (const r of query(sql)) {
+          if (n++ === 1) throw new Error("bridge died mid-table");
+          yield r as never;
+        }
+        return;
+      }
+      yield* query(sql);
+    }) as typeof query;
+
+    const s = await runSync(
+      { mode: "full", tables: ["tblTypes"], transform: false, allowMassDelete: false },
+      { readSchema: async () => schema, query: fakeQuery, db: connect },
+    );
+    expect(s.status).toBe("failed");
+    expect(exitCodeFor(s.status)).toBe(1);
+    expect(await hashes()).toEqual(hashesBefore);
+    expect(await syncTablesRow(c, "tblTypes")).toEqual(stateBefore);
   }, 600_000);
 });

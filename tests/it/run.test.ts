@@ -81,6 +81,43 @@ describe.skipIf(process.env.LSBD_IT !== "1")("runSync (live)", () => {
     }
   }, 300_000);
 
+  it("after a failed run, the next quick run calls transforms with NULL (all domains) even with no changes", async () => {
+    const calls: (string[] | null)[] = [];
+    const record = async (_c: Client, changed: string[] | null) => {
+      calls.push(changed);
+      return 3;
+    };
+    const failing = await runSync(
+      { mode: "full", tables: ["tblTypes"], transform: true, allowMassDelete: false },
+      {
+        readSchema,
+        query,
+        db: connect,
+        runTransforms: async () => {
+          throw new Error("transform boom");
+        },
+      },
+    );
+    expect(failing.status).toBe("failed");
+
+    const rerun = await runSync(
+      { mode: "quick", tables: ["tblTypes"], transform: true, allowMassDelete: false },
+      { readSchema, query, db: connect, runTransforms: record },
+    );
+    expect(rerun.status).toBe("ok");
+    expect(rerun.tablesChanged).toEqual([]);
+    expect(calls).toEqual([null]);
+    expect(rerun.orphansSkipped).toBe(3);
+
+    // The previous run is now ok: no changes -> transforms are skipped again.
+    const calm = await runSync(
+      { mode: "quick", tables: ["tblTypes"], transform: true, allowMassDelete: false },
+      { readSchema, query, db: connect, runTransforms: record },
+    );
+    expect(calm.status).toBe("ok");
+    expect(calls).toEqual([null]);
+  }, 600_000);
+
   it("schema drift: a new source column is added to lsbd_raw and reported", async () => {
     const real = (await readSchema()).map((t) => ({ ...t, columns: [...t.columns] }));
     const realFees = real.find((t) => t.name === "tblFees")!;

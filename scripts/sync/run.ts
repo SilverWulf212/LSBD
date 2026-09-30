@@ -55,6 +55,8 @@ export interface RunDeps {
   readSchema: typeof readSchema;
   query: typeof query;
   db?: () => Promise<Client>;
+  /** Transform step; defaults to CALL lsbd.run_transforms. `changed` NULL = all domains. Returns orphans. */
+  runTransforms?: (c: Client, changed: string[] | null) => Promise<number>;
 }
 
 const LOCK_KEY = "hashtext('lsbd_sync')";
@@ -103,12 +105,51 @@ export function exitCodeFor(status: RunStatus): number {
   return 0;
 }
 
-/** Strips data values that database error messages sometimes quote. */
+/** Words after which a quoted string is an identifier (kept), not a data value. */
+const IDENT_CONTEXT = new Set(["relation", "column", "table", "constraint", "schema", "type", "function", "procedure", "index"]);
+
+/**
+ * Fail-closed redaction of error text: EVERY quoted substring ('…' or "…") is replaced by
+ * <redacted>, except one that directly follows an identifier context word (relation "x",
+ * column "y", ...). `)=(…)` key details are redacted too.
+ */
 export function redact(msg: string): string {
-  return msg
-    .replace(/(invalid input (?:syntax|value) for [^:]*: )"[^"]*"/g, '$1"<redacted>"')
-    .replace(/(value )'[^']*'/g, "$1'<redacted>'")
-    .replace(/\)=\([^)]*\)/g, ")=(<redacted>)");
+  const out = msg.replace(/(["'])((?:(?!\1)[\s\S])*)\1/g, (m, quote: string, _body: string, offset: number) => {
+    const before = msg.slice(0, offset);
+    const word = /(\S+)\s+$/.exec(before)?.[1]?.toLowerCase();
+    return word !== undefined && IDENT_CONTEXT.has(word) ? m : `${quote}<redacted>${quote}`;
+  });
+  return out.replace(/\)=\([^)]*\)/g, ")=(<redacted>)");
+}
+
+/**
+ * Whether the fingerprint taken before the diff can be trusted for this table. It can't when
+ * the key read disagrees with the fingerprint's row count, or when fewer changed rows came back
+ * than the diff asked for: the source moved during the run. The caller then stores a NULL
+ * fingerprint and count so the next quick run re-diffs the table.
+ */
+export function fingerprintTrusted(p: {
+  sourceRows: number;
+  fpCount: string | null;
+  fetched: number;
+  changed: number;
+}): boolean {
+  if (p.fpCount === null || Number(p.fpCount) !== p.sourceRows) return false;
+  return p.fetched >= p.changed;
+}
+
+/** The best-effort event-log call. The message travels in the environment, never in the command. */
+export function eventLogInvocation(message: string): { file: string; args: string[]; env: NodeJS.ProcessEnv } {
+  return {
+    file: "powershell.exe",
+    args: [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "Write-EventLog -LogName Application -Source LSBD-Sync -EventId 1001 -EntryType Error -Message $env:LSBD_SYNC_MSG",
+    ],
+    env: { ...process.env, LSBD_SYNC_MSG: message },
+  };
 }
 
 /** Throws unless the row's keys are exactly the expected column set. Reports names only. */
@@ -179,6 +220,9 @@ async function defaultDb(): Promise<Client> {
   const url = loadSecrets()["SUPABASE_DB_URL_SESSION"];
   if (!url) throw new Error("SUPABASE_DB_URL_SESSION not found in secrets file");
   const c = new Client({ connectionString: url, ssl: { rejectUnauthorized: false }, application_name: "lsbd-sync" });
+  // An idle-connection drop emits 'error'; without a listener it would crash the process past
+  // our finally blocks. The next query on the dead client then rejects normally.
+  c.on("error", (e) => console.error(`pg client error: ${redact(e.message)}`));
   await c.connect();
   return c;
 }
@@ -193,6 +237,8 @@ function hmacKeyFromSecrets(): Buffer {
 
 type Fp = { n: string | null; fp: string | null };
 const norm = (v: unknown): string | null => (v === null || v === undefined ? null : String(v));
+/** Stored when the fingerprint can't be trusted: a NULL count never matches, so quick re-diffs. */
+const UNTRUSTED: Fp = { n: null, fp: null };
 
 interface TableResult {
   blocked: boolean;
@@ -314,8 +360,15 @@ async function syncPkTable(ctx: Ctx, t: SourceTable, adds: Drift["add"], fp: Fp 
     else upd++;
   }
   const changed = rows.size > 0 || d.deleted.length > 0 || adds.length > 0;
+  const trusted = fingerprintTrusted({
+    sourceRows: new Set(src.map((x) => x.k)).size,
+    fpCount: fp?.n ?? null,
+    fetched: rows.size,
+    changed: changedCount,
+  });
+  if (!trusted) log(`  ${t.name}: source moved during the read; fingerprint not stored (next quick run re-diffs)`);
   let del = 0;
-  await writeTable(ctx, t, adds, fp, changed, async () => {
+  await writeTable(ctx, t, adds, trusted ? fp : UNTRUSTED, changed, async () => {
     if (rows.size > 0) await upsertRaw(ctx.c, t, [...rows.values()]);
     if (d.deleted.length > 0) del = await softDelete(ctx.c, t, d.deleted);
     return 0;
@@ -347,7 +400,9 @@ async function syncNoPkTable(ctx: Ctx, t: SourceTable, adds: Drift["add"], fp: F
     log(`  ${t.name}: mass-delete guard overridden (--allow-mass-delete): ${del} of ${rawHashes.length} rows`);
   }
   const changed = ins > 0 || del > 0 || adds.length > 0;
-  await writeTable(ctx, t, adds, fp, changed, async () => {
+  const trusted = fingerprintTrusted({ sourceRows: rows.length, fpCount: fp?.n ?? null, fetched: 0, changed: 0 });
+  if (!trusted) log(`  ${t.name}: source moved during the read; fingerprint not stored (next quick run re-diffs)`);
+  await writeTable(ctx, t, adds, trusted ? fp : UNTRUSTED, changed, async () => {
     if (changed) await replaceTable(ctx.c, t, rows);
     return 0;
   });
@@ -377,16 +432,8 @@ async function notify(summary: RunSummary, error: string | null): Promise<void> 
   if (summary.status === "failed" || summary.status === "blocked") {
     const message = `LSBD sync run ${summary.runId} ${summary.status}: ${error ?? ""}`.slice(0, 4000);
     try {
-      const r = spawnSync(
-        "powershell.exe",
-        [
-          "-NoProfile",
-          "-NonInteractive",
-          "-Command",
-          `Write-EventLog -LogName Application -Source LSBD-Sync -EventId 1001 -EntryType Error -Message '${message.replace(/'/g, "''")}'`,
-        ],
-        { windowsHide: true, timeout: 30_000, encoding: "utf8" },
-      );
+      const inv = eventLogInvocation(message);
+      const r = spawnSync(inv.file, inv.args, { env: inv.env, windowsHide: true, timeout: 30_000, encoding: "utf8" });
       if (r.status !== 0) console.error("event log write failed (is the LSBD-Sync source registered?)");
     } catch (e) {
       console.error(`event log write failed: ${errMsg(e)}`);
@@ -433,6 +480,16 @@ export async function runSync(opts: RunOptions, deps?: RunDeps): Promise<RunSumm
     summary.runId = Number(ins.rows[0].id);
     log(`sync run ${summary.runId}: mode ${opts.mode}, tables ${opts.tables === undefined ? "all" : opts.tables === "none" ? "none" : opts.tables.join(",")}`);
 
+    // Tables commit (with their fingerprints) before transforms run. If the previous run failed
+    // (transform error, crash, scheduler kill; abandoned rows were just marked failed), its
+    // committed changes may never have reached lsbd.*, and this run's fingerprints would hide
+    // them. So after a failed run, quick mode runs ALL transforms.
+    const prev = await c.query<{ status: string }>(
+      `SELECT status FROM lsbd_raw._sync_runs WHERE id < $1 ORDER BY id DESC LIMIT 1`,
+      [summary.runId],
+    );
+    const previousFailed = prev.rows[0]?.status === "failed";
+
     const errors: string[] = [];
     const failed: string[] = [];
     let runFailed = false;
@@ -444,7 +501,7 @@ export async function runSync(opts: RunOptions, deps?: RunDeps): Promise<RunSumm
       }
       if (opts.transform) {
         try {
-          await runTransforms(c, opts, summary);
+          await runTransforms(c, opts, summary, previousFailed, deps?.runTransforms ?? defaultTransforms);
         } catch (e) {
           runFailed = true;
           errors.push(`transforms: ${redact(errMsg(e))}`);
@@ -603,27 +660,50 @@ async function syncAll(
   }
 }
 
-async function runTransforms(c: Client, opts: RunOptions, summary: RunSummary): Promise<void> {
+/**
+ * The real transform step: CALL lsbd.run_transforms (Task 11). Returns orphans skipped. When the
+ * procedure isn't installed yet it logs and returns 0 (not a failure).
+ */
+async function defaultTransforms(c: Client, changed: string[] | null): Promise<number> {
   const exists = await c.query<{ ok: boolean }>(
     `SELECT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
                     WHERE n.nspname = 'lsbd' AND p.proname = 'run_transforms' AND p.prokind = 'p') AS ok`,
   );
   if (!exists.rows[0].ok) {
     log("transforms not installed; skipped");
-    return;
+    return 0;
   }
-  const sources = opts.mode === "full" || opts.tables === "none" ? null : summary.tablesChanged;
+  await c.query("SET statement_timeout = 0");
+  const r = await c.query<{ orphans: number | null }>(
+    `CALL lsbd.run_transforms(changed_sources => $1::text[], orphans => 0)`,
+    [changed],
+  );
+  return Number(r.rows[0]?.orphans ?? 0);
+}
+
+/**
+ * changed_sources: NULL (all domains) in full mode, with --tables none, or after a failed
+ * previous run; otherwise the tables this run changed (skipped when there are none).
+ */
+async function runTransforms(
+  c: Client,
+  opts: RunOptions,
+  summary: RunSummary,
+  previousFailed: boolean,
+  fn: NonNullable<RunDeps["runTransforms"]>,
+): Promise<void> {
+  let sources: string[] | null = summary.tablesChanged;
+  if (opts.mode === "full" || opts.tables === "none") sources = null;
+  else if (previousFailed) {
+    log("previous run failed; running all transforms");
+    sources = null;
+  }
   if (sources !== null && sources.length === 0) {
     log("transforms: no changed tables; skipped");
     return;
   }
   const started = Date.now();
-  await c.query("SET statement_timeout = 0");
-  const r = await c.query<{ orphans: number | null }>(
-    `CALL lsbd.run_transforms(changed_sources => $1::text[], orphans => 0)`,
-    [sources],
-  );
-  summary.orphansSkipped = Number(r.rows[0]?.orphans ?? 0);
+  summary.orphansSkipped = await fn(c, sources);
   log(`transforms done in ${Date.now() - started}ms, orphans skipped ${summary.orphansSkipped}`);
 }
 
