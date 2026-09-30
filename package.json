@@ -11,7 +11,8 @@
     "test:it": "vitest run tests/it --passWithNoTests --no-file-parallelism",
     "sync:bootstrap": "tsx scripts/sync/bootstrap-raw.ts",
     "sync": "tsx scripts/sync/run.ts",
-    "sync:full": "tsx scripts/sync/run.ts --mode full"
+    "sync:full": "tsx scripts/sync/run.ts --mode full",
+    "sync:reconcile": "tsx scripts/sync/reconcile.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
