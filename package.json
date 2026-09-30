@@ -8,8 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run tests/sync",
-    "test:it": "vitest run tests/it --passWithNoTests",
-    "sync:bootstrap": "tsx scripts/sync/bootstrap-raw.ts"
+    "test:it": "vitest run tests/it --passWithNoTests --no-file-parallelism",
+    "sync:bootstrap": "tsx scripts/sync/bootstrap-raw.ts",
+    "sync": "tsx scripts/sync/run.ts",
+    "sync:full": "tsx scripts/sync/run.ts --mode full"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
