@@ -18,6 +18,7 @@ import * as fs from "node:fs";
 import * as readline from "node:readline";
 import * as path from "node:path";
 import { Client } from "pg";
+import { normalizeSsn, hmacSsn } from "./lib/pii";
 
 const DATA_DIR = process.env.LSBD_DATA_DIR ?? "D:/extracted/data";
 const SECRETS_FILE = process.env.LSBD_SECRETS_FILE ?? "C:/Users/Administrator/.lsbd-secrets.env";
@@ -47,17 +48,6 @@ function ensureHmacKey(): Buffer {
     console.log(`Generated new PII_SSN_HMAC_KEY and persisted to ${SECRETS_FILE}.`);
   }
   return Buffer.from(raw, "base64");
-}
-
-function normalizeSsn(v: unknown): string | null {
-  if (v == null) return null;
-  const digits = String(v).replace(/\D/g, "");
-  if (digits.length === 0) return null;
-  return digits;
-}
-
-function hmacSha256Base64(key: Buffer, message: string): string {
-  return crypto.createHmac("sha256", key).update(message).digest("base64");
 }
 
 function strOrNull(v: unknown): string | null {
@@ -120,8 +110,8 @@ async function main() {
 
   // Determinism self-test before we touch any DB rows.
   const testSsn = "123456789";
-  const h1 = hmacSha256Base64(hmacKey, testSsn);
-  const h2 = hmacSha256Base64(hmacKey, testSsn);
+  const h1 = hmacSsn(hmacKey, testSsn);
+  const h2 = hmacSsn(hmacKey, testSsn);
   if (h1 !== h2) {
     console.error("HMAC determinism self-test FAILED.");
     process.exit(1);
@@ -189,7 +179,7 @@ async function main() {
     seenPersons.add(personId);
 
     const ssn = normalizeSsn(r.SSN);
-    const ssnHash = ssn ? hmacSha256Base64(hmacKey, ssn) : null;
+    const ssnHash = ssn ? hmacSsn(hmacKey, ssn) : null;
     if (ssn) ssnsHashed++;
 
     let background: boolean | null = null;
