@@ -329,7 +329,7 @@ export async function main(): Promise<number> {
     const dq = await dataQuality(c, schema);
     const when = new Date();
     const md = renderReport({ when, durationSec: (Date.now() - t0) / 1000, rows, schemaEmpty: check.empty, ...dq });
-    const dir = path.resolve(__dirname, "..", "..", "reports");
+    const dir = process.env.LSBD_REPORTS_DIR || path.resolve(__dirname, "..", "..", "reports");
     mkdirSync(dir, { recursive: true });
     const file = path.join(dir, reportFileName(when));
     writeFileSync(file, md, "utf8");

@@ -44,17 +44,29 @@ $wrapper  = Join-Path $root 'run-task.ps1'
 $fallback = 'C:\Users\Administrator\.lsbd-secrets.env'
 $node     = 'C:\Program Files\nodejs\node.exe'
 $tsxCli   = Join-Path $app 'node_modules\tsx\dist\cli.mjs'
+$tmp      = Join-Path $root 'tmp'
+$reports  = Join-Path $root 'reports'
 
 if (-not (Test-Path $node))   { throw "Node not found at $node" }
 if (-not (Test-Path $tsxCli)) { throw "Release worktree not deployed ($tsxCli missing). Run release.ps1 first." }
 
 # --- 1. folders + secrets -------------------------------------------------
-New-Item -ItemType Directory -Force -Path $root, $logs | Out-Null
+New-Item -ItemType Directory -Force -Path $root, $logs, $tmp, $reports | Out-Null
+
+# Lock the root BEFORE any secret lands in it: no inheritance, SYSTEM + Administrators only.
+# Children (logs, tmp, reports, secrets.env) inherit this and never carry Users entries.
+function Set-AdminOnly([string]$Path, [bool]$Container) {
+  $grantSys = if ($Container) { '*S-1-5-18:(OI)(CI)F' } else { '*S-1-5-18:F' }
+  $grantAdm = if ($Container) { '*S-1-5-32-544:(OI)(CI)F' } else { '*S-1-5-32-544:F' }
+  & icacls.exe $Path /inheritance:r /grant:r $grantSys $grantAdm | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw "icacls on $Path failed ($LASTEXITCODE)" }
+}
+Set-AdminOnly $root $true
 
 if ((-not (Test-Path $secrets)) -or $RefreshSecrets) {
   if (-not (Test-Path $fallback)) { throw "No secrets source at $fallback" }
-  # The file may already be locked to admins; take care with overwrite.
   Copy-Item -Path $fallback -Destination $secrets -Force
+  Set-AdminOnly $secrets $false   # immediately after the copy
   Write-Host "Copied secrets file to $secrets"
 } else {
   Write-Host "Secrets already at $secrets (use -RefreshSecrets to overwrite)."
@@ -91,9 +103,16 @@ $app  = Join-Path $root 'app'
 $logs = Join-Path $root 'logs'
 $node = 'C:\Program Files\nodejs\node.exe'
 $tsx  = Join-Path $app 'node_modules\tsx\dist\cli.mjs'
+$tmp  = Join-Path $root 'tmp'
 $utf8 = New-Object Text.UTF8Encoding($false)
 
-New-Item -ItemType Directory -Force -Path $logs | Out-Null
+New-Item -ItemType Directory -Force -Path $logs, $tmp | Out-Null
+# SYSTEM's default TEMP (C:\Windows\Temp) is writable by Users, and tsx keeps an executable
+# cache there. Use the admin-only folder instead, for this process and every child.
+$env:TEMP = $tmp
+$env:TMP  = $tmp
+# Reconcile reports (counts only) stay admin-only too.
+$env:LSBD_REPORTS_DIR = Join-Path $root 'reports'
 Get-ChildItem -Path $logs -Filter '*.log' -ErrorAction SilentlyContinue |
   Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) } |
   Remove-Item -Force -ErrorAction SilentlyContinue
@@ -105,7 +124,8 @@ function Write-Log([string]$s) { [IO.File]::AppendAllText($log, $s + "`r`n", $ut
 
 function Invoke-Step([string]$Label, [string[]]$ScriptArgs) {
   Write-Log ("=== {0} start {1}" -f $Label, (Get-Date -Format 's'))
-  $o = [IO.Path]::GetTempFileName(); $e = [IO.Path]::GetTempFileName()
+  $o = Join-Path $tmp ([guid]::NewGuid().ToString('N') + '.out')
+  $e = Join-Path $tmp ([guid]::NewGuid().ToString('N') + '.err')
   try {
     $argList = '"' + $tsx + '" ' + ($ScriptArgs -join ' ')
     $p = Start-Process -FilePath $node -ArgumentList $argList -WorkingDirectory $app `
@@ -141,6 +161,8 @@ function New-RepeatingTrigger([string[]]$Days, [int]$Minutes) {
   $rep = (New-ScheduledTaskTrigger -Once -At '07:00' `
             -RepetitionInterval (New-TimeSpan -Minutes $Minutes) `
             -RepetitionDuration (New-TimeSpan -Hours 12)).Repetition
+  $rep.Duration = 'PT12H1M'          # 07:00 + 12h01m, so the 19:00 start happens
+  $rep.StopAtDurationEnd = $false
   $t.Repetition = $rep
   return $t
 }
@@ -153,7 +175,7 @@ function Register-SyncTask([string]$Name, [string]$Key, $Trigger, [int]$LimitMin
   $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $arg -WorkingDirectory $app
   $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew `
       -ExecutionTimeLimit (New-TimeSpan -Minutes $LimitMinutes) `
-      -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+      -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
   $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
   Register-ScheduledTask -TaskName $Name -Action $action -Trigger $Trigger -Settings $settings `
       -Principal $principal -Description $Desc | Out-Null
@@ -173,12 +195,15 @@ Register-SyncTask 'LSBD Sync Full' 'full' `
   'LSBD MSSQL -> Supabase full sync daily 02:00, then reconcile.'
 
 # --- 5. ACLs ----------------------------------------------------------------
-# Root: admin-only (holds secrets, logs and the SYSTEM-executed wrapper).
-& icacls.exe $root /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "icacls on $root failed ($LASTEXITCODE)" }
-# Secrets file: explicit, no inheritance, SYSTEM + Administrators only.
-& icacls.exe $secrets /inheritance:r /grant:r '*S-1-5-18:F' '*S-1-5-32-544:F' | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "icacls on $secrets failed ($LASTEXITCODE)" }
+# Root, secrets, logs, tmp and reports were locked to SYSTEM + Administrators above. Re-assert
+# (idempotent) now that the wrapper exists, including children created by earlier installs.
+Set-AdminOnly $root $true
+Set-AdminOnly $secrets $false
+Set-AdminOnly $wrapper $false
+foreach ($d in @($logs, $tmp, $reports)) { Set-AdminOnly $d $true }
+# The old SYSTEM tsx cache lived in C:\Windows\Temp (Users-writable): remove it.
+$staleCache = 'C:\Windows\Temp\tsx-SYSTEM'
+if (Test-Path $staleCache) { Remove-Item -Recurse -Force $staleCache; Write-Host "Removed stale $staleCache" }
 # App: code only; non-admins may read/execute but not modify.
 & icacls.exe $app /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "icacls on $app failed ($LASTEXITCODE)" }

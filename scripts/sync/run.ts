@@ -682,6 +682,25 @@ async function defaultTransforms(c: Client, changed: string[] | null): Promise<n
 }
 
 /**
+ * --allow-mass-delete must also reach the DB-level guard in lsbd (Task 11): the transform CALL runs
+ * with the session GUC lsbd.allow_mass_delete = 'on' on the same connection (a session SET, not
+ * SET LOCAL, because run_transforms may COMMIT internally), and it is reset afterwards.
+ */
+export async function withMassDeleteOverride<T>(
+  c: Pick<Client, "query">,
+  allow: boolean,
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (!allow) return fn();
+  await c.query("SET lsbd.allow_mass_delete = 'on'");
+  try {
+    return await fn();
+  } finally {
+    await c.query("RESET lsbd.allow_mass_delete").catch(() => undefined);
+  }
+}
+
+/**
  * changed_sources: NULL (all domains) in full mode, with --tables none, or after a failed
  * previous run; otherwise the tables this run changed (skipped when there are none).
  */

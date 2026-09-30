@@ -7,6 +7,7 @@ import {
   redact,
   fingerprintTrusted,
   eventLogInvocation,
+  withMassDeleteOverride,
 } from "../../scripts/sync/run";
 import type { SourceTable } from "../../scripts/sync/types";
 
@@ -168,5 +169,31 @@ describe("eventLogInvocation", () => {
     expect(inv.args.join(" ")).not.toContain(msg);
     expect(inv.args[inv.args.length - 1]).toContain("-Message $env:LSBD_SYNC_MSG");
     expect(inv.env.LSBD_SYNC_MSG).toBe(msg);
+  });
+});
+
+describe("withMassDeleteOverride (--allow-mass-delete reaches the DB guard)", () => {
+  const recorder = () => {
+    const calls: string[] = [];
+    return { calls, c: { query: async (sql: string) => { calls.push(sql); return {} as never; } } };
+  };
+
+  it("SETs the GUC before the transform call and RESETs it after, on the same connection", async () => {
+    const { calls, c } = recorder();
+    const out = await withMassDeleteOverride(c, true, async () => { calls.push("CALL"); return 7; });
+    expect(out).toBe(7);
+    expect(calls).toEqual(["SET lsbd.allow_mass_delete = 'on'", "CALL", "RESET lsbd.allow_mass_delete"]);
+  });
+
+  it("resets the GUC even when the transform call throws", async () => {
+    const { calls, c } = recorder();
+    await expect(withMassDeleteOverride(c, true, async () => { calls.push("CALL"); throw new Error("boom"); })).rejects.toThrow("boom");
+    expect(calls).toEqual(["SET lsbd.allow_mass_delete = 'on'", "CALL", "RESET lsbd.allow_mass_delete"]);
+  });
+
+  it("does nothing without the flag", async () => {
+    const { calls, c } = recorder();
+    await withMassDeleteOverride(c, false, async () => { calls.push("CALL"); });
+    expect(calls).toEqual(["CALL"]);
   });
 });
