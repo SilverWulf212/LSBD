@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run tests/sync",
+    "test": "vitest run tests/sync tests/app",
     "test:it": "vitest run tests/it --passWithNoTests --no-file-parallelism",
     "sync:bootstrap": "tsx scripts/sync/bootstrap-raw.ts",
     "sync": "tsx scripts/sync/run.ts",

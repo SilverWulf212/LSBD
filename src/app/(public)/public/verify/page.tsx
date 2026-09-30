@@ -8,11 +8,15 @@ import { Search, Shield, Info } from "lucide-react";
 import {
   searchPublicLicensees,
   validateSearch,
+  resolveSearchInput,
+  isExpired,
+  licenseDetailHref,
   TYPE_LABEL,
   STATUS_LABEL,
   MAX_RESULTS,
   type SearchParams,
 } from "@/lib/public-verify";
+import { formatCentralDate } from "@/lib/central-time";
 import { rateLimit } from "@/lib/rate-limit";
 
 export const metadata: Metadata = {
@@ -21,15 +25,9 @@ export const metadata: Metadata = {
     "Search for a dental professional to verify their license status with the Louisiana State Board of Dentistry.",
 };
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-}
-
 interface PageProps {
   searchParams: Promise<{
+    q?: string;
     license_id?: string;
     last_name?: string;
     first_name?: string;
@@ -40,13 +38,7 @@ interface PageProps {
 
 export default async function VerifyPage({ searchParams }: PageProps) {
   const sp = await searchParams;
-  const params: SearchParams = {
-    licenseId: sp.license_id ?? "",
-    lastName: sp.last_name ?? "",
-    firstName: sp.first_name ?? "",
-    type: (sp.type as SearchParams["type"]) ?? "all",
-    page: Math.max(1, Number(sp.page ?? 1) || 1),
-  };
+  const params: SearchParams = resolveSearchInput(sp);
 
   const submitted =
     !!params.licenseId?.trim() ||
@@ -216,6 +208,13 @@ export default async function VerifyPage({ searchParams }: PageProps) {
                   </p>
                 ) : (
                   <>
+                    {params.licenseId && new Set(result.rows.map((r) => r.type)).size > 1 && (
+                      <p className="mb-3 text-sm text-[#495057]">
+                        License number <span className="font-mono">{params.licenseId}</span> is held by
+                        more than one type of licensee. Check the <strong>Type</strong> column to find the
+                        record you need.
+                      </p>
+                    )}
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="border-b">
@@ -229,11 +228,14 @@ export default async function VerifyPage({ searchParams }: PageProps) {
                           </tr>
                         </thead>
                         <tbody>
-                          {result.rows.map((r) => (
-                            <tr key={r.license_id} className="border-b last:border-b-0 hover:bg-muted/30">
+                          {result.rows.map((r, i) => (
+                            <tr
+                              key={`${r.type}-${r.license_id}-${i}`}
+                              className="border-b last:border-b-0 hover:bg-muted/30"
+                            >
                               <td className="py-2 px-2 font-mono">
                                 <Link
-                                  href={`/public/verify/${encodeURIComponent(r.license_id)}`}
+                                  href={licenseDetailHref(r.license_id, r.type)}
                                   className="text-[#0077B6] hover:underline"
                                 >
                                   {r.license_id}
@@ -242,19 +244,37 @@ export default async function VerifyPage({ searchParams }: PageProps) {
                               <td className="py-2 px-2">
                                 {(r.last_name ?? "").toUpperCase()}, {r.first_name ?? ""}
                               </td>
-                              <td className="py-2 px-2">{TYPE_LABEL[r.type]}</td>
+                              <td className="py-2 px-2 font-medium">{TYPE_LABEL[r.type]}</td>
                               <td className="py-2 px-2">
                                 <Badge variant={r.status === "ACT" ? "default" : "outline"}>
                                   {STATUS_LABEL[r.status]}
                                 </Badge>
                               </td>
-                              <td className="py-2 px-2">{formatDate(r.date_since)}</td>
-                              <td className="py-2 px-2">{formatDate(r.date_until)}</td>
+                              <td className="py-2 px-2">{formatCentralDate(r.date_since)}</td>
+                              <td className="py-2 px-2">
+                                {formatCentralDate(r.date_until)}
+                                {isExpired(r.date_until) && (
+                                  <Badge
+                                    variant="outline"
+                                    className="ml-2 border-red-300 bg-red-50 text-red-800"
+                                  >
+                                    Expired
+                                  </Badge>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
+
+                    {result.rows.some((r) => isExpired(r.date_until)) && (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        <strong>Expired</strong> means the expiration date on record has passed. Contact
+                        the Board office to confirm this licensee&apos;s current standing. Dates are shown
+                        in Central time.
+                      </p>
+                    )}
 
                     {/* Pagination */}
                     {result.total > result.pageSize && (

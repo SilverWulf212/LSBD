@@ -16,6 +16,7 @@ import {
   UserCog,
   Layers,
   Shield,
+  RefreshCw,
 } from "lucide-react";
 import type { LsbdRole } from "@/lib/auth-roles";
 
@@ -32,6 +33,7 @@ const sidebarItems: SidebarItem[] = [
   { label: "Alerts", href: "/admin/alerts", icon: AlertTriangle },
   { label: "Board Members", href: "/admin/board", icon: Users },
   { label: "Fees", href: "/admin/fees", icon: DollarSign },
+  { label: "Sync Status", href: "/admin/sync", icon: RefreshCw, adminOnly: true },
   { label: "Meetings", href: "/admin/meetings", icon: Calendar },
   { label: "Forms", href: "/admin/forms", icon: ClipboardList },
   { label: "Publications", href: "/admin/publications", icon: BookOpen },

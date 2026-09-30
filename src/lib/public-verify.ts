@@ -1,25 +1,29 @@
 import { supabaseAnon } from "@/lib/supabase-anon";
+import {
+  PUBLIC_LICENSEE_COLUMNS,
+  sortByTypeOrder,
+  type LicenseType,
+  type PublicLicensee,
+} from "@/lib/public-verify-helpers";
 
-export type PublicLicensee = {
-  license_id: string;
-  type: "D" | "H" | "E";
-  status: "ACT" | "PRB";
-  action: string | null;
-  date_since: string | null;
-  date_until: string | null;
-  first_name: string | null;
-  middle_name: string | null;
-  last_name: string | null;
-  license_name: string | null;
-  suffix: string | null;
-  prefix: string | null;
-};
+export {
+  TYPE_LABEL,
+  STATUS_LABEL,
+  TYPE_ORDER,
+  groupByType,
+  isExpired,
+  licenseDetailHref,
+  parseLicenseType,
+  resolveSearchInput,
+  sortByTypeOrder,
+} from "@/lib/public-verify-helpers";
+export type { LicenseType, PublicLicensee } from "@/lib/public-verify-helpers";
 
 export interface SearchParams {
   licenseId?: string;
   lastName?: string;
   firstName?: string;
-  type?: "D" | "H" | "E" | "all";
+  type?: LicenseType | "all";
   page?: number;
 }
 
@@ -33,6 +37,9 @@ export interface SearchResult {
 
 const PAGE_SIZE = 15;
 export const MAX_RESULTS = 50;
+
+/** Upper bound for rows sharing one license number (all types + duplicates). */
+const MAX_PER_NUMBER = 25;
 
 /**
  * Validate a search request. Must have either a license number OR
@@ -52,10 +59,7 @@ export async function searchPublicLicensees(p: SearchParams): Promise<SearchResu
   const page = Math.max(1, p.page ?? 1);
   let q = supabaseAnon
     .from("public_licensee")
-    .select(
-      "license_id,type,status,action,date_since,date_until,first_name,middle_name,last_name,license_name,suffix,prefix",
-      { count: "exact" }
-    );
+    .select(PUBLIC_LICENSEE_COLUMNS, { count: "exact" });
 
   const lic = (p.licenseId ?? "").trim();
   if (lic) q = q.eq("license_id", lic);
@@ -69,9 +73,13 @@ export async function searchPublicLicensees(p: SearchParams): Promise<SearchResu
   if (p.type && p.type !== "all") q = q.eq("type", p.type);
 
   const offset = (page - 1) * PAGE_SIZE;
+  // A license-number search can match several types (D/H/E share number
+  // ranges); order by type first so they appear together.
+  if (lic) q = q.order("type", { ascending: true });
   q = q
     .order("last_name", { ascending: true, nullsFirst: false })
     .order("first_name", { ascending: true, nullsFirst: false })
+    .order("date_since", { ascending: true, nullsFirst: false })
     .range(offset, offset + PAGE_SIZE - 1);
 
   const { data, count, error } = await q;
@@ -84,8 +92,9 @@ export async function searchPublicLicensees(p: SearchParams): Promise<SearchResu
   const lastPage = Math.max(1, Math.ceil(capped / PAGE_SIZE));
   const safePage = Math.min(page, lastPage);
 
+  const rows = (data ?? []) as unknown as PublicLicensee[];
   return {
-    rows: (data ?? []) as PublicLicensee[],
+    rows: lic ? sortByTypeOrder(rows) : rows,
     total: capped,
     page: safePage,
     pageSize: PAGE_SIZE,
@@ -93,26 +102,25 @@ export async function searchPublicLicensees(p: SearchParams): Promise<SearchResu
   };
 }
 
-export async function getPublicLicensee(licenseId: string): Promise<PublicLicensee | null> {
-  const { data, error } = await supabaseAnon
+/**
+ * Every public record holding `licenseId`, optionally narrowed to one type.
+ * Returns ALL matches (sorted D, H, E) — several types can share a number,
+ * and a few (type, number) pairs are genuine duplicates; the caller must
+ * show them all rather than pick one.
+ */
+export async function getPublicLicensees(
+  licenseId: string,
+  type?: LicenseType | null
+): Promise<PublicLicensee[]> {
+  let q = supabaseAnon
     .from("public_licensee")
-    .select(
-      "license_id,type,status,action,date_since,date_until,first_name,middle_name,last_name,license_name,suffix,prefix"
-    )
-    .eq("license_id", licenseId)
-    .limit(1)
-    .maybeSingle();
-  if (error) return null;
-  return data as PublicLicensee | null;
+    .select(PUBLIC_LICENSEE_COLUMNS)
+    .eq("license_id", licenseId);
+  if (type) q = q.eq("type", type);
+  const { data, error } = await q
+    .order("type", { ascending: true })
+    .order("date_since", { ascending: true, nullsFirst: false })
+    .limit(MAX_PER_NUMBER);
+  if (error) throw new Error(`Lookup failed: ${error.message}`);
+  return sortByTypeOrder((data ?? []) as unknown as PublicLicensee[]);
 }
-
-export const TYPE_LABEL: Record<"D" | "H" | "E", string> = {
-  D: "Dentist",
-  H: "Hygienist",
-  E: "EDDA",
-};
-
-export const STATUS_LABEL: Record<"ACT" | "PRB", string> = {
-  ACT: "Active",
-  PRB: "Probation",
-};
