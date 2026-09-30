@@ -97,10 +97,11 @@ Chosen over SQL Server Change Tracking (alters prod, needs PKs everywhere) and
 timestamp-incremental (only ~25 tables have `Updated`, deletes invisible).
 
 1. **Fingerprint** (every run, all tables, one round-trip): per table
-   `COUNT_BIG(*)` and `CHECKSUM_AGG` over a per-row SHA-256. The per-row hash is
-   computed in T-SQL from a generated canonical expression. If both
-   match the values stored in `lsbd_raw._sync_tables` from the previous run, the
-   table is skipped.
+   `COUNT_BIG(*)` and `CHECKSUM_AGG(BINARY_CHECKSUM(*))`. This is cheap, but
+   `BINARY_CHECKSUM` ignores ntext/image columns. An edit that touches only
+   those columns is therefore picked up by the nightly full run, not the
+   15-minute run. If both values match those stored in `lsbd_raw._sync_tables`
+   from the previous run, the table is skipped.
 2. **Keys** (changed tables only): fetch `(pk…, row_hash)` for every row; diff
    against `lsbd_raw.<t>(pk, _row_hash)` → inserts, updates, deletes.
 3. **Rows** (changed keys only): fetch full rows for inserted/updated keys,
