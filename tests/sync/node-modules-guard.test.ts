@@ -10,6 +10,9 @@ import * as path from "node:path";
 // SYSTEM + Administrators-only directories (Protect-NodeModulesDir). This test runs the same
 // function against temp paths. Needs Windows and an elevated session (setting the owner to
 // Administrators requires the elevated token).
+//
+// Skipped on CI: the hosted Windows runner is elevated but its ACLs do not read back the way
+// the LSBD host's do (owner null, no ACEs), and the guard only ever runs on that host.
 
 const HELPER = path.resolve(__dirname, "../../scripts/sync/node-modules-guard.ps1");
 
@@ -24,6 +27,7 @@ function ps(script: string): { code: number; out: string; err: string } {
 
 const elevated =
   process.platform === "win32" &&
+  !process.env.CI &&
   ps("([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole('Administrators')").out.trim() ===
     "True";
 
