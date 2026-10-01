@@ -29,6 +29,7 @@ import {
   INDIVIDUAL_SELECTABLE_COLUMNS_SQL,
   diffSets,
 } from "./lib/staff-ro-tables";
+import { anonRestOutcome } from "./lib/anon-rest-outcome";
 
 const STAGES = ["0005", "0006", "0007"] as const;
 type Stage = (typeof STAGES)[number];
@@ -65,14 +66,17 @@ function parseStage(argv: string[]): Stage {
 // or on a successful answer with zero rows. Anything else (network failure, wrong
 // URL, stale key, 5xx) is a FAIL: it proves nothing. limit(0) returns no rows but,
 // unlike a HEAD request, does return the error body.
-async function anonRestDenied(anon: SupabaseClient, table: string): Promise<void> {
+// expectHidden: anon has no privilege at all on the relation, so PostgREST answers
+// "relation not found" instead of permission denied (lib/anon-rest-outcome.ts).
+async function anonRestDenied(anon: SupabaseClient, table: string, expectHidden = false): Promise<void> {
   const name = `anon REST: public.${table}`;
   const r = await anon.from(table).select("*", { count: "exact" }).limit(0);
+  const ok = anonRestOutcome(expectHidden, r.error, r.count) === "pass";
   if (r.error) {
-    const ok = r.error.code === DENIED;
-    return report(ok, name, ok ? "permission denied" : `unchecked: error ${r.error.code || "(no code)"}, HTTP ${r.status}`);
+    const what = r.error.code === DENIED ? "permission denied" : `not visible to anon (${r.error.code})`;
+    return report(ok, name, ok ? what : `unchecked: error ${r.error.code || "(no code)"}, HTTP ${r.status}`);
   }
-  report(r.count === 0, name, r.count === 0 ? "0 rows" : `${r.count ?? "unknown"} row(s) visible`);
+  report(ok, name, ok ? "0 rows" : `${r.count ?? "unknown"} row(s) visible`);
 }
 
 async function inSavepoint(c: Client, name: string, fn: () => Promise<void>): Promise<void> {
@@ -175,7 +179,7 @@ async function main(): Promise<void> {
     realtime: { transport: WebSocket as unknown as typeof globalThis.WebSocket },
   });
   for (const t of ["users", "audit_log", "posts"]) await anonRestDenied(anon, t);
-  if (at("0007")) await anonRestDenied(anon, "public_licensee");
+  if (at("0007")) await anonRestDenied(anon, "public_licensee", true);
 
   console.log("\ndatabase roles (SET ROLE, rolled back)");
   const c = await connectPg(dbUrl, { applicationName: "lsbd-verify-rls" });
