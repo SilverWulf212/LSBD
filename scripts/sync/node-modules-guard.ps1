@@ -23,6 +23,10 @@ function Protect-NodeModulesDir {
   if (Test-Path -LiteralPath $Path) {
     $item = Get-Item -LiteralPath $Path -Force
     if (-not $item.PSIsContainer) { throw "$Path exists and is not a directory; inspect and remove it." }
+    # A junction/symlink would make the elevated icacls below re-ACL its TARGET instead.
+    if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+      throw "$Path is a junction or symlink; inspect and remove it, then re-run."
+    }
     $content = @(Get-ChildItem -LiteralPath $Path -Force)
     if ($content.Count -gt 0) {
       throw "$Path is not empty ($($content.Count) entries). Node would load modules from it as SYSTEM; inspect and remove its contents, then re-run."

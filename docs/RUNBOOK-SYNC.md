@@ -103,7 +103,7 @@ powershell -ExecutionPolicy Bypass -File scripts\sync\install-task.ps1 -RefreshS
 
 ### 4.2 Transform fails with `mass delete blocked on lsbd.<table>: X of Y rows`
 - **Meaning:** the DB-level guard in `lsbd._delete` stopped a transform from deleting more than 50% of a normalized table.
-- **Important:** `--allow-mass-delete` currently does **not** reach this guard. The `run.ts` wiring for it (`withMassDeleteOverride` around the `runTransforms` call, `run.ts` ~line 725) is pending; the edit was blocked for the agent and is left to the user.
+- **Important:** `--allow-mass-delete` currently does **not** reach this guard. The `run.ts` wiring for it (`withMassDeleteOverride` around the `runTransforms` call, `run.ts` ~line 811, `summary.orphansSkipped = await fn(c, sources);`) is pending; the edit was blocked for the agent and is left to the user.
 - **Steps:**
   1. Confirm the deletion is real. Compare `lsbd_raw."<Source>"` live rows against MSSQL, and ask staff.
   2. **Pause the tasks first** (elevated), so no scheduled run interleaves with the manual one:
