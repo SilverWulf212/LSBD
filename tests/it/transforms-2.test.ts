@@ -75,6 +75,12 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms, Task 14 domai
     await inTx(async () => {
       const office = await count(c, `SELECT min("OFFICE_ID") FROM lsbd_raw."Office" WHERE _deleted_at IS NULL`);
       const base = await run(c, ["OfficeAffiliation"]);
+      // Real dangling rows (OFFICE_ID with no live Office) before the synthetic one: whatever the
+      // live data holds today (R34/M4: no assumption that there are any).
+      const danglingSql = `SELECT count(*) FROM lsbd_raw."OfficeAffiliation" r
+          WHERE r._deleted_at IS NULL AND r."OFFICE_ID" IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM lsbd_raw."Office" o WHERE o._deleted_at IS NULL AND o."OFFICE_ID" = r."OFFICE_ID")`;
+      const danglingBefore = await count(c, danglingSql);
       await c.query(
         `INSERT INTO lsbd_raw."OfficeAffiliation" ("OfficeAffiliation_ID", "OFFICE_ID", "DENTIST_ID", "OfficePermit", _row_hash)
          VALUES ($1, $2, 1, false, 'it-test'), ($3, $4, 1, true, 'it-test')`,
@@ -90,14 +96,10 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms, Task 14 domai
         { id: K1, office_id: null, office_permit: false },
         { id: K2, office_id: office, office_permit: true },
       ]);
-      // Every real "1,926-style" row (OFFICE_ID with no live Office) is loaded with office_id NULL.
-      const dangling = await count(
-        c,
-        `SELECT count(*) FROM lsbd_raw."OfficeAffiliation" r
-          WHERE r._deleted_at IS NULL AND r."OFFICE_ID" IS NOT NULL
-            AND NOT EXISTS (SELECT 1 FROM lsbd_raw."Office" o WHERE o._deleted_at IS NULL AND o."OFFICE_ID" = r."OFFICE_ID")`,
-      );
-      expect(dangling).toBeGreaterThan(1); // the synthetic row plus the real ones
+      // Every dangling row (the synthetic one plus any real "1,926-style" ones) is loaded with
+      // office_id NULL.
+      const dangling = await count(c, danglingSql);
+      expect(dangling).toBe(danglingBefore + 1);
       expect(
         await count(
           c,
@@ -340,7 +342,19 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms, Task 14 domai
   it("(h) specialty / announcements / faqs with a missing parent load with the reference NULL", async () => {
     const MISSING_UUID = "a0000000-0000-4000-8000-000999999999";
     const SPEC_UUID = "a0000000-0000-4000-8000-000900000021";
+    const unlinked = async (): Promise<Record<string, number>> => {
+      const q = await c.query<{ target: string; n: string }>(
+        `SELECT target, n FROM lsbd._transform_quality
+          WHERE kind = 'unlinked' AND target IN ('lsbd.announcements', 'lsbd.faqs', 'lsbd.specialty')`,
+      );
+      const out: Record<string, number> = { "lsbd.announcements": 0, "lsbd.faqs": 0, "lsbd.specialty": 0 };
+      for (const x of q.rows) out[x.target] = Number(x.n);
+      return out;
+    };
     await inTx(async () => {
+      // Baseline from the live data (R34/M4: real orphans may exist; only the delta is asserted).
+      await run(c, ["Announcements", "FAQS", "Specialty"]);
+      const before = await unlinked();
       await c.query(
         `INSERT INTO lsbd_raw."Announcements" ("ANNOUNCID", "ANNOUNC_SUBJECT", "CAT_ID", _row_hash) VALUES ($1, 'IT', $2::uuid, 'it-test')`,
         [K1, MISSING_UUID],
@@ -361,15 +375,50 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms, Task 14 domai
         [K1, SPEC_UUID],
       );
       expect(r.rows[0]).toEqual({ ann: `(,${MISSING_UUID})`, faq: `(,${MISSING_UUID})`, spec: `(,${MISSING_UUID})` });
-      const q = await c.query<{ target: string; n: string }>(
-        `SELECT target, n FROM lsbd._transform_quality
-          WHERE kind = 'unlinked' AND target IN ('lsbd.announcements', 'lsbd.faqs', 'lsbd.specialty') ORDER BY target`,
+      expect(await unlinked()).toEqual({
+        "lsbd.announcements": before["lsbd.announcements"] + 1,
+        "lsbd.faqs": before["lsbd.faqs"] + 1,
+        "lsbd.specialty": before["lsbd.specialty"] + 1,
+      });
+    });
+  }, T);
+
+  // R33/M5: ElectionDistricts -> Parishes is a nullable LOOKUP (it was a gate that dropped the
+  // row). A row pointing at a missing parish loads with parish_id NULL and is counted 'unlinked'.
+  it("(i) an ElectionDistricts row with a nonexistent ParishID loads with parish_id NULL (unlinked)", async () => {
+    const MISSING_UUID = "a0000000-0000-4000-8000-000999999998";
+    const unlinked = async (): Promise<number> =>
+      count(
+        c,
+        `SELECT coalesce((SELECT n FROM lsbd._transform_quality
+                           WHERE target = 'lsbd.election_districts' AND relation = 'parish_id -> parishes' AND kind = 'unlinked'), 0)`,
       );
-      expect(q.rows.map((x) => [x.target, Number(x.n)])).toEqual([
-        ["lsbd.announcements", 1],
-        ["lsbd.faqs", 1],
-        ["lsbd.specialty", 1],
+    await inTx(async () => {
+      const base = await run(c, ["ElectionDistricts"]);
+      const before = await unlinked();
+      const parish = await c.query<{ uid: string }>(
+        `SELECT "ParishID"::text AS uid FROM lsbd_raw."Parishes" WHERE _deleted_at IS NULL AND "ParishID" IS NOT NULL ORDER BY "Parish_ID" LIMIT 1`,
+      );
+      await c.query(
+        `INSERT INTO lsbd_raw."ElectionDistricts" ("ElectionDistrict_ID", "ParishID", "District", "PARISH", _row_hash)
+         VALUES ($1, $2::uuid, 1, 'IT', 'it-test'), ($3, $4::uuid, 2, 'IT', 'it-test')`,
+        [K1, MISSING_UUID, K2, parish.rows[0]?.uid ?? null],
+      );
+      const orphans = await run(c, ["ElectionDistricts"]);
+      expect(orphans).toBe(base); // the dangling row is loaded, not skipped
+      const rows = await c.query<{ legacy_id: string; linked: boolean }>(
+        `SELECT legacy_id, parish_id IS NOT NULL AS linked FROM lsbd.election_districts
+          WHERE legacy_id = ANY($1::text[]) ORDER BY legacy_id`,
+        [[String(K1), String(K2)]],
+      );
+      expect(rows.rows).toEqual([
+        { legacy_id: String(K1), linked: false },
+        { legacy_id: String(K2), linked: parish.rows.length > 0 },
       ]);
+      expect(await unlinked()).toBe(before + 1);
+      expect(await count(c, `SELECT count(*) FROM lsbd_raw."ElectionDistricts" WHERE _deleted_at IS NULL`)).toBe(
+        await count(c, `SELECT count(*) FROM lsbd.election_districts`),
+      );
     });
   }, T);
 });

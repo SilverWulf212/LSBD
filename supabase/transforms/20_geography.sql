@@ -8,7 +8,10 @@
 -- election_districts.parish_id: the source row carries only the parish uuid
 -- (ParishID), no int Parish_ID, so it resolves through parishes.legacy_uid to
 -- the GENERATED lsbd.parishes.id (never assumed equal to the source PK).
--- A non-NULL ParishID with no live parish is an orphan: skipped + counted.
+-- "Lookup, not gate" (R33, review M5; same rule as R26/R30): a non-NULL ParishID
+-- with no live parish loads with parish_id NULL and is counted 'unlinked' in
+-- lsbd._transform_quality; the row is never dropped. parish_id has no DB FK, so
+-- no _unlink step is needed before a parish delete.
 
 DROP VIEW IF EXISTS lsbd._src_countries, lsbd._src_states, lsbd._src_parishes, lsbd._src_cities,
   lsbd._src_zipcodes, lsbd._src_election_districts, lsbd._src_tbl_counties CASCADE;
@@ -63,10 +66,8 @@ SELECT r."ElectionDistrict_ID"::text AS legacy_id,
        r."District" AS district,
        lsbd._s(r."PARISH") AS parish_name
   FROM lsbd_raw."ElectionDistricts" r
-  LEFT JOIN (SELECT DISTINCT legacy_uid FROM lsbd._src_parishes) sp ON sp.legacy_uid = r."ParishID"
   LEFT JOIN (SELECT legacy_uid, min(id) AS id FROM lsbd.parishes GROUP BY legacy_uid) p ON p.legacy_uid = r."ParishID"
- WHERE r._deleted_at IS NULL AND r."ElectionDistrict_ID" IS NOT NULL
-   AND (r."ParishID" IS NULL OR sp.legacy_uid IS NOT NULL);
+ WHERE r._deleted_at IS NULL AND r."ElectionDistrict_ID" IS NOT NULL;
 
 CREATE VIEW lsbd._src_tbl_counties WITH (security_invoker = true) AS
 SELECT r."ID"::text AS legacy_id,
@@ -105,6 +106,9 @@ BEGIN
     o := o + lsbd._upsert('lsbd.zipcodes',           'lsbd._src_zipcodes',           '{legacy_id}', 'Zipcodes');
     o := o + lsbd._upsert('lsbd.election_districts', 'lsbd._src_election_districts', '{legacy_id}', 'ElectionDistricts');
     o := o + lsbd._upsert('lsbd.tbl_counties',       'lsbd._src_tbl_counties',       '{legacy_id}', 'tblCounties');
+
+    PERFORM lsbd._count_unlinked('lsbd.election_districts', 'parish_id -> parishes', 'ElectionDistricts',
+      'r."ElectionDistrict_ID"::text = t.legacy_id', 'r."ParishID"', 'parish_id');
   END IF;
   RETURN o;
 END;
