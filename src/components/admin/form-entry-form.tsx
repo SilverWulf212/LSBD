@@ -33,7 +33,8 @@ import { toast } from "sonner";
 import type { DownloadableForm } from "@/types";
 import type { z } from "zod";
 
-type FormEntryFormValues = z.infer<typeof formEntrySchema>;
+type FormEntryFormValues = z.output<typeof formEntrySchema>;
+type FormEntryFormInput = z.input<typeof formEntrySchema>;
 
 interface FormEntryFormProps {
   formEntry?: DownloadableForm | null;
@@ -55,8 +56,8 @@ export function FormEntryForm({ formEntry }: FormEntryFormProps) {
       : null
   );
 
-  const form = useForm<FormEntryFormValues>({
-    resolver: zodResolver(formEntrySchema) as any,
+  const form = useForm<FormEntryFormInput, unknown, FormEntryFormValues>({
+    resolver: zodResolver(formEntrySchema),
     defaultValues: {
       name: formEntry?.name ?? "",
       description: formEntry?.description ?? "",
@@ -273,7 +274,12 @@ export function FormEntryForm({ formEntry }: FormEntryFormProps) {
                     <FormItem>
                       <FormLabel>Sort Order</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value as number}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

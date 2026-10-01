@@ -31,7 +31,8 @@ import { toast } from "sonner";
 import type { BoardMember } from "@/types";
 import type { z } from "zod";
 
-type BoardMemberFormValues = z.infer<typeof boardMemberSchema>;
+type BoardMemberFormValues = z.output<typeof boardMemberSchema>;
+type BoardMemberFormInput = z.input<typeof boardMemberSchema>;
 
 const roleLabels: Record<string, string> = {
   president: "President",
@@ -49,8 +50,8 @@ interface BoardMemberFormProps {
 export function BoardMemberForm({ boardMember }: BoardMemberFormProps) {
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<BoardMemberFormValues>({
-    resolver: zodResolver(boardMemberSchema) as any,
+  const form = useForm<BoardMemberFormInput, unknown, BoardMemberFormValues>({
+    resolver: zodResolver(boardMemberSchema),
     defaultValues: {
       name: boardMember?.name ?? "",
       honorific: boardMember?.honorific ?? "",
@@ -229,7 +230,12 @@ export function BoardMemberForm({ boardMember }: BoardMemberFormProps) {
                     <FormItem>
                       <FormLabel>Sort Order</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value as number}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

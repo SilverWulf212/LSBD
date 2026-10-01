@@ -33,7 +33,8 @@ import { cn } from "@/lib/utils";
 import type { Alert } from "@/types";
 import type { z } from "zod";
 
-type AlertFormValues = z.infer<typeof alertSchema>;
+type AlertFormValues = z.output<typeof alertSchema>;
+type AlertFormInput = z.input<typeof alertSchema>;
 
 const severityConfig = {
   info: { label: "Info", className: "bg-blue-100 text-blue-800" },
@@ -48,8 +49,8 @@ interface AlertFormProps {
 export function AlertForm({ alert }: AlertFormProps) {
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<AlertFormValues>({
-    resolver: zodResolver(alertSchema) as any,
+  const form = useForm<AlertFormInput, unknown, AlertFormValues>({
+    resolver: zodResolver(alertSchema),
     defaultValues: {
       title: alert?.title ?? "",
       content: alert?.content ?? "",
@@ -243,7 +244,12 @@ export function AlertForm({ alert }: AlertFormProps) {
                     <FormItem>
                       <FormLabel>Sort Order</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value as number}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

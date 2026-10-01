@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Legacy one-shot ETL scripts, scheduled for deletion; not part of the app.
+    "scripts/etl-*.ts",
   ]),
 ]);
 

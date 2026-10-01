@@ -24,7 +24,8 @@ import { toast } from "sonner";
 import type { StaffMember } from "@/types";
 import type { z } from "zod";
 
-type StaffFormValues = z.infer<typeof staffSchema>;
+type StaffFormValues = z.output<typeof staffSchema>;
+type StaffFormInput = z.input<typeof staffSchema>;
 
 interface StaffFormProps {
   staffMember?: StaffMember | null;
@@ -33,8 +34,8 @@ interface StaffFormProps {
 export function StaffForm({ staffMember }: StaffFormProps) {
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<StaffFormValues>({
-    resolver: zodResolver(staffSchema) as any,
+  const form = useForm<StaffFormInput, unknown, StaffFormValues>({
+    resolver: zodResolver(staffSchema),
     defaultValues: {
       name: staffMember?.name ?? "",
       title: staffMember?.title ?? "",
@@ -214,7 +215,12 @@ export function StaffForm({ staffMember }: StaffFormProps) {
                     <FormItem>
                       <FormLabel>Sort Order</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value as number}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

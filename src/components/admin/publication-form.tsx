@@ -25,7 +25,8 @@ import { toast } from "sonner";
 import type { Publication } from "@/types";
 import type { z } from "zod";
 
-type PublicationFormValues = z.infer<typeof publicationSchema>;
+type PublicationFormValues = z.output<typeof publicationSchema>;
+type PublicationFormInput = z.input<typeof publicationSchema>;
 
 interface PublicationFormProps {
   publication?: Publication | null;
@@ -47,8 +48,8 @@ export function PublicationForm({ publication }: PublicationFormProps) {
       : null
   );
 
-  const form = useForm<PublicationFormValues>({
-    resolver: zodResolver(publicationSchema) as any,
+  const form = useForm<PublicationFormInput, unknown, PublicationFormValues>({
+    resolver: zodResolver(publicationSchema),
     defaultValues: {
       title: publication?.title ?? "",
       year: publication?.year ?? new Date().getFullYear(),
@@ -128,6 +129,7 @@ export function PublicationForm({ publication }: PublicationFormProps) {
                           max={2100}
                           aria-required="true"
                           {...field}
+                          value={field.value as number}
                         />
                       </FormControl>
                       <FormMessage />

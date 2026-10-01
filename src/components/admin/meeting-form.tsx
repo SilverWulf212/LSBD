@@ -35,7 +35,8 @@ import { formatFileSize } from "@/lib/utils";
 import type { MeetingWithDocuments, MeetingDocument } from "@/types";
 import type { z } from "zod";
 
-type MeetingFormValues = z.infer<typeof meetingSchema>;
+type MeetingFormValues = z.output<typeof meetingSchema>;
+type MeetingFormInput = z.input<typeof meetingSchema>;
 
 const docTypes = [
   { key: "notice" as const, label: "Notice" },
@@ -51,8 +52,8 @@ export function MeetingForm({ meeting }: MeetingFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<MeetingFormValues>({
-    resolver: zodResolver(meetingSchema) as any,
+  const form = useForm<MeetingFormInput, unknown, MeetingFormValues>({
+    resolver: zodResolver(meetingSchema),
     defaultValues: {
       title: meeting?.title ?? "",
       meetingDate: meeting?.meetingDate
