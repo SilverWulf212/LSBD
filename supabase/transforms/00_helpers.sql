@@ -238,7 +238,8 @@ AS $$
 DECLARE
   n bigint;
 BEGIN
-  EXECUTE format('SELECT count(*) FROM %s AS t JOIN lsbd_raw.%I AS r ON r._deleted_at IS NULL AND (%s) WHERE (%s) IS NOT NULL AND t.%I IS NULL',
+  -- count(DISTINCT t.ctid): a no-PK source can hold several raw rows per target row
+  EXECUTE format('SELECT count(DISTINCT t.ctid) FROM %s AS t JOIN lsbd_raw.%I AS r ON r._deleted_at IS NULL AND (%s) WHERE (%s) IS NOT NULL AND t.%I IS NULL',
                  target, source_table, join_on, raw_ref, col) INTO n;
   IF n > 0 THEN
     RAISE NOTICE 'transform %: % rows loaded with % NULL (unresolved %)', target, n, col, relation;

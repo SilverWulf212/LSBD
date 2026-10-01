@@ -69,7 +69,9 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms, Task 14 domai
     }
   }
 
-  it("(a) an OfficeAffiliation row pointing at a nonexistent office is an orphan: counted, not inserted", async () => {
+  // R26/R28: OfficeAffiliation -> Office is a nullable LOOKUP. A row pointing at a missing
+  // office loads with office_id NULL and is counted 'unlinked', never skipped.
+  it("(a1) an OfficeAffiliation row pointing at a nonexistent office loads with office_id NULL (unlinked)", async () => {
     await inTx(async () => {
       const office = await count(c, `SELECT min("OFFICE_ID") FROM lsbd_raw."Office" WHERE _deleted_at IS NULL`);
       const base = await run(c, ["OfficeAffiliation"]);
@@ -79,18 +81,66 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms, Task 14 domai
         [K1, MISSING, K2, office],
       );
       const orphans = await run(c, ["OfficeAffiliation"]);
+      expect(orphans).toBe(base); // nothing skipped: the dangling row is loaded, not dropped
+      const rows = await c.query(
+        `SELECT id, office_id, office_permit FROM lsbd.office_affiliation WHERE id = ANY($1::int[]) ORDER BY id`,
+        [[K1, K2]],
+      );
+      expect(rows.rows).toEqual([
+        { id: K1, office_id: null, office_permit: false },
+        { id: K2, office_id: office, office_permit: true },
+      ]);
+      // Every real "1,926-style" row (OFFICE_ID with no live Office) is loaded with office_id NULL.
+      const dangling = await count(
+        c,
+        `SELECT count(*) FROM lsbd_raw."OfficeAffiliation" r
+          WHERE r._deleted_at IS NULL AND r."OFFICE_ID" IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM lsbd_raw."Office" o WHERE o._deleted_at IS NULL AND o."OFFICE_ID" = r."OFFICE_ID")`,
+      );
+      expect(dangling).toBeGreaterThan(1); // the synthetic row plus the real ones
+      expect(
+        await count(
+          c,
+          `SELECT count(*) FROM lsbd.office_affiliation t
+             JOIN lsbd_raw."OfficeAffiliation" r ON r."OfficeAffiliation_ID" = t.id AND r._deleted_at IS NULL
+            WHERE r."OFFICE_ID" IS NOT NULL AND t.office_id IS NULL`,
+        ),
+      ).toBe(dangling);
+      expect(
+        await count(c, `SELECT count(*) FROM lsbd_raw."OfficeAffiliation" WHERE _deleted_at IS NULL`),
+      ).toBe(await count(c, `SELECT count(*) FROM lsbd.office_affiliation`));
+      const q = await c.query<{ kind: string; n: string }>(
+        `SELECT kind, n FROM lsbd._transform_quality
+          WHERE target = 'lsbd.office_affiliation' AND relation IN ('office_id -> office', 'skipped (orphan / unkeyable / duplicate)')
+          ORDER BY kind`,
+      );
+      expect(q.rows.map((r) => [r.kind, Number(r.n)])).toEqual([
+        ["skipped", 0],
+        ["unlinked", dangling],
+      ]);
+    });
+  }, T);
+
+  // The skip (orphan) path keeps IT coverage through a row that cannot be loaded: lsbd.logins
+  // needs a non-empty license_id, and the source row has LicenseID = ''.
+  it("(a2) an unloadable source row is an orphan: counted, not inserted", async () => {
+    await inTx(async () => {
+      const base = await run(c, ["Logins"]);
+      await c.query(
+        `INSERT INTO lsbd_raw."Logins" ("ID", "LicenseID", "LicType", "LoginDate", _row_hash)
+         VALUES ($1, '', 'D', '2026-09-30 10:00', 'it-test'), ($2, 'IT-1', 'D', '2026-09-30 10:00', 'it-test')`,
+        [K1, K2],
+      );
+      const orphans = await run(c, ["Logins"]);
       expect(orphans).toBeGreaterThanOrEqual(1);
       expect(orphans).toBe(base + 1);
-      expect(await count(c, `SELECT count(*) FROM lsbd.office_affiliation WHERE id = $1`, [K1])).toBe(0);
-      // the control row with a live office is inserted
-      const ok = await c.query(`SELECT office_id, office_permit FROM lsbd.office_affiliation WHERE id = $1`, [K2]);
-      expect(ok.rows).toEqual([{ office_id: office, office_permit: true }]);
-      // per-relation bookkeeping for the reconcile report
+      expect(await count(c, `SELECT count(*) FROM lsbd.logins WHERE id = $1`, [K1])).toBe(0);
+      expect(await count(c, `SELECT count(*) FROM lsbd.logins WHERE id = $1`, [K2])).toBe(1);
       const q = await c.query<{ n: string; source_table: string }>(
-        `SELECT n, source_table FROM lsbd._transform_quality WHERE target = 'lsbd.office_affiliation' AND kind = 'skipped'`,
+        `SELECT n, source_table FROM lsbd._transform_quality WHERE target = 'lsbd.logins' AND kind = 'skipped'`,
       );
       expect(q.rows).toHaveLength(1);
-      expect(q.rows[0].source_table).toBe("OfficeAffiliation");
+      expect(q.rows[0].source_table).toBe("Logins");
       expect(Number(q.rows[0].n)).toBeGreaterThanOrEqual(1);
     });
   }, T);
@@ -259,5 +309,67 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms, Task 14 domai
     expect(second).toEqual(first);
     expect(first.derived).toBe(uuidV5(NS_URL, `lsbd:Disciplinary:Disciplinary_ID:${K1}`));
     expect(first.kept).toBe(DISC_UUID); // a real source uuid is kept as-is
+  }, T);
+
+  // R29: the SSN HMAC lives only in lsbd.licensee_pii; the random_sample tables never carry it.
+  it("(g) random_sample_dentists / _hygienists.ssn is never populated, even when the raw row has an SSN", async () => {
+    await inTx(async () => {
+      await c.query(
+        `INSERT INTO lsbd_raw."tblRndDentists" ("Key", "LICENSEID", "SSN", _row_hash) VALUES ($1, 'IT-1', 'it-hash-d', 'it-test')`,
+        [K1],
+      );
+      await c.query(
+        `INSERT INTO lsbd_raw."tblRndHygienists" ("Key", "LICENSEID", "SSN", _row_hash) VALUES ($1, 'IT-1', 'it-hash-h', 'it-test')`,
+        [K1],
+      );
+      await run(c, ["tblRndDentists", "tblRndHygienists"]);
+      expect(await count(c, `SELECT count(*) FROM lsbd.random_sample_dentists WHERE id = $1`, [K1])).toBe(1);
+      expect(await count(c, `SELECT count(*) FROM lsbd.random_sample_hygienists WHERE id = $1`, [K1])).toBe(1);
+      expect(
+        await count(
+          c,
+          `SELECT (SELECT count(*) FROM lsbd.random_sample_dentists WHERE ssn IS NOT NULL)
+                + (SELECT count(*) FROM lsbd.random_sample_hygienists WHERE ssn IS NOT NULL)`,
+        ),
+      ).toBe(0);
+    });
+  }, T);
+
+  // R30: specialty -> professional and announcements / faqs -> category are lookups: a row whose
+  // parent is missing loads with the reference NULL (source uuid kept in the *_uid column).
+  it("(h) specialty / announcements / faqs with a missing parent load with the reference NULL", async () => {
+    const MISSING_UUID = "a0000000-0000-4000-8000-000999999999";
+    const SPEC_UUID = "a0000000-0000-4000-8000-000900000021";
+    await inTx(async () => {
+      await c.query(
+        `INSERT INTO lsbd_raw."Announcements" ("ANNOUNCID", "ANNOUNC_SUBJECT", "CAT_ID", _row_hash) VALUES ($1, 'IT', $2::uuid, 'it-test')`,
+        [K1, MISSING_UUID],
+      );
+      await c.query(
+        `INSERT INTO lsbd_raw."FAQS" ("FAQSID", "FAQS_QUESTIONS", "CAT_ID", _row_hash) VALUES ($1, 'IT', $2::uuid, 'it-test')`,
+        [K1, MISSING_UUID],
+      );
+      await c.query(
+        `INSERT INTO lsbd_raw."Specialty" ("SpecialtyID", "ProfessionalD", "Institution", _row_hash) VALUES ($1::uuid, $2::uuid, 'IT', 'it-test')`,
+        [SPEC_UUID, MISSING_UUID],
+      );
+      await run(c, ["Announcements", "FAQS", "Specialty"]);
+      const r = await c.query(
+        `SELECT (SELECT row(category_id, category_uid::text)::text FROM lsbd.announcements WHERE id = $1) AS ann,
+                (SELECT row(category_id, category_uid::text)::text FROM lsbd.faqs WHERE id = $1) AS faq,
+                (SELECT row(professional_id, professional_uid::text)::text FROM lsbd.specialty WHERE legacy_id = $2) AS spec`,
+        [K1, SPEC_UUID],
+      );
+      expect(r.rows[0]).toEqual({ ann: `(,${MISSING_UUID})`, faq: `(,${MISSING_UUID})`, spec: `(,${MISSING_UUID})` });
+      const q = await c.query<{ target: string; n: string }>(
+        `SELECT target, n FROM lsbd._transform_quality
+          WHERE kind = 'unlinked' AND target IN ('lsbd.announcements', 'lsbd.faqs', 'lsbd.specialty') ORDER BY target`,
+      );
+      expect(q.rows.map((x) => [x.target, Number(x.n)])).toEqual([
+        ["lsbd.announcements", 1],
+        ["lsbd.faqs", 1],
+        ["lsbd.specialty", 1],
+      ]);
+    });
   }, T);
 });

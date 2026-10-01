@@ -14,13 +14,13 @@
 -- (ID), association_history (ID), professional_llc (tblPLLCs.Key), professional_association
 -- (tblPAs.Key).
 --
--- References
---   gate (brief, test (a)): office_affiliation.office_id (OFFICE_ID) -> office (id = OFFICE_ID).
---     A non-NULL OFFICE_ID with no live Office row is an orphan: skipped + counted, never
---     inserted. (1,926 of 4,088 live rows point at OFFICE_IDs 4180..6730, above the highest
---     Office row: see the Task 14 report.)
---   lookup, not gate (controller carry 1): the row is always loaded, an unresolved reference
---     is NULL and counted 'unlinked' in lsbd._transform_quality:
+-- References: all "lookup, not gate" (controller carry 1; rulings R26/R28 for office): the
+--   row is always loaded, an unresolved reference is NULL and counted 'unlinked' in
+--   lsbd._transform_quality:
+--       office_affiliation.office_id (no DB FK) -> office (id = OFFICE_ID): the OFFICE_ID of a
+--         live Office row, else NULL. (1,926 of 4,088 live rows point at OFFICE_IDs 4180..6730,
+--         above the highest Office row; their source OFFICE_ID stays in lsbd_raw only (R28).
+--         office_uid keeps the source OfficeID uuid verbatim.)
 --       individual_affiliation.dentist_id / individual_id (uuid, DB FK -> individual):
 --         DentistID / IndividualID resolved through lsbd._src_individual; _unlink() NULLs a
 --         reference whose Individual is gone BEFORE entities deletes it (NO ACTION FK).
@@ -118,7 +118,7 @@ SELECT r."IndividualAffiliation_ID" AS id,
   LEFT JOIN lsbd._src_individual i ON i.individual_id = r."IndividualID"
  WHERE r._deleted_at IS NULL AND r."IndividualAffiliation_ID" IS NOT NULL;
 
--- Gate: OFFICE_ID must be NULL or a live Office row.
+-- Lookup (R26): office_id is the live Office row's id, else NULL; the row always loads.
 CREATE VIEW lsbd._src_office_affiliation WITH (security_invoker = true) AS
 SELECT r."OfficeAffiliation_ID"  AS id,
        r."OfficeAffiliationID"   AS legacy_uid,
@@ -126,11 +126,10 @@ SELECT r."OfficeAffiliation_ID"  AS id,
        r."OfficeID"              AS office_uid,
        r."OfficePermit"          AS office_permit,
        r."DENTIST_ID"            AS dentist_id,
-       r."OFFICE_ID"             AS office_id
+       o.id                      AS office_id
   FROM lsbd_raw."OfficeAffiliation" r
   LEFT JOIN lsbd._src_office o ON o.id = r."OFFICE_ID"
- WHERE r._deleted_at IS NULL AND r."OfficeAffiliation_ID" IS NOT NULL
-   AND (r."OFFICE_ID" IS NULL OR o.id IS NOT NULL);
+ WHERE r._deleted_at IS NULL AND r."OfficeAffiliation_ID" IS NOT NULL;
 
 CREATE VIEW lsbd._src_office_aff_history WITH (security_invoker = true) AS
 SELECT r."ID"                     AS id,
@@ -276,6 +275,8 @@ BEGIN
     PERFORM lsbd._count_unlinked('lsbd.address', 'country_id -> countries', 'ADDRESS', 'r."Address_ID" = t.id', 'r."CountryID"', 'country_id');
     PERFORM lsbd._count_unlinked('lsbd.address', 'address_type_id -> address_type_lookup', 'ADDRESS', 'r."Address_ID" = t.id', 'r."AddressTypeID"', 'address_type_id');
     PERFORM lsbd._count_unlinked('lsbd.address', 'parish_id -> parishes', 'ADDRESS', 'r."Address_ID" = t.id', 'r."ParishID"', 'parish_id');
+    PERFORM lsbd._count_unlinked('lsbd.office_affiliation', 'office_id -> office', 'OfficeAffiliation',
+      'r."OfficeAffiliation_ID" = t.id', 'r."OFFICE_ID"', 'office_id');
     PERFORM lsbd._count_unlinked('lsbd.individual_affiliation', 'dentist_id -> individual', 'IndividualAffiliation',
       'r."IndividualAffiliation_ID" = t.id', 'r."DentistID"', 'dentist_id');
     PERFORM lsbd._count_unlinked('lsbd.individual_affiliation', 'individual_id -> individual', 'IndividualAffiliation',
@@ -290,7 +291,7 @@ VALUES ('relationships', 'lsbd.transform_relationships'::regproc, 50, ARRAY[
   -- own sources
   'ADDRESS', 'AddressHistory', 'IndividualAffiliation', 'OfficeAffiliation', 'OfficeAffHistory',
   'AssociationHistory', 'tblPLLCs', 'tblPAs',
-  -- parents (a change re-runs this domain: re-link / unlink / re-gate)
+  -- parents (a change re-runs this domain: re-link / unlink)
   'Individual', 'Office', 'Cities', 'States', 'Countries', 'AddressType', 'Parishes'])
 ON CONFLICT (domain) DO UPDATE
   SET fn = EXCLUDED.fn, sort_order = EXCLUDED.sort_order, source_tables = EXCLUDED.source_tables;

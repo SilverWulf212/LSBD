@@ -175,7 +175,7 @@ describe("eventLogInvocation", () => {
 describe("withMassDeleteOverride (--allow-mass-delete reaches the DB guard)", () => {
   const recorder = () => {
     const calls: string[] = [];
-    return { calls, c: { query: async (sql: string) => { calls.push(sql); return {} as never; } } };
+    return { calls, c: { query: async (sql: string) => { calls.push(sql); return {} as never; } } as unknown as Pick<import("pg").Client, "query"> };
   };
 
   it("SETs the GUC before the transform call and RESETs it after, on the same connection", async () => {

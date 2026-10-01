@@ -18,10 +18,10 @@
 -- soft-deleted lookup row never deletes or FK-fails the rows under it:
 --   individual.individual_status_uuid -> individual_status (DB FK, nullable)
 --   professional.individual_id        -> individual        (DB FK, nullable)
--- Parents, gate (orphan = non-NULL reference with no eligible parent: skipped + counted,
--- never inserted with a NULL FK):
---   specialty.professional_uid        -> professional (professional_id int := professional.legacy_id)
---   announcements/faqs.category_uid   -> category (category_id := category.id = CATID)
+--   (ruling R30, no DB FK, nullable; the source uuid is kept verbatim in the *_uid column)
+--   specialty.professional_id         -> professional (professional.legacy_id via ProfessionalD)
+--   announcements/faqs.category_id    -> category (category.id = CATID via CAT_ID)
+-- No relation in this domain is a gate any more: no row is dropped for a missing parent.
 -- Columns that are UNIQUE in lsbd besides the key (individual_status_uuid,
 -- individual.individual_id, professional.professional_id) keep the lowest
 -- source key per value; later duplicates are skipped + counted.
@@ -164,7 +164,6 @@ SELECT DISTINCT ON (lower(r."SpecialtyID"::text))
   FROM lsbd_raw."Specialty" r
   LEFT JOIN lsbd._src_professional p ON p.professional_id = r."ProfessionalD"
  WHERE r._deleted_at IS NULL AND r."SpecialtyID" IS NOT NULL
-   AND (r."ProfessionalD" IS NULL OR p.professional_id IS NOT NULL)
  ORDER BY lower(r."SpecialtyID"::text), r._rowid;
 
 -- Statutes: no source PK (0 rows today). Key lower(StatuteID), first _rowid wins.
@@ -202,8 +201,7 @@ SELECT r."ANNOUNCID" AS id,
        lsbd._s(r."CATEGORY") AS category_text
   FROM lsbd_raw."Announcements" r
   LEFT JOIN (SELECT legacy_uid, min(id) AS id FROM lsbd._src_category GROUP BY legacy_uid) c ON c.legacy_uid = r."CAT_ID"
- WHERE r._deleted_at IS NULL AND r."ANNOUNCID" IS NOT NULL
-   AND (r."CAT_ID" IS NULL OR c.id IS NOT NULL);
+ WHERE r._deleted_at IS NULL AND r."ANNOUNCID" IS NOT NULL;
 
 CREATE VIEW lsbd._src_faqs WITH (security_invoker = true) AS
 SELECT r."FAQSID" AS id,
@@ -216,8 +214,7 @@ SELECT r."FAQSID" AS id,
        lsbd._s(r."CATEGORY") AS category_text
   FROM lsbd_raw."FAQS" r
   LEFT JOIN (SELECT legacy_uid, min(id) AS id FROM lsbd._src_category GROUP BY legacy_uid) c ON c.legacy_uid = r."CAT_ID"
- WHERE r._deleted_at IS NULL AND r."FAQSID" IS NOT NULL
-   AND (r."CAT_ID" IS NULL OR c.id IS NOT NULL);
+ WHERE r._deleted_at IS NULL AND r."FAQSID" IS NOT NULL;
 
 CREATE OR REPLACE FUNCTION lsbd.transform_entities(phase text DEFAULT 'all')
 RETURNS integer
@@ -271,6 +268,12 @@ BEGIN
       'r."INDVID" = t.indv_id', 'r."IndividualStatusID"', 'individual_status_uuid');
     PERFORM lsbd._count_unlinked('lsbd.professional', 'individual_id -> individual', 'Professional',
       'r."Professional_ID" = t.legacy_id', 'r."IndividualID"', 'individual_id');
+    PERFORM lsbd._count_unlinked('lsbd.specialty', 'professional_id -> professional', 'Specialty',
+      'lower(r."SpecialtyID"::text) = t.legacy_id', 'r."ProfessionalD"', 'professional_id');
+    PERFORM lsbd._count_unlinked('lsbd.announcements', 'category_id -> category', 'Announcements',
+      'r."ANNOUNCID" = t.id', 'r."CAT_ID"', 'category_id');
+    PERFORM lsbd._count_unlinked('lsbd.faqs', 'category_id -> category', 'FAQS',
+      'r."FAQSID" = t.id', 'r."CAT_ID"', 'category_id');
   END IF;
   RETURN o;
 END;

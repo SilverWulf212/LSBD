@@ -45,8 +45,10 @@
 --     _src_statutes legacy_uid -> legacy_id -> JOIN statutes.legacy_id (controller carry 2).
 -- logins: license_id, lic_type and login_date are NOT NULL in lsbd; a row with any of them
 --   NULL or '' is skipped + counted (the May ETL skipped the same rows); values verbatim.
--- random_sample_dentists / _hygienists.ssn is the SSN HMAC already in lsbd_raw (the sync
---   HMACs SSN on tblRndDentists / tblRndHygienists); dob / sex / race are PII (RLS).
+-- random_sample_dentists / _hygienists.ssn is always NULL (ruling R29): the SSN HMAC lives
+--   only in lsbd.licensee_pii, as individual.ssn is NULL (Task 11); a sample reaches it by
+--   joining person / license. The column stays only because the DDL has it. dob / sex /
+--   race are PII (RLS).
 -- activity.attachment_url is not written: the source Attachment is a blob, not a URL.
 
 DROP VIEW IF EXISTS lsbd._src_complaint, lsbd._src_disciplinary, lsbd._src_activity,
@@ -269,7 +271,7 @@ SELECT r."Key" AS id,
        lsbd._s(r."CITY") AS city, lsbd._s(r."STATE") AS state, lsbd._s(r."ZIP") AS zip,
        lsbd._s(r."COUNTY") AS county, lsbd._s(r."AddrType") AS addr_type,
        lsbd._s(r."COMPLAINT") AS complaint,
-       r."SSN" AS ssn,
+       NULL::text AS ssn,  -- R29: the SSN HMAC lives only in lsbd.licensee_pii
        lsbd._s(r."Email") AS email, lsbd._s(r."URL") AS url, lsbd._s(r."Location") AS location,
        lsbd._s(r."Phone1") AS phone1, lsbd._s(r."Ext1") AS ext1, lsbd._s(r."Phone2") AS phone2,
        lsbd._s(r."Ext2") AS ext2, lsbd._s(r."Fax") AS fax, lsbd._s(r."Notes") AS notes,
