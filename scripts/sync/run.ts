@@ -30,7 +30,7 @@ import { loadSecrets } from "../lib/secrets";
 import { connectPg } from "../lib/pg";
 import { readSchema, query, closeBridge } from "./mssql";
 import { EXCLUDED_TABLES, applyPolicy, policyFor } from "./policy";
-import { fingerprintSql, keysSql, rowsSql } from "./sql-gen";
+import { fingerprintSql, keysSql, pkProbeSql, rowsSql } from "./sql-gen";
 import { diffKeys, keyOf, massDeleteGuard } from "./diff";
 import { readRawKeys, replaceTable, rowToRaw, softDelete, upsertRaw } from "./raw-writer";
 import { pgTypeFor } from "./type-map";
@@ -65,6 +65,8 @@ export interface RunDeps {
   runTransforms?: (c: Client, changed: string[] | null) => Promise<number>;
   /** Healthcheck + event-log alerts; defaults to the real ones (scripts/sync/alert.ts). */
   alert?: Alerter;
+  /** SSN HMAC key; defaults to PII_SSN_HMAC_KEY from the secrets file. For unit tests. */
+  hmacKey?: Buffer;
 }
 
 const LOCK_KEY = "hashtext('lsbd_sync')";
@@ -314,6 +316,22 @@ async function collect<T>(it: AsyncIterable<T>): Promise<T[]> {
   return out;
 }
 
+/**
+ * R38: of the delete candidates (normalised keys), the ones a PK point lookup on the source
+ * does NOT find. Runs through the same read-only bridge (query), chunked like rowsSql.
+ */
+export async function confirmAbsent(q: typeof query, t: SourceTable, candidates: string[]): Promise<string[]> {
+  const pkCol = t.columns.find((x) => x.name === t.pk);
+  if (!pkCol) throw new Error(`${t.name}: pk column ${String(t.pk)} not in column list`);
+  const present = new Set<string>();
+  for (let i = 0; i < candidates.length; i += ROW_CHUNK) {
+    for await (const r of q<{ k: unknown }>(pkProbeSql(t, candidates.slice(i, i + ROW_CHUNK)))) {
+      present.add(keyOf(r.k, pkCol.type));
+    }
+  }
+  return candidates.filter((k) => !present.has(k));
+}
+
 /** Everything written for one table happens in one transaction on ctx.c. */
 async function writeTable(
   ctx: Ctx,
@@ -411,18 +429,30 @@ async function syncPkTable(ctx: Ctx, t: SourceTable, adds: Drift["add"], fp: Fp 
     if (insertedSet.has(k)) ins++;
     else upd++;
   }
-  const changed = rows.size > 0 || d.deleted.length > 0 || adds.length > 0;
-  const trusted = fingerprintTrusted({
-    sourceRows: new Set(src.map((x) => x.k)).size,
-    fpCount: fp?.n ?? null,
-    fetched: rows.size,
-    changed: changedCount,
-  });
+  // R38: re-confirm every delete candidate with a PK point lookup before soft-deleting it. The
+  // unordered NOLOCK key scan can skip rows that move during a page split; a skipped key would
+  // otherwise be deleted here and re-inserted next run with new app-facing ids (spec 4.2). The
+  // mass-delete guard above still judges the scan's candidate count (semantics unchanged).
+  let toDelete = d.deleted;
+  if (d.deleted.length > 0) {
+    toDelete = await confirmAbsent(ctx.q, t, d.deleted);
+    const kept = d.deleted.length - toDelete.length;
+    if (kept > 0) log(`  ${t.name}: ${kept} delete candidate(s) still present at source on PK re-check; not deleted`);
+  }
+  const changed = rows.size > 0 || toDelete.length > 0 || adds.length > 0;
+  const trusted =
+    toDelete.length === d.deleted.length &&
+    fingerprintTrusted({
+      sourceRows: new Set(src.map((x) => x.k)).size,
+      fpCount: fp?.n ?? null,
+      fetched: rows.size,
+      changed: changedCount,
+    });
   if (!trusted) log(`  ${t.name}: source moved during the read; fingerprint not stored (next quick run re-diffs)`);
   let del = 0;
   await writeTable(ctx, t, adds, trusted ? fp : UNTRUSTED, changed, async () => {
     if (rows.size > 0) await upsertRaw(ctx.c, t, [...rows.values()]);
-    if (d.deleted.length > 0) del = await softDelete(ctx.c, t, d.deleted);
+    if (toDelete.length > 0) del = await softDelete(ctx.c, t, toDelete);
     return 0;
   });
   return { blocked: false, path, ins, upd, del, liveBefore: tgt.length };
@@ -540,7 +570,7 @@ export async function runSync(opts: RunOptions, deps?: RunDeps): Promise<RunSumm
 
     try {
       if (opts.tables !== "none") {
-        const ctx: Ctx = { c, q, hmacKey: hmacKeyFromSecrets(), allowMassDelete: opts.allowMassDelete };
+        const ctx: Ctx = { c, q, hmacKey: deps?.hmacKey ?? hmacKeyFromSecrets(), allowMassDelete: opts.allowMassDelete };
         await syncAll(ctx, opts, rs, summary, errors, failed);
       }
       if (opts.transform) {

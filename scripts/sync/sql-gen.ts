@@ -2,7 +2,8 @@ import type { SourceColumn, SourceTable } from "./types";
 
 /**
  * T-SQL generators for the sync bridge (spec section 4.1). Everything here is SELECT-only
- * and reads with NOLOCK. Pure string building: no database access.
+ * and reads with NOLOCK, except the PK point lookup (pkProbeSql). Pure string building: no
+ * database access.
  */
 
 // U+2400, written as NCHAR so it survives any transport encoding.
@@ -89,14 +90,13 @@ export function keysSql(t: SourceTable): string {
   return `SELECT ${q(t.pk)} AS k, ${rowHashExpr(t.columns)} AS h FROM dbo.${q(t.name)} WITH (NOLOCK)`;
 }
 
-export function rowsSql(t: SourceTable, keys: string[] | "all"): string {
-  const base = `SELECT *, ${rowHashExpr(t.columns)} AS __h FROM dbo.${q(t.name)} WITH (NOLOCK)`;
-  if (keys === "all") return base;
-  if (keys.length === 0) throw new Error("rowsSql: empty key list");
-  if (t.pk === null) throw new Error("rowsSql: keys given for a table without a PK");
+/** `[pk] IN (...)` with validated, literal-formatted keys. */
+function pkInList(fn: string, t: SourceTable, keys: string[]): string {
+  if (keys.length === 0) throw new Error(`${fn}: empty key list`);
+  if (t.pk === null) throw new Error(`${fn}: keys given for a table without a PK`);
   const pk = t.pk;
   const pkCol = t.columns.find((c) => c.name === pk);
-  if (!pkCol) throw new Error(`rowsSql: PK column ${pk} not found in ${t.name}`);
+  if (!pkCol) throw new Error(`${fn}: PK column ${pk} not found in ${t.name}`);
   const isInt = INT_PK_TYPES.has(pkCol.type.toLowerCase());
   const list = keys
     .map((k) => {
@@ -107,5 +107,23 @@ export function rowsSql(t: SourceTable, keys: string[] | "all"): string {
       return nlit(k);
     })
     .join(", ");
-  return `${base} WHERE ${q(pk)} IN (${list})`;
+  return `${q(pk)} IN (${list})`;
+}
+
+export function rowsSql(t: SourceTable, keys: string[] | "all"): string {
+  const base = `SELECT *, ${rowHashExpr(t.columns)} AS __h FROM dbo.${q(t.name)} WITH (NOLOCK)`;
+  if (keys === "all") return base;
+  return `${base} WHERE ${pkInList("rowsSql", t, keys)}`;
+}
+
+/**
+ * PK point lookup used to re-confirm delete candidates (ruling R38). No NOLOCK hint and no row
+ * hash: an IN-list on the PK is answered by index seeks, which are not subject to the
+ * allocation-order scan anomalies (rows skipped during a concurrent page split) that an
+ * unordered NOLOCK key scan can hit. The bridge's READ UNCOMMITTED wrapper still applies, so it
+ * never blocks on staff locks.
+ */
+export function pkProbeSql(t: SourceTable, keys: string[]): string {
+  if (t.pk === null) throw new Error("pkProbeSql requires a PK");
+  return `SELECT ${q(t.pk)} AS k FROM dbo.${q(t.name)} WHERE ${pkInList("pkProbeSql", t, keys)}`;
 }
