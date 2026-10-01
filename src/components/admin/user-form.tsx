@@ -27,7 +27,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import type { User } from "@/types";
+import type { SafeUser } from "@/types";
 import type { z } from "zod";
 
 type CreateValues = z.infer<typeof userCreateSchema>;
@@ -35,7 +35,7 @@ type UpdateValues = z.infer<typeof userUpdateSchema>;
 type FormValues = CreateValues | UpdateValues;
 
 interface UserFormProps {
-  user?: User | null;
+  user?: SafeUser | null;
 }
 
 export function UserForm({ user }: UserFormProps) {

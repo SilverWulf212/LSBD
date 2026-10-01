@@ -9,9 +9,9 @@ import { deleteUser } from "@/actions/users";
 import { ROLE_LABELS } from "@/lib/auth-roles";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
-import type { User } from "@/types";
+import type { SafeUser } from "@/types";
 
-const columns: ColumnDef<User>[] = [
+const columns: ColumnDef<SafeUser>[] = [
   {
     key: "name",
     header: "Name",
@@ -49,14 +49,14 @@ export function UsersTable({
   users,
   currentUserId,
 }: {
-  users: User[];
+  users: SafeUser[];
   currentUserId: number;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SafeUser | null>(null);
 
-  const actions: RowAction<User>[] = [
+  const actions: RowAction<SafeUser>[] = [
     {
       label: "Edit",
       icon: <Pencil className="h-4 w-4" />,

@@ -7,6 +7,8 @@ import type {
 
 // Select types (reading from DB)
 export type User = InferSelectModel<typeof users>;
+// What may leave the server: a user row without the password hash.
+export type SafeUser = Omit<User, "passwordHash">;
 export type Post = InferSelectModel<typeof posts>;
 export type Alert = InferSelectModel<typeof alerts>;
 export type BoardMember = InferSelectModel<typeof boardMembers>;

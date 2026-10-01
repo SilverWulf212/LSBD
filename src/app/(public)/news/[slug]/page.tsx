@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { PostContent } from "@/components/content/post-content";
 import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { CalendarDays, ArrowLeft } from "lucide-react";
 
 export const revalidate = 60;
@@ -17,7 +17,7 @@ interface PostPageProps {
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const [post] = await db.select().from(posts).where(eq(posts.slug, slug)).limit(1);
+  const [post] = await db.select().from(posts).where(and(eq(posts.slug, slug), eq(posts.status, "published"))).limit(1);
   if (!post) return { title: "Post Not Found" };
   return {
     title: post.title,
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 
 export default async function PostPage({ params }: PostPageProps) {
   const { slug } = await params;
-  const [post] = await db.select().from(posts).where(eq(posts.slug, slug)).limit(1);
+  const [post] = await db.select().from(posts).where(and(eq(posts.slug, slug), eq(posts.status, "published"))).limit(1);
 
   if (!post) {
     notFound();

@@ -8,21 +8,31 @@ import { db } from "@/lib/db";
 import { users, auditLog } from "@/lib/db/schema";
 import { requireCapability } from "@/lib/auth-utils";
 import { userCreateSchema, userUpdateSchema } from "@/lib/validators";
-import type { User } from "@/types";
+import type { SafeUser } from "@/types";
 
-export async function getUsers(): Promise<User[]> {
+// Never the password hash: these rows are passed to client components.
+const safeUserColumns = {
+  id: users.id,
+  email: users.email,
+  name: users.name,
+  role: users.role,
+  createdAt: users.createdAt,
+  updatedAt: users.updatedAt,
+};
+
+export async function getUsers(): Promise<SafeUser[]> {
   await requireCapability("users.manage");
   try {
-    return await db.select().from(users).orderBy(desc(users.createdAt));
+    return await db.select(safeUserColumns).from(users).orderBy(desc(users.createdAt));
   } catch {
     return [];
   }
 }
 
-export async function getUser(id: number): Promise<User | null> {
+export async function getUser(id: number): Promise<SafeUser | null> {
   await requireCapability("users.manage");
   try {
-    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    const [user] = await db.select(safeUserColumns).from(users).where(eq(users.id, id)).limit(1);
     return user ?? null;
   } catch {
     return null;
