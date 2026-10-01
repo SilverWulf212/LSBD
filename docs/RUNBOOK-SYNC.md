@@ -16,21 +16,25 @@ Spec: `docs/superpowers/specs/2026-09-30-lsbd-migration-cutover-design.md`. Plan
 | `LSBD Sync Weekend` | hourly, 07:00–19:00, Sat–Sun | Same as Quick |
 | `LSBD Sync Full` | daily 02:00 | Full diff of all tables, all transforms, then **reconcile** |
 
-- **Code:** runs only from the release worktree `C:\ProgramData\lsbd-sync\app`, which is pinned to a tag (`sync-vN`; current: **sync-v5**). Never from the dev copy.
+- **Code:** runs only from the release worktree `C:\ProgramData\lsbd-sync\app`, which is pinned to a tag (`sync-vN`; current: **sync-v6**). Never from the dev copy.
 - **Secrets:** `C:\ProgramData\lsbd-sync\secrets.env` (SYSTEM + Administrators only). Never print or commit them.
 - **Logs:** `C:\ProgramData\lsbd-sync\logs\<task>-<yyyyMMdd-HHmm>.log` (30-day retention). Errors also go to the Windows Application event log, source `LSBD-Sync`.
 - **Reconcile reports:** `C:\ProgramData\lsbd-sync\reports\reconcile-<yyyyMMdd-HHmm>.md`.
 - **Run history:**
   - In the DB: `lsbd_raw._sync_runs` and `lsbd_raw._sync_tables`.
   - In the app: `/admin/sync` (admin only). It shows a red banner if the last ok run is more than 2 h old during weekday business hours.
-- **Alerting:** set `SYNC_HEALTHCHECK_URL=` in the secrets file (a healthchecks.io ping URL). **Until it is set, nobody is alerted on failure.**
+- **Alerting:** set `SYNC_HEALTHCHECK_URL=` in the secrets file (a healthchecks.io ping URL; configure the check as a cron schedule in America/Chicago covering the 15-min weekday, hourly weekend and 02:00 runs, so a *missing* ping alerts too). **Until it is set, only the event log records failures, and nobody watches it.**
+  - An `ok` run pings the URL.
+  - These ping `<url>/fail` **and** write an Error to the Application event log, source `LSBD-Sync`: a `failed` or `blocked` run; any error before the run completes (Supabase down, bad credentials, pooler error, failed run-row write); a lock held for more than 30 min (§4.5); and a reconcile FAIL or crash (event id 1002; runner events are 1001).
+- **Timeouts:** every sync/reconcile/apply session runs with `statement_timeout` 10 min, `lock_timeout` 60 s and `idle_in_transaction_session_timeout` 10 min, and verifies TLS against the pinned Supabase root CA. A transform CALL stuck on a lock fails the run (and alerts) instead of hanging.
 
 ### Bridge safety (do not weaken)
 Every SQL Server query:
 - goes over Hyper-V PowerShell Direct,
 - runs as `EXECUTE AS USER 'lsbdverify'` (read-only),
+- fails closed unless that user is still read-only: in `db_denydatawriter`, in no write-capable fixed role, with no database-level write/DDL/EXECUTE permission (checked on every connection). If Vincent changes `lsbdverify`'s roles, every run fails with `bridge: refusing to run: read-only role check failed: …` until it is fixed,
 - runs inside `READ UNCOMMITTED; BEGIN TRAN … ROLLBACK`,
-- passes a keyword guard first.
+- passes a keyword guard first (it also refuses `ROLLBACK`, `SAVE` and `USE` in the query).
 
 **MSSQL is read-only to this system.**
 
@@ -79,7 +83,7 @@ npx tsx scripts/sync/run.ts --tables none           # transforms only (all domai
 npx tsx scripts/sync/run.ts --mode full --no-transform
 ```
 
-**Re-install or refresh the tasks** (e.g. after rotating secrets):
+**Re-install or refresh the tasks** (e.g. after rotating secrets). It also pre-creates `C:\ProgramData\node_modules` and `C:\node_modules` as empty, SYSTEM + Administrators-only folders (so no user can plant a module SYSTEM's node would load) and **stops with an error if either already has content**; inspect and empty it, then re-run:
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\sync\install-task.ps1 -RefreshSecrets
 ```
@@ -135,7 +139,10 @@ powershell -ExecutionPolicy Bypass -File scripts\sync\install-task.ps1 -RefreshS
 - The runner keeps syncing known columns. To adopt a change: update the raw DDL/policy, release, then run `--mode full` for that table.
 
 ### 4.5 Advisory lock busy
-- Only one run at a time (`pg_advisory_lock(hashtext('lsbd_sync'))`). A run that overlaps another exits quietly.
+- Only one run at a time (`pg_advisory_lock(hashtext('lsbd_sync'))`). A run that overlaps another logs the holder (`pid`, `application_name`, state, age) and exits 0.
+- **Stale holder:** if the holder has held the lock for more than 30 min (a sync holder is aged from its `running` row in `_sync_runs`; anything else from its last state change), the skipping run exits 1 and alerts (event log + healthcheck `/fail`), because every scheduled run is silently skipping behind it.
+  1. Find it: `select pid, application_name, state, state_change, query from pg_stat_activity where pid = <pid>;`
+  2. If it is a dead/hung sync or a forgotten psql session: `select pg_terminate_backend(<pid>);` The next run marks the abandoned run failed and re-runs all transforms.
 - An abandoned run (crash) is recovered and marked failed on the next start.
 
 ## 5. Data rules (do not "fix" these)
@@ -150,4 +157,6 @@ powershell -ExecutionPolicy Bypass -File scripts\sync\install-task.ps1 -RefreshS
 ## 6. Known caveats
 - Integration tests write synthetic bookkeeping rows into the same `lsbd_raw._sync_runs` table: synthetic keys ≥ 900000000, and `blocked`/`failed` test runs. Expect them in `/admin/sync` around test windows. A separate test database (Supabase branch) is the deferred fix.
 - Business-hours reconcile can race staff edits; trust the 02:00 report.
+- **Destructive tools:** `scripts/ops/wipe-stale.ts` (truncates every `lsbd` table) now refuses without `--i-understand-this-wipes` and refuses outright whenever `lsbd_raw._sync_runs` has rows. Do not use it against this project.
+- **Raw deletes are re-confirmed:** before a raw row is soft-deleted, its key is re-checked at the source with a PK point lookup; a key the (NOLOCK) scan missed but the lookup finds is kept, and the table re-diffs next run.
 - **Cutover: stop this engine.** At the flip (spec §7 step 5), pause all `LSBD Sync*` tasks and keep them disabled; never run `run.ts`, `--tables none` or `run_transforms` against the new system of record. After cutover SQL Server is retired for staff, but it may stay up as member-base.net's write target while the payments toggle is `memberbase`. Pulling those writes requires the post-cutover payment-ingest mode (raw sync of the member-base payment tables only, append-only ingest, dedicated read-only login), which is **not built** and is a P4 cutover blocker (spec §11). Until it exists, this engine does **not** carry payments across the cutover.
