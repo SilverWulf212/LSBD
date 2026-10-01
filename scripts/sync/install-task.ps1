@@ -15,6 +15,9 @@
        LSBD Sync Full     daily 02:00: run.ts --mode full, then reconcile (60 min)
   5. ACLs C:\ProgramData\lsbd-sync (no inheritance; SYSTEM:F, Administrators:F)
      and its app\ subtree (additionally Users:RX, read-only for non-admins).
+  0. (First) pre-creates C:\ProgramData\node_modules and C:\node_modules as empty,
+     Administrators-owned, SYSTEM + Administrators-only folders, so no user can plant a module
+     that SYSTEM's node would resolve (node-modules-guard.ps1). Fails if either has content.
 
   Deploy code first with release.ps1. Tasks run ONLY from the release worktree.
   Logs: C:\ProgramData\lsbd-sync\logs\<task>-<yyyyMMdd-HHmm>.log (30 day retention).
@@ -49,6 +52,16 @@ $reports  = Join-Path $root 'reports'
 
 if (-not (Test-Path $node))   { throw "Node not found at $node" }
 if (-not (Test-Path $tsxCli)) { throw "Release worktree not deployed ($tsxCli missing). Run release.ps1 first." }
+
+# --- 0. module-resolution hardening (review M9) ------------------------------
+# SYSTEM's node walks up from app\ to C:\ProgramData\node_modules and C:\node_modules for any
+# module missing from app\node_modules. Users can create both by default; pre-create them empty
+# and SYSTEM + Administrators-only. Throws (before any task changes) if either has content.
+. (Join-Path $PSScriptRoot 'node-modules-guard.ps1')
+foreach ($nm in @('C:\ProgramData\node_modules', 'C:\node_modules')) {
+  Protect-NodeModulesDir -Path $nm
+  Write-Host "Protected $nm (empty; SYSTEM + Administrators only)."
+}
 
 # --- 1. folders + secrets -------------------------------------------------
 New-Item -ItemType Directory -Force -Path $root, $logs, $tmp, $reports | Out-Null
