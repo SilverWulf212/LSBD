@@ -632,7 +632,7 @@ export async function runSync(opts: RunOptions, deps?: RunDeps): Promise<RunSumm
       if (locked) await c.query(`SELECT pg_advisory_unlock(${LOCK_KEY})`).catch(() => undefined);
       await c.end().catch(() => undefined);
     }
-    await closeBridge().catch((e) => console.error(`closeBridge: ${errMsg(e)}`));
+    await closeBridge().catch((e) => console.error(`closeBridge: ${redact(errMsg(e))}`));
   }
 }
 
