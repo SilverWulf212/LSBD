@@ -15,4 +15,7 @@ describe("/api/search", () => {
     expect(src).toContain('eq(posts.status, "published")');
     expect(src).toContain("escapeLike(");
   });
+  it("filters meetings to published", () => {
+    expect(src).toContain("eq(meetings.isPublished, true)");
+  });
 });

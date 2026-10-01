@@ -49,7 +49,9 @@ export async function GET(req: NextRequest) {
           meetingDate: meetings.meetingDate,
         })
         .from(meetings)
-        .where(ilike(meetings.title, searchTerm))
+        .where(
+          and(eq(meetings.isPublished, true), ilike(meetings.title, searchTerm))
+        )
         .limit(5),
     ]);
     const results = [
