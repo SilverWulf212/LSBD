@@ -1,6 +1,6 @@
 # LSBD Online Payments — Findings and Proposed Plan
 
-> **Status:** DRAFT. These are findings and a *proposed* plan. They are not yet an approved design spec. Three decisions (§4) gate the spec.
+> **Status:** DRAFT. These are findings and a *proposed* plan. They are not yet an approved design spec. D1 is decided (payments toggle); D2–D3 (§4b) gate the spec.
 > **Date:** 2026-10-01
 > **Parent spec:** `2026-09-30-lsbd-migration-cutover-design.md` (§2 decision table, §4.4 Payments, §9 risks)
 > **Research detail:** `2026-10-01-payflow-research.md` (sources cited; unconfirmed items tagged)
@@ -76,11 +76,34 @@ Source: aggregate queries on `lsbd_raw."tblTransactions"` (synced from LSBDDB), 
 8. **Reconciliation:** the Reporting API (`payments-reports.paypal.com/reportingengine`) supports a nightly match on PNREF + amount.
 9. **Stripe fallback:** signed webhooks, about $17 on a $590 renewal at list price, SAQ A, and less to build. It changes the merchant/bank relationship.
 
-## 4. Decisions needed (gate the spec)
+## 4. Decisions
+
+**D1 — DECIDED 2026-10-01 (user):** member-base.net stays as a **backend-toggleable payment system**.
+- **At go-live:** the site's renew/pay buttons link to member-base.net, exactly as today.
+- **When the board says go:** an admin switch flips those buttons to our own payment system, which is already tested and working. The switch can flip back as a rollback path.
+- **Implications for the design:**
+  - **Payments mode flag** (`memberbase` | `lsbd`), stored in the DB.
+    - It is changed only from `/admin` by the `admin` role, with an audit-log row on every flip.
+    - It is read server-side by every renew/pay entry point, so no page hard-codes a member-base URL.
+    - It takes effect immediately; no redeploy.
+  - **Our system must be fully exercisable while the flag is `memberbase`.**
+    - The pilot/test-mode path stays reachable by staff only (allowlist or role), for UAT and a live $1 test.
+  - **While in `memberbase` mode after go-live:**
+    - MSSQL stays up as member-base.net's data store, and the sync keeps pulling its writes (transactions, splits, renewal certification/details, tblDenHyg renewal dates) into Supabase.
+    - **Open risk:** member-base.net also *reads* licensee data from MSSQL. After cutover, staff edits happen in Supabase, so member-base.net could see stale data (new licensees, status changes, fee changes).
+    - Mitigation options, decided once we know what member-base.net reads:
+      - (i) A narrow reverse feed (Supabase → MSSQL) of only the fields it reads. This needs an explicit lift of the "MSSQL read-only" rule for those tables.
+      - (ii) Freeze those edits during the overlap.
+      - (iii) Accept the staleness for the season.
+  - **Flipping to `lsbd`:**
+    - Renew/pay entry points go to `/pay/start`.
+    - member-base.net is told to stop taking payments (or its link is simply no longer shown).
+    - The sync on payment tables continues until its last writes have landed. Then the MSSQL write path is retired and credentials are rotated.
+
+## 4b. Decisions still needed
 
 | # | Decision | Options | Recommendation |
 |---|---|---|---|
-| D1 | **When do payments move off member-base.net?** | (a) After this season, ~Feb 2027; new checkout ready for the next season. (b) At go-live, Nov 18–20, mid-season. (c) Rushed, before ~Nov 15. | **(a).** Peak-season risk is too high for brand-new payment code. |
 | D2 | **How does a payer prove identity?** | (a) Verified checkout: license # + DOB or SSN-last-4, matched against `licensee_pii`. (b) Portal-first: account + TOTP, then pay. (c) Both, staged. | **(c).** Verified checkout first; logged-in portal users skip the challenge later. With D1(a), the portal could also simply come first. |
 | D3 | **Processor** | (a) Payflow (current account). (b) Stripe Checkout. | **(a)**, *if* Manager checks pass (§5 step 1). Build behind a provider interface either way. |
 
@@ -163,6 +186,6 @@ Source: aggregate queries on `lsbd_raw."tblTransactions"` (synced from LSBDDB), 
 
 ## 7. Next actions
 
-1. **User:** decide D1–D3, or confirm the recommendations.
+1. **User:** D1 decided (payments toggle). Decide D2–D3, or confirm the recommendations.
 2. **Erin/Vincent:** the Phase 0 step 3 questions plus the Payflow Manager login, for the Phase 1 checks.
 3. **Us, after the decisions:** turn §5 into the approved payments design spec, then the implementation plan (writing-plans), then build via subagent-driven development.
