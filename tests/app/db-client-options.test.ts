@@ -23,3 +23,36 @@ describe("dbPoolConfig", () => {
     expect(SUPABASE_ROOT_CA_2021.trim()).toMatch(/-----END CERTIFICATE-----$/);
   });
 });
+
+describe("dbPoolConfig strips TLS query params so the pinned CA always applies (R40)", () => {
+  // node-postgres merges the parsed connection string OVER the explicit config, and any
+  // sslmode replaces ssl with {} -> the pinned CA would be silently discarded.
+  const PINNED = { ca: SUPABASE_ROOT_CA_2021, rejectUnauthorized: true };
+
+  it("removes sslmode=require (the usual Supabase / Vercel-integration suffix)", () => {
+    const cfg = dbPoolConfig(`${TXN}?sslmode=require`);
+    expect(cfg.connectionString).toBe(TXN);
+    expect(cfg.ssl).toEqual(PINNED);
+  });
+
+  it("removes every ssl* parameter but keeps the others", () => {
+    const cfg = dbPoolConfig(
+      `${TXN}?sslmode=verify-full&ssl=true&sslrootcert=system&sslcert=a.crt&sslkey=a.key&uselibpqcompat=true&application_name=lsbd&options=-c%20search_path%3Dlsbd`,
+    );
+    const u = new URL(cfg.connectionString!);
+    expect([...u.searchParams.keys()].sort()).toEqual(["application_name", "options"]);
+    expect(u.searchParams.get("options")).toBe("-c search_path=lsbd");
+    expect(cfg.ssl).toEqual(PINNED);
+  });
+
+  it("is case-insensitive on parameter names and leaves a param-free URL untouched", () => {
+    expect(dbPoolConfig(`${TXN}?SSLMODE=disable`).connectionString).toBe(TXN);
+    expect(dbPoolConfig(TXN).connectionString).toBe(TXN);
+  });
+
+  it("node-postgres ends up with the pinned CA even when the URL said sslmode=require", async () => {
+    const { default: ConnectionParameters } = await import("pg/lib/connection-parameters");
+    const p = new ConnectionParameters(dbPoolConfig(`${TXN}?sslmode=require`));
+    expect(p.ssl).toEqual(PINNED);
+  });
+});
