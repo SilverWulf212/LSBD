@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { posts, pageSections, meetings } from "@/lib/db/schema";
-import { or, ilike } from "drizzle-orm";
+import { or, ilike, eq, and } from "drizzle-orm";
+import { escapeLike } from "@/lib/sql-like";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -8,7 +9,8 @@ export async function GET(req: NextRequest) {
   if (!query || query.length < 2) {
     return NextResponse.json({ results: [] });
   }
-  const searchTerm = `%${query}%`;
+  const cappedQuery = query.slice(0, 100);
+  const searchTerm = `%${escapeLike(cappedQuery)}%`;
   try {
     const [postResults, pageResults, meetingResults] = await Promise.all([
       db
@@ -20,7 +22,10 @@ export async function GET(req: NextRequest) {
         })
         .from(posts)
         .where(
-          or(ilike(posts.title, searchTerm), ilike(posts.content, searchTerm))
+          and(
+            eq(posts.status, "published"),
+            or(ilike(posts.title, searchTerm), ilike(posts.content, searchTerm))
+          )
         )
         .limit(5),
       db
