@@ -1,4 +1,4 @@
-// Pure helpers for the public /verify pages. No Supabase import here so the
+// Pure helpers for the public /verify pages. No database import here so the
 // logic is unit-testable without env vars (see tests/app/public-verify.test.ts).
 //
 // License identity note: a license NUMBER is not unique. Dentists, hygienists
@@ -43,9 +43,24 @@ export const STATUS_LABEL: Record<"ACT" | "PRB", string> = {
 /** Display order for types sharing a license number. */
 export const TYPE_ORDER: readonly LicenseType[] = ["D", "H", "E"];
 
+export const PAGE_SIZE = 15;
+export const MAX_RESULTS = 50;
+/** ceil(MAX_RESULTS / PAGE_SIZE): no page beyond this can hold a result. */
+export const LAST_PAGE = 4;
+
+/** First value of a (possibly repeated) query param, trimmed. Missing → "". */
+export function firstParam(v: string | string[] | null | undefined): string {
+  return ((Array.isArray(v) ? v[0] : v) ?? "").trim();
+}
+
+/** A license number as it may appear in a URL path: 1–20 letters, digits or hyphens. */
+export function isValidLicenseId(s: string): boolean {
+  return /^[A-Za-z0-9-]{1,20}$/.test(s);
+}
+
 /** Parse a `type` query param. Anything other than D/H/E (any case) → null. */
 export function parseLicenseType(v: string | string[] | null | undefined): LicenseType | null {
-  const s = (Array.isArray(v) ? v[0] : v ?? "").trim().toUpperCase();
+  const s = firstParam(v).toUpperCase();
   return s === "D" || s === "H" || s === "E" ? s : null;
 }
 
@@ -90,15 +105,16 @@ export function licenseDetailHref(licenseId: string, type?: LicenseType | null):
  * Normalise the /verify query string. Supports the explicit form fields
  * (license_id, last_name, first_name, type, page) and a single `q` shortcut:
  * `q` containing a digit is treated as a license number, otherwise as a
- * last-name prefix. Explicit fields win over `q`.
+ * last-name prefix. Explicit fields win over `q`. A repeated param uses its
+ * first value; `page` is clamped to 1..LAST_PAGE.
  */
 export function resolveSearchInput(sp: {
-  q?: string;
-  license_id?: string;
-  last_name?: string;
-  first_name?: string;
-  type?: string;
-  page?: string;
+  q?: string | string[];
+  license_id?: string | string[];
+  last_name?: string | string[];
+  first_name?: string | string[];
+  type?: string | string[];
+  page?: string | string[];
 }): {
   licenseId: string;
   lastName: string;
@@ -106,9 +122,9 @@ export function resolveSearchInput(sp: {
   type: LicenseType | "all";
   page: number;
 } {
-  let licenseId = (sp.license_id ?? "").trim();
-  let lastName = (sp.last_name ?? "").trim();
-  const q = (sp.q ?? "").trim();
+  let licenseId = firstParam(sp.license_id);
+  let lastName = firstParam(sp.last_name);
+  const q = firstParam(sp.q);
   if (q && !licenseId && !lastName) {
     if (/\d/.test(q)) licenseId = q;
     else lastName = q;
@@ -116,8 +132,8 @@ export function resolveSearchInput(sp: {
   return {
     licenseId,
     lastName,
-    firstName: (sp.first_name ?? "").trim(),
+    firstName: firstParam(sp.first_name),
     type: parseLicenseType(sp.type) ?? "all",
-    page: Math.max(1, Math.floor(Number(sp.page ?? 1)) || 1),
+    page: Math.min(LAST_PAGE, Math.max(1, Math.floor(Number(firstParam(sp.page) || 1)) || 1)),
   };
 }

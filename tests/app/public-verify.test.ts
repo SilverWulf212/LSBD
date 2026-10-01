@@ -6,6 +6,7 @@ import {
   isExpired,
   licenseDetailHref,
   resolveSearchInput,
+  isValidLicenseId,
   PUBLIC_LICENSEE_COLUMNS,
   type LicenseType,
 } from "../../src/lib/public-verify-helpers";
@@ -99,6 +100,19 @@ describe("resolveSearchInput", () => {
     expect(resolveSearchInput({ page: "3" }).page).toBe(3);
     expect(resolveSearchInput({ page: "-2" }).page).toBe(1);
     expect(resolveSearchInput({ page: "abc" }).page).toBe(1);
+  });
+  it("resolveSearchInput takes the first of repeated params and clamps the page", () => {
+    const r = resolveSearchInput({ q: ["smith", "jones"], page: "999", type: ["h", "d"] });
+    expect(r.lastName).toBe("smith");
+    expect(r.page).toBe(4);
+    expect(r.type).toBe("H");
+  });
+  it("isValidLicenseId", () => {
+    expect(isValidLicenseId("2227")).toBe(true);
+    expect(isValidLicenseId("unknown-12345")).toBe(true);
+    expect(isValidLicenseId("%E0")).toBe(false);
+    expect(isValidLicenseId("")).toBe(false);
+    expect(isValidLicenseId("a".repeat(21))).toBe(false);
   });
 });
 

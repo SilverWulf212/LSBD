@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { SUPABASE_ROOT_CA_2021 } from "../../src/lib/db/supabase-ca";
 
-// R40: the shared db client and the anon Supabase client must not throw at import (that is
+// R40: the shared db client must not throw at import (that is
 // what broke `next build` page-data collection when an env var was unset). A missing env
 // fails on first use instead, with a clear message.
 
-const KEYS = ["POSTGRES_URL", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"] as const;
+const KEYS = ["POSTGRES_URL"] as const;
 const saved: Record<string, string | undefined> = {};
 
 beforeEach(() => {
@@ -40,22 +40,5 @@ describe("src/lib/db (lazy)", () => {
     expect(opts.ssl).toEqual({ ca: SUPABASE_ROOT_CA_2021, rejectUnauthorized: true });
     // Builders work through the proxy (methods are bound to the real instance).
     expect(typeof db.select().from).toBe("function");
-  });
-});
-
-describe("src/lib/supabase-anon (lazy)", () => {
-  it("imports without env and throws a clear error on first use", async () => {
-    const mod = await import("../../src/lib/supabase-anon");
-    expect(() => mod.supabaseAnon.from).toThrow(/NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set/);
-  });
-
-  it("creates the client on first use", async () => {
-    // supabase-js builds a Realtime client at construction; Node 20 has no global WebSocket.
-    if (typeof (globalThis as { WebSocket?: unknown }).WebSocket === "undefined") vi.stubGlobal("WebSocket", class {});
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-test-key";
-    const { supabaseAnon } = await import("../../src/lib/supabase-anon");
-    expect(typeof supabaseAnon.from).toBe("function");
-    expect(typeof supabaseAnon.from("public_licensee").select).toBe("function");
   });
 });

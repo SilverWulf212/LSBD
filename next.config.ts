@@ -44,13 +44,22 @@ const nextConfig: NextConfig = {
       },
       {
         // Edge caching for public HTML pages (does not affect admin routes)
-        source: "/((?!admin|api|_next).*)",
+        source: "/((?!admin|api|_next|public/verify).*)",
         headers: [
           {
             key: "CDN-Cache-Control",
             value: "public, max-age=60, stale-while-revalidate=300",
           },
         ],
+      },
+      {
+        // License lookups are per-request (rate limited by IP): never cached
+        source: "/public/verify",
+        headers: [{ key: "Cache-Control", value: "private, no-store" }],
+      },
+      {
+        source: "/public/verify/:path*",
+        headers: [{ key: "Cache-Control", value: "private, no-store" }],
       },
     ];
   },

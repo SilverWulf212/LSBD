@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import {
   getPublicLicensees,
   groupByType,
   isExpired,
+  isValidLicenseId,
   licenseDetailHref,
   parseLicenseType,
   TYPE_LABEL,
@@ -17,6 +19,8 @@ import {
   type PublicLicensee,
 } from "@/lib/public-verify";
 import { formatCentralDate } from "@/lib/central-time";
+import { rateLimit } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/client-ip";
 
 interface PageProps {
   params: Promise<{ license_id: string }>;
@@ -25,8 +29,9 @@ interface PageProps {
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { license_id } = await params;
+  if (!isValidLicenseId(license_id)) return { title: "Verify a License" };
+  const decoded = license_id;
   const type = parseLicenseType((await searchParams).type);
-  const decoded = decodeURIComponent(license_id);
   const label = type ? `${TYPE_LABEL[type]} license ${decoded}` : `License ${decoded}`;
   return {
     title: `${label} — Verify`,
@@ -43,10 +48,30 @@ function fullName(r: PublicLicensee): string {
 
 export default async function LicenseDetailPage({ params, searchParams }: PageProps) {
   const { license_id } = await params;
-  const decoded = decodeURIComponent(license_id);
+  // Next has already decoded the param; anything outside the license-number
+  // alphabet cannot match a record.
+  if (!isValidLicenseId(license_id)) notFound();
+  const decoded = license_id;
   const type = parseLicenseType((await searchParams).type);
 
-  const rows = await getPublicLicensees(decoded, type);
+  // Rate limit: 60 requests / IP / minute.
+  const ip = clientIp(await headers());
+  if (!rateLimit(`verify-detail:${ip}`, 60, 60_000).ok) {
+    return (
+      <Notice
+        decoded={decoded}
+        message="Too many searches from your network. Please wait a minute and try again."
+      />
+    );
+  }
+
+  let rows: PublicLicensee[];
+  try {
+    rows = await getPublicLicensees(decoded, type);
+  } catch (e) {
+    console.error("public verify lookup failed", e);
+    return <Notice decoded={decoded} message="Search is temporarily unavailable. Please try again." />;
+  }
   if (rows.length === 0) notFound();
 
   const groups = groupByType(rows);
@@ -128,6 +153,27 @@ export default async function LicenseDetailPage({ params, searchParams }: PagePr
             Central time. For a written verification letter, contact the Board office. Verification
             fee: $25.00.
           </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Notice({ decoded, message }: { decoded: string; message: string }) {
+  return (
+    <>
+      <PageHeader title={`License ${decoded}`} description="License verification" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/public/verify">
+              <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" />
+              Back to search
+            </Link>
+          </Button>
+          <div role="alert" className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <p className="text-sm text-amber-900">{message}</p>
+          </div>
         </div>
       </div>
     </>

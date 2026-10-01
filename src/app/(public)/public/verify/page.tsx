@@ -18,6 +18,7 @@ import {
 } from "@/lib/public-verify";
 import { formatCentralDate } from "@/lib/central-time";
 import { rateLimit } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/client-ip";
 
 export const metadata: Metadata = {
   title: "Verify a License",
@@ -26,14 +27,7 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  searchParams: Promise<{
-    q?: string;
-    license_id?: string;
-    last_name?: string;
-    first_name?: string;
-    type?: string;
-    page?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function VerifyPage({ searchParams }: PageProps) {
@@ -56,11 +50,7 @@ export default async function VerifyPage({ searchParams }: PageProps) {
     } else {
       // Rate limit: 30 requests / IP / minute. Falls back to a single bucket
       // if we can't read the IP (some Vercel proxy headers may be absent).
-      const hdrs = await headers();
-      const ip =
-        hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        hdrs.get("x-real-ip") ||
-        "unknown";
+      const ip = clientIp(await headers());
       const rl = rateLimit(`verify:${ip}`, 30, 60_000);
       if (!rl.ok) {
         rateLimited = true;
@@ -68,7 +58,8 @@ export default async function VerifyPage({ searchParams }: PageProps) {
         try {
           result = await searchPublicLicensees(params);
         } catch (e) {
-          validationError = e instanceof Error ? e.message : "Search failed.";
+          console.error("public verify search failed", e);
+          validationError = "Search is temporarily unavailable. Please try again.";
         }
       }
     }
