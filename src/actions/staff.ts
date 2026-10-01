@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { staffMembers, auditLog } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
@@ -9,13 +9,8 @@ import { redirect } from "next/navigation";
 import { staffSchema } from "@/lib/validators";
 import type { StaffMember } from "@/types";
 
-async function requireSession() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session as typeof session & { user: NonNullable<typeof session.user> };
-}
-
 export async function getStaff(): Promise<StaffMember[]> {
+  await requireCapability("cms.read");
   try {
     return await db
       .select()
@@ -27,6 +22,7 @@ export async function getStaff(): Promise<StaffMember[]> {
 }
 
 export async function getStaffMember(id: number): Promise<StaffMember | null> {
+  await requireCapability("cms.read");
   try {
     const [member] = await db
       .select()
@@ -40,7 +36,7 @@ export async function getStaffMember(id: number): Promise<StaffMember | null> {
 }
 
 export async function createStaff(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     name: formData.get("name") as string,
     title: formData.get("title") as string,
@@ -80,7 +76,7 @@ export async function createStaff(formData: FormData) {
 }
 
 export async function updateStaff(id: number, formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     name: formData.get("name") as string,
     title: formData.get("title") as string,
@@ -121,7 +117,7 @@ export async function updateStaff(id: number, formData: FormData) {
 }
 
 export async function deleteStaff(id: number) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
 
   const [member] = await db
     .select({ name: staffMembers.name })

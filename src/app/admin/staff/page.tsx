@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { getStaff } from "@/actions/staff";
@@ -8,6 +9,7 @@ import { Plus } from "lucide-react";
 export const metadata = { title: "Staff | Admin" };
 
 export default async function StaffPage() {
+  await requireCapability("cms.read");
   const staff = await getStaff();
 
   return (

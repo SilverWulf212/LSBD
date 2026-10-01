@@ -1,6 +1,6 @@
 import React from "react";
 import { sql } from "drizzle-orm";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { loadSyncStatus, RUN_LIMIT, type SyncRun } from "@/lib/sync-status";
 import { formatCentralDateTime } from "@/lib/central-time";
@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 // read here through the privileged POSTGRES_URL connection and rendered to
 // HTML; no lsbd_raw data is passed to a client component.
 export default async function SyncStatusPage() {
-  await requireAuth("admin");
+  await requireCapability("sync.view");
 
   let status: Awaited<ReturnType<typeof loadSyncStatus>> | null = null;
   let loadError: string | null = null;

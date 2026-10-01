@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { getAlerts } from "@/actions/alerts";
@@ -8,6 +9,7 @@ import { Plus } from "lucide-react";
 export const metadata = { title: "Alerts | Admin" };
 
 export default async function AlertsPage() {
+  await requireCapability("cms.read");
   const alerts = await getAlerts();
 
   return (

@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { StaffForm } from "@/components/admin/staff-form";
@@ -6,7 +7,8 @@ import { ArrowLeft } from "lucide-react";
 
 export const metadata = { title: "New Staff Member | Admin" };
 
-export default function NewStaffPage() {
+export default async function NewStaffPage() {
+  await requireCapability("cms.write");
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">

@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { getMeetings } from "@/actions/meetings";
@@ -8,6 +9,7 @@ import { Plus } from "lucide-react";
 export const metadata = { title: "Meetings | Admin" };
 
 export default async function MeetingsPage() {
+  await requireCapability("cms.read");
   const meetings = await getMeetings();
 
   return (

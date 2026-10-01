@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { boardMembers, auditLog } from "@/lib/db/schema";
 import { eq, asc, sql } from "drizzle-orm";
@@ -9,13 +9,8 @@ import { redirect } from "next/navigation";
 import { boardMemberSchema } from "@/lib/validators";
 import type { BoardMember } from "@/types";
 
-async function requireSession() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session as typeof session & { user: NonNullable<typeof session.user> };
-}
-
 export async function getBoardMembers(): Promise<BoardMember[]> {
+  await requireCapability("cms.read");
   try {
     return await db.select().from(boardMembers).orderBy(asc(boardMembers.sortOrder));
   } catch {
@@ -24,6 +19,7 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
 }
 
 export async function getBoardMember(id: number): Promise<BoardMember | null> {
+  await requireCapability("cms.read");
   try {
     const [member] = await db.select().from(boardMembers).where(eq(boardMembers.id, id)).limit(1);
     return member ?? null;
@@ -33,7 +29,7 @@ export async function getBoardMember(id: number): Promise<BoardMember | null> {
 }
 
 export async function createBoardMember(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     name: formData.get("name") as string,
     honorific: (formData.get("honorific") as string) || undefined,
@@ -75,7 +71,7 @@ export async function createBoardMember(formData: FormData) {
 }
 
 export async function updateBoardMember(id: number, formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     name: formData.get("name") as string,
     honorific: (formData.get("honorific") as string) || undefined,
@@ -118,7 +114,7 @@ export async function updateBoardMember(id: number, formData: FormData) {
 }
 
 export async function deleteBoardMember(id: number) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
 
   const [member] = await db
     .select({ name: boardMembers.name })
@@ -141,6 +137,7 @@ export async function deleteBoardMember(id: number) {
 }
 
 export async function getBoardMembersCount(): Promise<number> {
+  await requireCapability("cms.read");
   try {
     const [result] = await db
       .select({ count: sql<number>`count(*)` })

@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { getPageSectionsBySlug } from "@/actions/pages";
@@ -12,6 +13,7 @@ export default async function EditPageSectionsPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  await requireCapability("cms.read");
   const { slug } = await params;
   const sections = await getPageSectionsBySlug(slug);
 

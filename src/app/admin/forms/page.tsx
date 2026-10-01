@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { getForms } from "@/actions/forms";
@@ -8,6 +9,7 @@ import { Plus } from "lucide-react";
 export const metadata = { title: "Forms | Admin" };
 
 export default async function FormsPage() {
+  await requireCapability("cms.read");
   const forms = await getForms();
 
   return (

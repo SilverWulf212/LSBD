@@ -1,5 +1,6 @@
 "use server";
 
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { auditLog, users } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
@@ -10,6 +11,7 @@ export interface AuditLogEntryWithUser extends AuditLogEntry {
 }
 
 export async function getRecentAuditLog(): Promise<AuditLogEntryWithUser[]> {
+  await requireCapability("cms.read");
   try {
     const entries = await db
       .select({

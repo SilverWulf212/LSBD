@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { getUsers } from "@/actions/users";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireCapability } from "@/lib/auth-utils";
 import { UsersTable } from "./users-table";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 export default async function UsersPage() {
-  const session = await requireAuth("admin");
+  const session = await requireCapability("users.manage");
   const users = await getUsers();
 
   return (

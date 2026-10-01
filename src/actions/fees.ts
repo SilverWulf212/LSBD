@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { fees, auditLog } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
@@ -8,13 +8,8 @@ import { revalidatePath } from "next/cache";
 import { feeSchema } from "@/lib/validators";
 import type { Fee } from "@/types";
 
-async function requireSession() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session as typeof session & { user: NonNullable<typeof session.user> };
-}
-
 export async function getFees(): Promise<Fee[]> {
+  await requireCapability("cms.read");
   try {
     return await db.select().from(fees).orderBy(asc(fees.category), asc(fees.sortOrder));
   } catch {
@@ -23,6 +18,7 @@ export async function getFees(): Promise<Fee[]> {
 }
 
 export async function getFee(id: number): Promise<Fee | null> {
+  await requireCapability("cms.read");
   try {
     const [fee] = await db.select().from(fees).where(eq(fees.id, id)).limit(1);
     return fee ?? null;
@@ -32,7 +28,7 @@ export async function getFee(id: number): Promise<Fee | null> {
 }
 
 export async function createFee(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     category: formData.get("category") as string,
     name: formData.get("name") as string,
@@ -69,7 +65,7 @@ export async function createFee(formData: FormData) {
 }
 
 export async function updateFee(id: number, formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     category: formData.get("category") as string,
     name: formData.get("name") as string,
@@ -107,7 +103,7 @@ export async function updateFee(id: number, formData: FormData) {
 }
 
 export async function deleteFee(id: number) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
 
   const [fee] = await db
     .select({ name: fees.name })

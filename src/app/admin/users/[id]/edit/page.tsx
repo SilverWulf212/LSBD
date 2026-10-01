@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getUser } from "@/actions/users";
 import { UserForm } from "@/components/admin/user-form";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireCapability } from "@/lib/auth-utils";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -16,7 +16,7 @@ export default async function EditUserPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAuth("admin");
+  await requireCapability("users.manage");
   const { id } = await params;
   const user = await getUser(Number(id));
   if (!user) notFound();

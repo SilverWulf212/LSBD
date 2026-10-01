@@ -12,12 +12,15 @@ function walk(dir: string): string[] {
 }
 const rel = (p: string) => relative(root, p).split("\\").join("/");
 
-// enabled in Task 2
-describe.skip("admin gates", () => {
+describe("admin gates", () => {
   const actionsDir = join(root, "src/actions");
   const actionFiles = existsSync(actionsDir)
     ? walk(actionsDir).filter((f) => f.endsWith(".ts"))
     : [];
+
+  it("finds action files", () => {
+    expect(actionFiles.length).toBeGreaterThan(0);
+  });
 
   it("every exported server action checks a capability", () => {
     const offenders: string[] = [];
@@ -49,6 +52,7 @@ describe.skip("admin gates", () => {
         !r.endsWith("admin/403/page.tsx")
       );
     });
+    expect(pages.length).toBeGreaterThan(0);
     const offenders = pages
       .filter((f) => !readFileSync(f, "utf8").includes("requireCapability("))
       .map(rel);

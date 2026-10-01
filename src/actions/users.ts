@@ -6,12 +6,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { users, auditLog } from "@/lib/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireCapability } from "@/lib/auth-utils";
 import { userCreateSchema, userUpdateSchema } from "@/lib/validators";
 import type { User } from "@/types";
 
 export async function getUsers(): Promise<User[]> {
-  await requireAuth("admin");
+  await requireCapability("users.manage");
   try {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   } catch {
@@ -20,7 +20,7 @@ export async function getUsers(): Promise<User[]> {
 }
 
 export async function getUser(id: number): Promise<User | null> {
-  await requireAuth("admin");
+  await requireCapability("users.manage");
   try {
     const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
     return user ?? null;
@@ -30,7 +30,7 @@ export async function getUser(id: number): Promise<User | null> {
 }
 
 export async function createUser(formData: FormData) {
-  const session = await requireAuth("admin");
+  const session = await requireCapability("users.manage");
   const raw = {
     email: formData.get("email") as string,
     name: formData.get("name") as string,
@@ -64,7 +64,7 @@ export async function createUser(formData: FormData) {
 }
 
 export async function updateUser(id: number, formData: FormData) {
-  const session = await requireAuth("admin");
+  const session = await requireCapability("users.manage");
   const raw = {
     email: formData.get("email") as string,
     name: formData.get("name") as string,
@@ -103,7 +103,7 @@ export async function updateUser(id: number, formData: FormData) {
 }
 
 export async function deleteUser(id: number) {
-  const session = await requireAuth("admin");
+  const session = await requireCapability("users.manage");
 
   if (Number(session.user.id) === id) {
     throw new Error("You cannot delete your own account.");

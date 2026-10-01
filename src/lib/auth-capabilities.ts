@@ -28,6 +28,6 @@ export function can(
   role: LsbdRole | null | undefined,
   cap: Capability
 ): boolean {
-  if (!role) return false;
-  return ROLE_CAPABILITIES[role]?.includes(cap) ?? false;
+  if (!role || !Object.hasOwn(ROLE_CAPABILITIES, role)) return false;
+  return ROLE_CAPABILITIES[role].includes(cap);
 }

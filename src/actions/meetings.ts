@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { meetings, meetingDocuments, auditLog } from "@/lib/db/schema";
 import { eq, desc, gte, sql } from "drizzle-orm";
@@ -8,15 +8,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { meetingSchema } from "@/lib/validators";
 import { deleteFile } from "@/lib/blob";
-import type { Meeting, MeetingDocument, MeetingWithDocuments } from "@/types";
-
-async function requireSession() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session as typeof session & { user: NonNullable<typeof session.user> };
-}
+import type { MeetingWithDocuments } from "@/types";
 
 export async function getMeetings(): Promise<MeetingWithDocuments[]> {
+  await requireCapability("cms.read");
   try {
     const allMeetings = await db
       .select()
@@ -34,6 +29,7 @@ export async function getMeetings(): Promise<MeetingWithDocuments[]> {
 }
 
 export async function getMeeting(id: number): Promise<MeetingWithDocuments | null> {
+  await requireCapability("cms.read");
   try {
     const [meeting] = await db
       .select()
@@ -54,7 +50,7 @@ export async function getMeeting(id: number): Promise<MeetingWithDocuments | nul
 }
 
 export async function createMeeting(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     title: formData.get("title") as string,
     meetingDate: formData.get("meetingDate") as string,
@@ -90,7 +86,7 @@ export async function createMeeting(formData: FormData) {
 }
 
 export async function updateMeeting(id: number, formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     title: formData.get("title") as string,
     meetingDate: formData.get("meetingDate") as string,
@@ -127,7 +123,7 @@ export async function updateMeeting(id: number, formData: FormData) {
 }
 
 export async function deleteMeeting(id: number) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
 
   const [meeting] = await db
     .select({ title: meetings.title })
@@ -169,7 +165,7 @@ export async function addMeetingDocument(
   docType: "notice" | "agenda" | "minutes",
   fileData: { url: string; pathname: string; size: number; title: string }
 ) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
 
   // Remove existing document of same type if present
   const existing = await db
@@ -212,7 +208,7 @@ export async function addMeetingDocument(
 }
 
 export async function deleteMeetingDocument(docId: number) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
 
   const [doc] = await db
     .select()
@@ -242,6 +238,7 @@ export async function deleteMeetingDocument(docId: number) {
 }
 
 export async function getUpcomingMeetingsCount(): Promise<number> {
+  await requireCapability("cms.read");
   try {
     const [result] = await db
       .select({ count: sql<number>`count(*)` })

@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { posts, auditLog } from "@/lib/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
@@ -9,13 +9,8 @@ import { redirect } from "next/navigation";
 import { postSchema } from "@/lib/validators";
 import type { Post } from "@/types";
 
-async function requireSession() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session as typeof session & { user: NonNullable<typeof session.user> };
-}
-
 export async function getPosts(): Promise<Post[]> {
+  await requireCapability("cms.read");
   try {
     return await db.select().from(posts).orderBy(desc(posts.createdAt));
   } catch {
@@ -24,6 +19,7 @@ export async function getPosts(): Promise<Post[]> {
 }
 
 export async function getPost(id: number): Promise<Post | null> {
+  await requireCapability("cms.read");
   try {
     const [post] = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
     return post ?? null;
@@ -33,7 +29,7 @@ export async function getPost(id: number): Promise<Post | null> {
 }
 
 export async function createPost(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     title: formData.get("title") as string,
     slug: formData.get("slug") as string,
@@ -76,7 +72,7 @@ export async function createPost(formData: FormData) {
 }
 
 export async function updatePost(id: number, formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     title: formData.get("title") as string,
     slug: formData.get("slug") as string,
@@ -129,7 +125,7 @@ export async function updatePost(id: number, formData: FormData) {
 }
 
 export async function deletePost(id: number) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
 
   const [post] = await db
     .select({ title: posts.title })
@@ -152,6 +148,7 @@ export async function deletePost(id: number) {
 }
 
 export async function getPostsCount(): Promise<number> {
+  await requireCapability("cms.read");
   try {
     const [result] = await db
       .select({ count: sql<number>`count(*)` })

@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { getPostsCount } from "@/actions/posts";
@@ -42,6 +43,7 @@ const entityLabels: Record<string, string> = {
 };
 
 export default async function AdminDashboard() {
+  await requireCapability("cms.read");
   const [postsCount, alertsCount, boardCount, meetingsCount, auditLog] =
     await Promise.all([
       getPostsCount(),

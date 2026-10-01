@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { MeetingForm } from "@/components/admin/meeting-form";
@@ -6,7 +7,8 @@ import { ArrowLeft } from "lucide-react";
 
 export const metadata = { title: "New Meeting | Admin" };
 
-export default function NewMeetingPage() {
+export default async function NewMeetingPage() {
+  await requireCapability("cms.write");
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">

@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { getBoardMembers } from "@/actions/board-members";
@@ -8,6 +9,7 @@ import { Plus } from "lucide-react";
 export const metadata = { title: "Board Members | Admin" };
 
 export default async function BoardPage() {
+  await requireCapability("cms.read");
   const members = await getBoardMembers();
 
   return (

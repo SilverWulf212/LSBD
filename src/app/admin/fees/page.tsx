@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import { getFees } from "@/actions/fees";
 import { FeesManager } from "./fees-manager";
@@ -5,6 +6,7 @@ import { FeesManager } from "./fees-manager";
 export const metadata = { title: "Fees | Admin" };
 
 export default async function FeesPage() {
+  await requireCapability("cms.read");
   const fees = await getFees();
 
   return (

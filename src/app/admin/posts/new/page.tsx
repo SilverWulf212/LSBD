@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { PostForm } from "@/components/admin/post-form";
@@ -8,7 +9,8 @@ export const metadata = {
   title: "New Post | Admin",
 };
 
-export default function NewPostPage() {
+export default async function NewPostPage() {
+  await requireCapability("cms.write");
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">

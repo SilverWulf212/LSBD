@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { publications, auditLog } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -10,13 +10,8 @@ import { publicationSchema } from "@/lib/validators";
 import { deleteFile } from "@/lib/blob";
 import type { Publication } from "@/types";
 
-async function requireSession() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session as typeof session & { user: NonNullable<typeof session.user> };
-}
-
 export async function getPublications(): Promise<Publication[]> {
+  await requireCapability("cms.read");
   try {
     return await db.select().from(publications).orderBy(desc(publications.year));
   } catch {
@@ -25,6 +20,7 @@ export async function getPublications(): Promise<Publication[]> {
 }
 
 export async function getPublication(id: number): Promise<Publication | null> {
+  await requireCapability("cms.read");
   try {
     const [pub] = await db
       .select()
@@ -38,7 +34,7 @@ export async function getPublication(id: number): Promise<Publication | null> {
 }
 
 export async function createPublication(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     title: formData.get("title") as string,
     year: Number(formData.get("year") ?? new Date().getFullYear()),
@@ -85,7 +81,7 @@ export async function createPublication(formData: FormData) {
 }
 
 export async function updatePublication(id: number, formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     title: formData.get("title") as string,
     year: Number(formData.get("year") ?? new Date().getFullYear()),
@@ -133,7 +129,7 @@ export async function updatePublication(id: number, formData: FormData) {
 }
 
 export async function deletePublication(id: number) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
 
   const [pub] = await db
     .select()

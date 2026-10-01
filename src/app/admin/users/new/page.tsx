@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { UserForm } from "@/components/admin/user-form";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireCapability } from "@/lib/auth-utils";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 export default async function NewUserPage() {
-  await requireAuth("admin");
+  await requireCapability("users.manage");
 
   return (
     <div className="space-y-6">

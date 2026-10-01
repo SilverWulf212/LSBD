@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,6 +14,7 @@ export default async function EditPublicationPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireCapability("cms.read");
   const { id } = await params;
   const publication = await getPublication(Number(id));
   if (!publication) notFound();

@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { alerts, auditLog } from "@/lib/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
@@ -9,13 +9,8 @@ import { redirect } from "next/navigation";
 import { alertSchema } from "@/lib/validators";
 import type { Alert } from "@/types";
 
-async function requireSession() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session as typeof session & { user: NonNullable<typeof session.user> };
-}
-
 export async function getAlerts(): Promise<Alert[]> {
+  await requireCapability("cms.read");
   try {
     return await db.select().from(alerts).orderBy(desc(alerts.createdAt));
   } catch {
@@ -24,6 +19,7 @@ export async function getAlerts(): Promise<Alert[]> {
 }
 
 export async function getAlert(id: number): Promise<Alert | null> {
+  await requireCapability("cms.read");
   try {
     const [alert] = await db.select().from(alerts).where(eq(alerts.id, id)).limit(1);
     return alert ?? null;
@@ -33,7 +29,7 @@ export async function getAlert(id: number): Promise<Alert | null> {
 }
 
 export async function createAlert(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     title: formData.get("title") as string,
     content: formData.get("content") as string,
@@ -73,7 +69,7 @@ export async function createAlert(formData: FormData) {
 }
 
 export async function updateAlert(id: number, formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     title: formData.get("title") as string,
     content: formData.get("content") as string,
@@ -114,7 +110,7 @@ export async function updateAlert(id: number, formData: FormData) {
 }
 
 export async function deleteAlert(id: number) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
 
   const [alert] = await db
     .select({ title: alerts.title })
@@ -137,6 +133,7 @@ export async function deleteAlert(id: number) {
 }
 
 export async function getActiveAlertsCount(): Promise<number> {
+  await requireCapability("cms.read");
   try {
     const [result] = await db
       .select({ count: sql<number>`count(*)` })

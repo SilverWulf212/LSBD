@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { downloadableForms, auditLog } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
@@ -10,13 +10,8 @@ import { formEntrySchema } from "@/lib/validators";
 import { deleteFile } from "@/lib/blob";
 import type { DownloadableForm } from "@/types";
 
-async function requireSession() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session as typeof session & { user: NonNullable<typeof session.user> };
-}
-
 export async function getForms(): Promise<DownloadableForm[]> {
+  await requireCapability("cms.read");
   try {
     return await db
       .select()
@@ -28,6 +23,7 @@ export async function getForms(): Promise<DownloadableForm[]> {
 }
 
 export async function getForm(id: number): Promise<DownloadableForm | null> {
+  await requireCapability("cms.read");
   try {
     const [form] = await db
       .select()
@@ -41,7 +37,7 @@ export async function getForm(id: number): Promise<DownloadableForm | null> {
 }
 
 export async function createForm(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     name: formData.get("name") as string,
     description: (formData.get("description") as string) || undefined,
@@ -90,7 +86,7 @@ export async function createForm(formData: FormData) {
 }
 
 export async function updateForm(id: number, formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     name: formData.get("name") as string,
     description: (formData.get("description") as string) || undefined,
@@ -140,7 +136,7 @@ export async function updateForm(id: number, formData: FormData) {
 }
 
 export async function deleteForm(id: number) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
 
   const [form] = await db
     .select()

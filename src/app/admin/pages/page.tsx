@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { getPageSections } from "@/actions/pages";
@@ -22,6 +23,7 @@ function groupByPage(
 }
 
 export default async function PagesAdminPage() {
+  await requireCapability("cms.read");
   const sections = await getPageSections();
   const grouped = groupByPage(sections);
 

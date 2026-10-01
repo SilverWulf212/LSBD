@@ -19,27 +19,28 @@ import {
   RefreshCw,
 } from "lucide-react";
 import type { LsbdRole } from "@/lib/auth-roles";
+import { can, type Capability } from "@/lib/auth-capabilities";
 
 type SidebarItem = {
   label: string;
   href: string;
   icon: typeof LayoutDashboard;
-  adminOnly?: boolean;
+  capability: Capability;
 };
 
 const sidebarItems: SidebarItem[] = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Posts", href: "/admin/posts", icon: FileText },
-  { label: "Alerts", href: "/admin/alerts", icon: AlertTriangle },
-  { label: "Board Members", href: "/admin/board", icon: Users },
-  { label: "Fees", href: "/admin/fees", icon: DollarSign },
-  { label: "Sync Status", href: "/admin/sync", icon: RefreshCw, adminOnly: true },
-  { label: "Meetings", href: "/admin/meetings", icon: Calendar },
-  { label: "Forms", href: "/admin/forms", icon: ClipboardList },
-  { label: "Publications", href: "/admin/publications", icon: BookOpen },
-  { label: "Staff", href: "/admin/staff", icon: UserCog },
-  { label: "Page Content", href: "/admin/pages", icon: Layers },
-  { label: "Users", href: "/admin/users", icon: Shield, adminOnly: true },
+  { label: "Dashboard", href: "/admin", icon: LayoutDashboard, capability: "cms.read" },
+  { label: "Posts", href: "/admin/posts", icon: FileText, capability: "cms.read" },
+  { label: "Alerts", href: "/admin/alerts", icon: AlertTriangle, capability: "cms.read" },
+  { label: "Board Members", href: "/admin/board", icon: Users, capability: "cms.read" },
+  { label: "Fees", href: "/admin/fees", icon: DollarSign, capability: "cms.read" },
+  { label: "Sync Status", href: "/admin/sync", icon: RefreshCw, capability: "sync.view" },
+  { label: "Meetings", href: "/admin/meetings", icon: Calendar, capability: "cms.read" },
+  { label: "Forms", href: "/admin/forms", icon: ClipboardList, capability: "cms.read" },
+  { label: "Publications", href: "/admin/publications", icon: BookOpen, capability: "cms.read" },
+  { label: "Staff", href: "/admin/staff", icon: UserCog, capability: "cms.read" },
+  { label: "Page Content", href: "/admin/pages", icon: Layers, capability: "cms.read" },
+  { label: "Users", href: "/admin/users", icon: Shield, capability: "users.manage" },
 ];
 
 interface AdminSidebarProps {
@@ -49,7 +50,7 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ onNavigate, userRole }: AdminSidebarProps) {
   const visibleItems = sidebarItems.filter(
-    (item) => !item.adminOnly || userRole === "admin"
+    (item) => can(userRole, item.capability)
   );
   const pathname = usePathname();
 

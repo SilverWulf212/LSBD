@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { getPosts } from "@/actions/posts";
@@ -10,6 +11,7 @@ export const metadata = {
 };
 
 export default async function PostsPage() {
+  await requireCapability("cms.read");
   const posts = await getPosts();
 
   return (

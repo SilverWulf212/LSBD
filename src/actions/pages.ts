@@ -1,20 +1,15 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { pageSections, auditLog } from "@/lib/db/schema";
-import { eq, asc, and } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { pageSectionSchema } from "@/lib/validators";
 import type { PageSection } from "@/types";
 
-async function requireSession() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session as typeof session & { user: NonNullable<typeof session.user> };
-}
-
 export async function getPageSections(): Promise<PageSection[]> {
+  await requireCapability("cms.read");
   try {
     return await db
       .select()
@@ -26,6 +21,7 @@ export async function getPageSections(): Promise<PageSection[]> {
 }
 
 export async function getPageSectionsBySlug(pageSlug: string): Promise<PageSection[]> {
+  await requireCapability("cms.read");
   try {
     return await db
       .select()
@@ -38,6 +34,7 @@ export async function getPageSectionsBySlug(pageSlug: string): Promise<PageSecti
 }
 
 export async function getPageSection(id: number): Promise<PageSection | null> {
+  await requireCapability("cms.read");
   try {
     const [section] = await db
       .select()
@@ -51,7 +48,7 @@ export async function getPageSection(id: number): Promise<PageSection | null> {
 }
 
 export async function updatePageSection(id: number, formData: FormData) {
-  const session = await requireSession();
+  const session = await requireCapability("cms.write");
   const raw = {
     pageSlug: formData.get("pageSlug") as string,
     sectionKey: formData.get("sectionKey") as string,
@@ -108,6 +105,7 @@ export async function updatePageSection(id: number, formData: FormData) {
  * Returns a list of unique page slugs that have sections.
  */
 export async function getPageSlugs(): Promise<string[]> {
+  await requireCapability("cms.read");
   try {
     const sections = await db
       .select({ pageSlug: pageSections.pageSlug })

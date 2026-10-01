@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,6 +14,7 @@ export default async function EditAlertPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireCapability("cms.read");
   const { id } = await params;
   const alert = await getAlert(Number(id));
   if (!alert) notFound();

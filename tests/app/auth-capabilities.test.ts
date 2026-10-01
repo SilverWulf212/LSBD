@@ -24,5 +24,6 @@ describe("capabilities", () => {
     expect(can(null, "cms.read")).toBe(false);
     expect(can(undefined, "cms.read")).toBe(false);
     expect(can("nope" as never, "cms.read")).toBe(false);
+    expect(can("constructor" as never, "cms.read")).toBe(false);
   });
 });

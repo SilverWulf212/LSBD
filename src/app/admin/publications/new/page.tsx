@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/auth-utils";
 import React from "react";
 import Link from "next/link";
 import { PublicationForm } from "@/components/admin/publication-form";
@@ -6,7 +7,8 @@ import { ArrowLeft } from "lucide-react";
 
 export const metadata = { title: "New Publication | Admin" };
 
-export default function NewPublicationPage() {
+export default async function NewPublicationPage() {
+  await requireCapability("cms.write");
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
