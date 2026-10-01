@@ -47,7 +47,7 @@ Source: aggregate queries on `lsbd_raw."tblTransactions"` (synced from LSBDDB), 
 | A handful | — | Reinstatement, registration | $100–$580 |
 
 **Other facts:**
-- The new site's renewal pages (`src/app/(public)/dentists/renewal/page.tsx`, the hygienists equivalent) say **"Online renewals discontinued."** That is wrong for the live system and would mislead licensees this season.
+- The new site's renewal pages (`src/app/(public)/dentists/renewal/page.tsx`, the hygienists equivalent) say **"Online renewals discontinued"** and tell licensees to mail a check; they keep membersbase.com (`https://www.membersbase.com/lsbd/dentist` and `/hygienist`) only for verification and address changes. **This conflicts with the data:** 6 `ONLINE` renewals landed on 2026-10-01. Either the board has discontinued online renewals (so the copy is right and the ONLINE rows are stragglers), or the copy is wrong. Unconfirmed; ask Erin. Also note that VSAuth/VsCapture (card logs) were purged at the source on 2026-09-30.
 - Fee composition is renewal + wellbeing fee + permit fee(s) + penalty, which maps onto `tblFees` / `lsbd.fees`, `tblTransSplits`, and `RenewalSettings`.
 - The current online portal also captures renewal attestations: the `RenewalCertification` / `RenewalDetails` tables (37k rows) are fed by it. Payments and the renewal *application* are coupled.
 
@@ -111,7 +111,7 @@ Source: aggregate queries on `lsbd_raw."tblTransactions"` (synced from LSBDDB), 
 
 **Phase 0 — Unblock and protect this season (this week; ~1 day of our time):**
 1. **Fix the website copy.**
-   - Replace "Online renewals discontinued" with a pointer to the live renewal portal.
+   - **Confirm with Erin whether online renewals are discontinued this season.** If they are not, replace the notice with a pointer to the membersbase.com renewal portal. If they are, the payments urgency drops and the toggle defaults to *mail-in only* until our checkout launches. Do not change the copy until this is confirmed.
    - Owner: us. ~30 min. Needs the correct current URL from Erin.
 2. **Keep the ONLINE feed flowing.**
    - The sync already mirrors `tblTransactions`.
