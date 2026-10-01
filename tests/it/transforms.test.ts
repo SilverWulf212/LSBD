@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Client } from "pg";
 import { loadSecrets } from "../../scripts/lib/secrets";
+import { connectPg } from "../../scripts/lib/pg";
 import { restoreSyntheticSequences } from "./sequences";
 
 // Live tests of lsbd.run_transforms (Task 11) against the real Supabase project.
@@ -59,8 +60,7 @@ describe.skipIf(process.env.LSBD_IT !== "1")("lsbd.run_transforms (live)", () =>
   beforeAll(async () => {
     const url = loadSecrets()["SUPABASE_DB_URL_SESSION"];
     if (!url) throw new Error("SUPABASE_DB_URL_SESSION missing");
-    c = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-    await c.connect();
+    c = await connectPg(url, { applicationName: "lsbd-it" });
     await c.query("SET statement_timeout = 0");
   }, 60_000);
   afterAll(async () => {

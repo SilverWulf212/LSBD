@@ -20,8 +20,9 @@
 // - Output is progress and counts only: never row values, never secrets.
 
 import { spawnSync } from "node:child_process";
-import { Client } from "pg";
+import type { Client } from "pg";
 import { loadSecrets } from "../lib/secrets";
+import { connectPg } from "../lib/pg";
 import { readSchema, query, closeBridge } from "./mssql";
 import { EXCLUDED_TABLES, applyPolicy, policyFor } from "./policy";
 import { fingerprintSql, keysSql, rowsSql } from "./sql-gen";
@@ -60,6 +61,7 @@ export interface RunDeps {
 }
 
 const LOCK_KEY = "hashtext('lsbd_sync')";
+const APP_NAME = "lsbd-sync";
 const ROW_CHUNK = 1_000; // keys per rowsSql IN-list
 const ALL_ROWS_RATIO = 0.3; // above this share of changed keys, fetch the whole table once
 const BOOKKEEPING = new Set(["_rowid", "_row_hash", "_synced_at", "_deleted_at"]);
@@ -219,12 +221,13 @@ export function computeDrift(t: SourceTable, rawCols: { column_name: string; dat
 async function defaultDb(): Promise<Client> {
   const url = loadSecrets()["SUPABASE_DB_URL_SESSION"];
   if (!url) throw new Error("SUPABASE_DB_URL_SESSION not found in secrets file");
-  const c = new Client({ connectionString: url, ssl: { rejectUnauthorized: false }, application_name: "lsbd-sync" });
-  // An idle-connection drop emits 'error'; without a listener it would crash the process past
-  // our finally blocks. The next query on the dead client then rejects normally.
-  c.on("error", (e) => console.error(`pg client error: ${redact(e.message)}`));
-  await c.connect();
-  return c;
+  // Pinned-CA TLS + statement/lock/idle-in-transaction timeouts (scripts/lib/pg.ts). An
+  // idle-connection drop emits 'error'; without a listener it would crash the process past our
+  // finally blocks. The next query on the dead client then rejects normally.
+  return connectPg(url, {
+    applicationName: APP_NAME,
+    onError: (e) => console.error(`pg client error: ${redact(e.message)}`),
+  });
 }
 
 function hmacKeyFromSecrets(): Buffer {
@@ -673,7 +676,9 @@ async function defaultTransforms(c: Client, changed: string[] | null): Promise<n
     log("transforms not installed; skipped");
     return 0;
   }
-  await c.query("SET statement_timeout = 0");
+  // Bounded (it was 0 = forever): a CALL stuck on a lock now fails the run and alerts instead of
+  // holding the sync lock indefinitely. Full transforms take seconds today.
+  await c.query("SET statement_timeout = '10min'");
   const r = await c.query<{ orphans: number | null }>(
     `CALL lsbd.run_transforms(changed_sources => $1::text[], orphans => 0)`,
     [changed],

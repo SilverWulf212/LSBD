@@ -9,8 +9,8 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { Client } from "pg";
 import { loadSecrets } from "../lib/secrets";
+import { connectPg } from "../lib/pg";
 import { readSchema, closeBridge } from "./mssql";
 import { EXCLUDED_TABLES, policyFor } from "./policy";
 import { bookkeepingDdl, rawTableDdl } from "./raw-ddl";
@@ -79,8 +79,7 @@ async function main(): Promise<void> {
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   fs.writeFileSync(OUT_FILE, sql, "utf8");
 
-  const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-  await client.connect();
+  const client = await connectPg(url, { applicationName: "lsbd-bootstrap" });
   try {
     await client.query("BEGIN");
     try {

@@ -17,8 +17,9 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { Client } from "pg";
+import type { Client } from "pg";
 import { loadSecrets } from "../lib/secrets";
+import { connectPg } from "../lib/pg";
 import { readSchema, query, closeBridge } from "./mssql";
 import { EXCLUDED_TABLES } from "./policy";
 import { keysSql } from "./sql-gen";
@@ -227,10 +228,10 @@ const SSN_TABLES = ["tblDenHyg", "Individual", "tblRndDentists", "tblRndHygienis
 async function connect(): Promise<Client> {
   const url = loadSecrets()["SUPABASE_DB_URL_SESSION"];
   if (!url) throw new Error("SUPABASE_DB_URL_SESSION not found in secrets file");
-  const c = new Client({ connectionString: url, ssl: { rejectUnauthorized: false }, application_name: "lsbd-reconcile" });
-  c.on("error", (e) => console.error(`pg client error: ${redact(e.message)}`));
-  await c.connect();
-  return c;
+  return connectPg(url, {
+    applicationName: "lsbd-reconcile",
+    onError: (e) => console.error(`pg client error: ${redact(e.message)}`),
+  });
 }
 
 async function sourceCounts(tables: SourceTable[]): Promise<Map<string, number>> {

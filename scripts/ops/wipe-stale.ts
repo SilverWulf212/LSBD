@@ -14,8 +14,9 @@
 //
 // Run: npx tsx scripts/ops/wipe-stale.ts [--yes]
 
-import { Client } from "pg";
+import type { Client } from "pg";
 import { loadSecrets } from "../lib/secrets";
+import { connectPg } from "../lib/pg";
 
 function qi(ident: string): string {
   return '"' + ident.replace(/"/g, '""') + '"';
@@ -48,8 +49,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-  await client.connect();
+  const client = await connectPg(url, { applicationName: "lsbd-wipe-stale" });
   try {
     const tr = await client.query(
       `SELECT table_name FROM information_schema.tables

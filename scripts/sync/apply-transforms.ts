@@ -10,8 +10,9 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { Client } from "pg";
+import type { Client } from "pg";
 import { loadSecrets } from "../lib/secrets";
+import { connectPg } from "../lib/pg";
 
 export const TRANSFORMS_DIR = path.resolve(__dirname, "../../supabase/transforms");
 
@@ -42,14 +43,16 @@ export async function applyTransforms(c: Client, files: string[] = transformFile
 async function main(): Promise<void> {
   const url = loadSecrets()["SUPABASE_DB_URL_SESSION"];
   if (!url) throw new Error("SUPABASE_DB_URL_SESSION missing from secrets");
-  const c = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-  c.on("error", () => undefined);
-  await c.connect();
+  const c = await connectPg(url, { applicationName: "lsbd-apply-transforms" });
   // Same key the sync runner takes (pg_try_advisory_lock(hashtext('lsbd_sync'))): a
   // DROP VIEW ... CASCADE between file transactions must never race a running
   // sync, so wait for any in-flight run and hold the lock for the whole apply.
+  // The wait for the lock is bounded by statement_timeout (10 min), not lock_timeout (60 s): a
+  // full sync run can legitimately hold it for a few minutes. Row/DDL locks get 60 s again after.
   console.log("waiting for the lsbd_sync advisory lock ...");
+  await c.query("SET lock_timeout = 0");
   await c.query("SELECT pg_advisory_lock(hashtext('lsbd_sync'))");
+  await c.query("SET lock_timeout = '60s'");
   try {
     await applyTransforms(c);
     const reg = await c.query<{ domain: string; sort_order: number; n: number }>(

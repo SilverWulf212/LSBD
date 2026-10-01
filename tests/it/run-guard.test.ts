@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Client } from "pg";
 import { loadSecrets } from "../../scripts/lib/secrets";
+import { connectPg } from "../../scripts/lib/pg";
 import { readSchema, query, closeBridge } from "../../scripts/sync/mssql";
 import { keysSql, rowsSql } from "../../scripts/sync/sql-gen";
 import { runSync, exitCodeFor } from "../../scripts/sync/run";
@@ -21,8 +22,7 @@ const SYNTH_N = 200;
 async function connect(): Promise<Client> {
   const url = loadSecrets()["SUPABASE_DB_URL_SESSION"];
   if (!url) throw new Error("SUPABASE_DB_URL_SESSION missing");
-  const c = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-  await c.connect();
+  const c = await connectPg(url, { applicationName: "lsbd-it" });
   return c;
 }
 

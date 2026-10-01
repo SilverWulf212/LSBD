@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Client } from "pg";
 import { loadSecrets } from "../../scripts/lib/secrets";
+import { connectPg } from "../../scripts/lib/pg";
 import type { SourceTable } from "../../scripts/sync/types";
 import {
   readRawKeys,
@@ -47,8 +48,7 @@ describe.skipIf(process.env.LSBD_IT !== "1")("raw writer (live lsbd_raw.tblFees)
   beforeAll(async () => {
     const url = loadSecrets()["SUPABASE_DB_URL_SESSION"];
     if (!url) throw new Error("SUPABASE_DB_URL_SESSION missing");
-    c = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-    await c.connect();
+    c = await connectPg(url, { applicationName: "lsbd-it" });
   }, 60_000);
   afterAll(async () => {
     await c.query("ROLLBACK").catch(() => undefined);
