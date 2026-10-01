@@ -44,7 +44,7 @@ const nextConfig: NextConfig = {
       },
       {
         // Edge caching for public HTML pages (does not affect admin routes)
-        source: "/((?!admin|api|_next|public/verify).*)",
+        source: "/((?!admin|api|_next|public/verify(?:/|$)).*)",
         headers: [
           {
             key: "CDN-Cache-Control",

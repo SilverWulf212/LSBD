@@ -16,7 +16,6 @@ beforeEach(() => {
   vi.resetModules();
 });
 afterEach(() => {
-  vi.unstubAllGlobals();
   for (const k of KEYS) {
     if (saved[k] === undefined) delete process.env[k];
     else process.env[k] = saved[k];

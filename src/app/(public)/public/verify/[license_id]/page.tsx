@@ -30,9 +30,8 @@ interface PageProps {
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { license_id } = await params;
   if (!isValidLicenseId(license_id)) return { title: "Verify a License" };
-  const decoded = license_id;
   const type = parseLicenseType((await searchParams).type);
-  const label = type ? `${TYPE_LABEL[type]} license ${decoded}` : `License ${decoded}`;
+  const label = type ? `${TYPE_LABEL[type]} license ${license_id}` : `License ${license_id}`;
   return {
     title: `${label} — Verify`,
     description: `License verification record for ${label.toLowerCase()} from the Louisiana State Board of Dentistry.`,
@@ -51,7 +50,6 @@ export default async function LicenseDetailPage({ params, searchParams }: PagePr
   // Next has already decoded the param; anything outside the license-number
   // alphabet cannot match a record.
   if (!isValidLicenseId(license_id)) notFound();
-  const decoded = license_id;
   const type = parseLicenseType((await searchParams).type);
 
   // Rate limit: 60 requests / IP / minute.
@@ -59,7 +57,7 @@ export default async function LicenseDetailPage({ params, searchParams }: PagePr
   if (!rateLimit(`verify-detail:${ip}`, 60, 60_000).ok) {
     return (
       <Notice
-        decoded={decoded}
+        licenseId={license_id}
         message="Too many searches from your network. Please wait a minute and try again."
       />
     );
@@ -67,16 +65,16 @@ export default async function LicenseDetailPage({ params, searchParams }: PagePr
 
   let rows: PublicLicensee[];
   try {
-    rows = await getPublicLicensees(decoded, type);
+    rows = await getPublicLicensees(license_id, type);
   } catch (e) {
     console.error("public verify lookup failed", e);
-    return <Notice decoded={decoded} message="Search is temporarily unavailable. Please try again." />;
+    return <Notice licenseId={license_id} message="Search is temporarily unavailable. Please try again." />;
   }
   if (rows.length === 0) notFound();
 
   const groups = groupByType(rows);
   const multipleTypes = groups.length > 1;
-  const title = type ? `${TYPE_LABEL[type]} License ${decoded}` : `License ${decoded}`;
+  const title = type ? `${TYPE_LABEL[type]} License ${license_id}` : `License ${license_id}`;
   const description =
     rows.length === 1
       ? `Verification record for ${fullName(rows[0])}`
@@ -100,7 +98,7 @@ export default async function LicenseDetailPage({ params, searchParams }: PagePr
                 <Info className="h-5 w-5 text-[#0077B6] shrink-0 mt-0.5" aria-hidden="true" />
                 <div>
                   <h2 className="font-semibold text-sm text-[#005f8f]">
-                    License number {decoded} is held by more than one type of licensee
+                    License number {license_id} is held by more than one type of licensee
                   </h2>
                   <p className="mt-1 text-sm text-blue-800">
                     Dentist, hygienist and EDDA licenses are numbered separately. Choose the type
@@ -110,10 +108,10 @@ export default async function LicenseDetailPage({ params, searchParams }: PagePr
                     {groups.map((g) => (
                       <li key={g.type}>
                         <Link
-                          href={licenseDetailHref(decoded, g.type)}
+                          href={licenseDetailHref(license_id, g.type)}
                           className="inline-block rounded-md border border-blue-300 bg-white px-3 py-1 text-sm text-[#0077B6] hover:underline"
                         >
-                          {g.label} {decoded}
+                          {g.label} {license_id}
                         </Link>
                       </li>
                     ))}
@@ -127,7 +125,7 @@ export default async function LicenseDetailPage({ params, searchParams }: PagePr
             <section key={g.type} aria-labelledby={`type-${g.type}`} className="space-y-4">
               {(multipleTypes || g.rows.length > 1) && (
                 <h2 id={`type-${g.type}`} className="text-lg font-semibold text-[#005f8f]">
-                  {g.label} license {decoded}
+                  {g.label} license {license_id}
                   {g.rows.length > 1 && (
                     <span className="ml-2 text-sm font-normal text-muted-foreground">
                       ({g.rows.length} records on file)
@@ -159,10 +157,10 @@ export default async function LicenseDetailPage({ params, searchParams }: PagePr
   );
 }
 
-function Notice({ decoded, message }: { decoded: string; message: string }) {
+function Notice({ licenseId, message }: { licenseId: string; message: string }) {
   return (
     <>
-      <PageHeader title={`License ${decoded}`} description="License verification" />
+      <PageHeader title={`License ${licenseId}`} description="License verification" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="max-w-3xl mx-auto space-y-6">
           <Button variant="ghost" size="sm" asChild>

@@ -25,24 +25,11 @@ export {
   sortByTypeOrder,
 } from "@/lib/public-verify-helpers";
 export type { LicenseType, PublicLicensee } from "@/lib/public-verify-helpers";
+export { validateSearch } from "@/lib/public-verify-query";
 export type { SearchParams, SearchResult } from "@/lib/public-verify-query";
 
 const pgQuery: PgQueryFn = async (text, params) =>
   (await db.$client.query(text, [...params])).rows;
-
-/**
- * Validate a search request. Must have either a license number OR
- * a last-name prefix ≥ 2 chars. Empty searches return null (the caller
- * should render an empty-state, not run the query).
- */
-export function validateSearch(p: SearchParams): { ok: true } | { ok: false; reason: string } {
-  const lic = (p.licenseId ?? "").trim();
-  const last = (p.lastName ?? "").trim();
-  if (!lic && last.length < 2) {
-    return { ok: false, reason: "Enter a license number, or at least 2 characters of last name." };
-  }
-  return { ok: true };
-}
 
 export function searchPublicLicensees(p: SearchParams): Promise<SearchResult> {
   return searchPublicLicenseesWith(pgQuery, p);

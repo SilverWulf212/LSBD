@@ -69,8 +69,30 @@ function mapRow(r: Record<string, unknown>): PublicLicensee {
   };
 }
 
+const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
+const MAX_INPUT_LENGTH = 100;
+
+/**
+ * Validate a search request. Must have either a license number OR
+ * a last-name prefix ≥ 2 chars, and no field may hold control characters
+ * (Postgres rejects NUL in text) or run past 100 characters.
+ */
+export function validateSearch(p: SearchParams): { ok: true } | { ok: false; reason: string } {
+  for (const v of [p.licenseId, p.lastName, p.firstName]) {
+    if (v && (v.length > MAX_INPUT_LENGTH || CONTROL_CHARS.test(v))) {
+      return { ok: false, reason: "Enter a valid name or license number." };
+    }
+  }
+  const lic = (p.licenseId ?? "").trim();
+  const last = (p.lastName ?? "").trim();
+  if (!lic && last.length < 2) {
+    return { ok: false, reason: "Enter a license number, or at least 2 characters of last name." };
+  }
+  return { ok: true };
+}
+
 export async function searchPublicLicensees(query: PgQueryFn, p: SearchParams): Promise<SearchResult> {
-  const page = Math.min(LAST_PAGE, Math.max(1, Math.floor(p.page ?? 1) || 1));
+  let page = Math.min(LAST_PAGE, Math.max(1, Math.floor(p.page ?? 1) || 1));
   const params: unknown[] = [];
   const where: string[] = [];
   const bind = (v: unknown) => `$${params.push(v)}`;
@@ -87,14 +109,26 @@ export async function searchPublicLicensees(query: PgQueryFn, p: SearchParams): 
   if (p.type && p.type !== "all") where.push(`type = ${bind(p.type)}`);
 
   // A license-number search can match several types (D/H/E share number
-  // ranges); order by type first so they appear together.
-  const text = `SELECT ${COLUMNS}, count(*) OVER() AS total
+  // ranges); order by type first so they appear together. The limit keeps a
+  // page inside the MAX_RESULTS cap (the last page holds only what is left).
+  const offsetRef = `$${params.length + 1}`;
+  const run = (offset: number) =>
+    query(
+      `SELECT ${COLUMNS}, count(*) OVER() AS total
 FROM public.public_licensee
 ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
 ORDER BY ${lic ? "type, " : ""}last_name NULLS LAST, first_name NULLS LAST, date_since NULLS LAST
-LIMIT ${PAGE_SIZE} OFFSET ${bind((page - 1) * PAGE_SIZE)}`;
+LIMIT ${Math.min(PAGE_SIZE, MAX_RESULTS - offset)} OFFSET ${offsetRef}`,
+      [...params, offset]
+    );
 
-  const data = await query(text, params);
+  let data = await run((page - 1) * PAGE_SIZE);
+  // A page past the last row returns nothing, and so no total: show page 1
+  // rather than "no matches" for licensees who exist.
+  if (data.length === 0 && page > 1) {
+    page = 1;
+    data = await run(0);
+  }
 
   // count(*) OVER() is a bigint, which arrives as a string.
   const total = data.length ? Number(data[0].total) || 0 : 0;
