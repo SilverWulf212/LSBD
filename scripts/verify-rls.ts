@@ -1,21 +1,39 @@
 // scripts/verify-rls.ts
 //
-// Smoke-test the RLS posture from Package C. Uses @supabase/supabase-js with
-// the anon key (same surface area the public /verify route will use):
+// Post-apply check for drizzle/0005, 0006 and 0007. Exits 1 if any check fails.
+// Prints counts and pass/fail only, never keys or row values.
 //
-//   ✓ SELECT from public.public_licensee returns rows.
-//   ✓ SELECT from lsbd.licensee_pii is denied.
-//   ✓ SELECT from lsbd.transactions is denied.
-//   ✓ View row count matches the expected active-D/H/E population.
+//   npx tsx scripts/verify-rls.ts --stage=0005   after 0005_public_cms_lockdown.sql
+//   npx tsx scripts/verify-rls.ts --stage=0006   after 0006_db_roles.sql
+//   npx tsx scripts/verify-rls.ts --stage=0007   after 0007_public_view_owner_rights.sql (default)
 //
-// Run:
-//   $env:NEXT_PUBLIC_SUPABASE_URL = "https://<project>.supabase.co"
-//   $env:NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJ..."
-//   npx tsx scripts/verify-rls.ts
+// Stages are cumulative: --stage=0006 also runs the 0005 checks.
+//
+// Two paths are checked:
+//   - the anon key over REST (@supabase/supabase-js), the surface anyone on the
+//     internet has; reads NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY from .env.local;
+//   - SUPABASE_DB_URL_SESSION + SET ROLE, the same role assertions as
+//     tests/it/grants.test.ts, inside one BEGIN ... ROLLBACK.
 
 import * as fs from "node:fs";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import type { Client } from "pg";
+import { loadSecrets } from "./lib/secrets";
+import { connectPg } from "./lib/pg";
+
+const STAGES = ["0005", "0006", "0007"] as const;
+type Stage = (typeof STAGES)[number];
+type Role = "lsbd_staff_ro" | "lsbd_app" | "anon";
+
+const DENIED = "42501"; // insufficient_privilege (table or schema)
+
+let failed = 0;
+
+function report(ok: boolean, name: string, detail: string): void {
+  if (!ok) failed++;
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${name} - ${detail}`);
+}
 
 function loadDotEnv(file: string): void {
   if (!fs.existsSync(file)) return;
@@ -27,73 +45,162 @@ function loadDotEnv(file: string): void {
   }
 }
 
-async function main() {
-  loadDotEnv(".env.local");
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    console.error("Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
-    process.exit(1);
-  }
-
-  const anon = createClient(url, key, {
-    realtime: { transport: WebSocket as unknown as typeof globalThis.WebSocket },
-  });
-
-  // 1. View should return rows.
-  console.log("Test 1: SELECT from public.public_licensee (anon) …");
-  const v = await anon
-    .from("public_licensee")
-    .select("license_id,type,status,first_name,last_name", { count: "exact" })
-    .limit(5);
-  if (v.error) {
-    console.error("  ✗ Failed:", v.error.message);
-    process.exit(1);
-  }
-  console.log(`  ✓ Got ${v.data?.length ?? 0} rows (of ${v.count} total)`);
-  for (const r of v.data?.slice(0, 3) ?? []) {
-    console.log(`     ${r.license_id} ${r.type} ${r.status} ${r.last_name}, ${r.first_name}`);
-  }
-
-  // 2. PII table — should be denied.
-  console.log("\nTest 2: SELECT from lsbd.licensee_pii (anon) — expect denial …");
-  const pii = await anon.schema("lsbd").from("licensee_pii").select("id").limit(1);
-  if (pii.error) {
-    console.log(`  ✓ Denied as expected: ${pii.error.message}`);
-  } else {
-    console.error(`  ✗ Anon got ${pii.data?.length ?? 0} rows — RLS misconfigured!`);
-    process.exit(1);
-  }
-
-  // 3. Transactions table — should be denied.
-  console.log("\nTest 3: SELECT from lsbd.transactions (anon) — expect denial …");
-  const tx = await anon.schema("lsbd").from("transactions").select("id").limit(1);
-  if (tx.error) {
-    console.log(`  ✓ Denied as expected: ${tx.error.message}`);
-  } else {
-    console.error(`  ✗ Anon got ${tx.data?.length ?? 0} rows — RLS misconfigured!`);
-    process.exit(1);
-  }
-
-  // 4. Search smoke (matches scripts/verify-load.ts query for parity)
-  console.log("\nTest 4: search 'SMITH' on public_licensee …");
-  const s = await anon
-    .from("public_licensee")
-    .select("license_id,type,status,first_name,last_name,date_until")
-    .ilike("last_name", "SMITH%")
-    .order("last_name", { ascending: true })
-    .limit(20);
-  if (s.error) {
-    console.error("  ✗ Search failed:", s.error.message);
-    process.exit(1);
-  }
-  console.log(`  ✓ ${s.data?.length ?? 0} SMITH rows returned. First 5:`);
-  for (const r of s.data?.slice(0, 5) ?? []) {
-    console.log(`     ${r.license_id} ${r.type} ${r.status} ${r.last_name}, ${r.first_name} (exp ${r.date_until ?? "—"})`);
-  }
-
-  console.log("\nAll RLS smoke checks passed.");
+function parseStage(argv: string[]): Stage {
+  const arg = argv.find((a) => a.startsWith("--stage="));
+  if (!arg) return "0007";
+  const v = arg.slice("--stage=".length);
+  if (!(STAGES as readonly string[]).includes(v)) throw new Error("usage: verify-rls.ts [--stage=0005|0006|0007]");
+  return v as Stage;
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+// anon over REST: an error, or zero rows, passes. Any row is a failure. A HEAD
+// request with an exact count, so no column data is fetched even when it is exposed.
+async function anonRestDenied(anon: SupabaseClient, table: string): Promise<void> {
+  const name = `anon REST: public.${table}`;
+  const r = await anon.from(table).select("*", { count: "exact", head: true });
+  if (r.error) return report(true, name, `denied (${r.error.code || `HTTP ${r.status}`})`);
+  report(r.count === 0, name, r.count === 0 ? "0 rows" : `${r.count ?? "unknown"} row(s) visible`);
+}
+
+async function inSavepoint(c: Client, name: string, fn: () => Promise<void>): Promise<void> {
+  await c.query(`SAVEPOINT ${name}`);
+  try {
+    await fn();
+  } finally {
+    await c.query(`ROLLBACK TO SAVEPOINT ${name}`);
+  }
+}
+
+// Runs the checks as `role`; the savepoint puts the session role back afterwards.
+async function asRole(c: Client, role: Role, fn: () => Promise<void>): Promise<void> {
+  try {
+    await inSavepoint(c, "as_role", async () => {
+      await c.query(`SET LOCAL ROLE ${role}`);
+      await fn();
+    });
+  } catch (e) {
+    report(false, `SET ROLE ${role}`, pgErr(e));
+  }
+}
+
+function pgErr(e: unknown): string {
+  const code = (e as { code?: string }).code;
+  return code ? `error ${code}` : "error";
+}
+
+async function expectDenied(c: Client, role: Role, sql: string): Promise<void> {
+  const name = `${role}: ${sql}`;
+  await inSavepoint(c, "denied", async () => {
+    try {
+      await c.query(sql);
+      report(false, name, "allowed, expected permission denied");
+    } catch (e) {
+      const code = (e as { code?: string }).code;
+      report(code === DENIED, name, code === DENIED ? "permission denied" : `${pgErr(e)}, expected permission denied`);
+    }
+  });
+}
+
+async function expectCount(c: Client, role: Role, relation: string, min: number): Promise<void> {
+  const name = `${role}: count(*) FROM ${relation} >= ${min}`;
+  await inSavepoint(c, "counted", async () => {
+    try {
+      const r = await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM ${relation}`);
+      report(r.rows[0].n >= min, name, `${r.rows[0].n} rows`);
+    } catch (e) {
+      report(false, name, pgErr(e));
+    }
+  });
+}
+
+async function rlsEnabled(c: Client, schemas: string[]): Promise<void> {
+  const r = await c.query<{ t: string }>(
+    `SELECT n.nspname || '.' || c.relname AS t
+       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = ANY($1::text[]) AND c.relkind IN ('r', 'p') AND NOT c.relrowsecurity
+      ORDER BY 1`,
+    [schemas],
+  );
+  const off = r.rows.map((x) => x.t);
+  report(off.length === 0, `row level security on every table in ${schemas.join(", ")}`,
+    off.length === 0 ? "0 tables without it" : `off on: ${off.join(", ")}`);
+}
+
+async function main(): Promise<void> {
+  const stage = parseStage(process.argv.slice(2));
+  const at = (s: Stage): boolean => STAGES.indexOf(stage) >= STAGES.indexOf(s);
+  loadDotEnv(".env.local");
+
+  const restUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!restUrl || !anonKey) throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set");
+  const dbUrl = loadSecrets()["SUPABASE_DB_URL_SESSION"];
+  if (!dbUrl) throw new Error("SUPABASE_DB_URL_SESSION missing from secrets");
+
+  console.log(`verify-rls: checks for stage ${stage}`);
+
+  console.log("\nanon key over REST");
+  const anon = createClient(restUrl, anonKey, {
+    realtime: { transport: WebSocket as unknown as typeof globalThis.WebSocket },
+  });
+  for (const t of ["users", "audit_log", "posts"]) await anonRestDenied(anon, t);
+  if (at("0007")) await anonRestDenied(anon, "public_licensee");
+
+  console.log("\ndatabase roles (SET ROLE, rolled back)");
+  const c = await connectPg(dbUrl, { applicationName: "lsbd-verify-rls" });
+  try {
+    await c.query("BEGIN");
+    await rlsEnabled(c, ["lsbd", "public"]);
+
+    await asRole(c, "anon", async () => {
+      await expectDenied(c, "anon", "SELECT 1 FROM public.users");
+      if (at("0007")) {
+        await expectDenied(c, "anon", "SELECT 1 FROM public.public_licensee");
+        await expectDenied(c, "anon", "SELECT 1 FROM lsbd.license");
+      }
+    });
+
+    if (at("0006")) {
+      await asRole(c, "lsbd_staff_ro", async () => {
+        await expectCount(c, "lsbd_staff_ro", "lsbd.license", 19000);
+        await expectCount(c, "lsbd_staff_ro", "lsbd.individual", 1);
+        await expectDenied(c, "lsbd_staff_ro", "SELECT ssn FROM lsbd.individual");
+        await expectDenied(c, "lsbd_staff_ro", "SELECT 1 FROM lsbd.licensee_pii");
+        await expectDenied(c, "lsbd_staff_ro", "UPDATE lsbd.person SET first_name = first_name WHERE false");
+        await expectDenied(c, "lsbd_staff_ro", "SELECT 1 FROM public.users");
+      });
+
+      await asRole(c, "lsbd_app", async () => {
+        await expectCount(c, "lsbd_app", "public.users", 1);
+        await expectCount(c, "lsbd_app", "lsbd_raw._sync_runs", 1);
+        await expectDenied(c, "lsbd_app", "DELETE FROM public.audit_log WHERE false");
+        await expectDenied(c, "lsbd_app", "SELECT 1 FROM lsbd.license");
+        // Until 0007 the view runs with the caller's rights, and lsbd_app has none on lsbd.
+        if (at("0007")) {
+          await expectCount(c, "lsbd_app", "public.public_licensee", 13000);
+          const name = "lsbd_app: public.public_licensee has column legacy_key";
+          await inSavepoint(c, "cols", async () => {
+            try {
+              const r = await c.query("SELECT * FROM public.public_licensee LIMIT 0");
+              const has = r.fields.some((f) => f.name === "legacy_key");
+              report(has, name, `${r.fields.length} columns`);
+            } catch (e) {
+              report(false, name, pgErr(e));
+            }
+          });
+        }
+      });
+    }
+  } finally {
+    await c.query("ROLLBACK").catch(() => undefined);
+    await c.end();
+  }
+
+  console.log(failed === 0 ? `\nAll checks passed for stage ${stage}.` : `\n${failed} check(s) FAILED for stage ${stage}.`);
+  if (failed > 0) process.exitCode = 1;
+}
+
+main().catch((e) => {
+  console.error(`verify-rls failed: ${(e as Error).message}`);
+  process.exitCode = 1;
+});
