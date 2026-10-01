@@ -3,16 +3,25 @@
 Three hand-written SQL files move the site off the `postgres` role and close the
 anon key's access to data. None of them is applied automatically.
 
+**Scope: the database and the Preview environment only.** Production is Stage 0b
+of the P2 plan, a supervised promotion (CMS re-copy from Neon, admin promotion,
+then environment variables and deploy). Do not set Production variables and do not
+redeploy `main` from this runbook.
+
 | File | What it does | When it is safe |
 | --- | --- | --- |
 | `drizzle/0005_public_cms_lockdown.sql` | RLS on every table in `public`; revokes anon / authenticated on them | Any time |
 | `drizzle/0006_db_roles.sql` | Creates `lsbd_app` and `lsbd_staff_ro` (no login), their grants and policies | Any time (additive) |
-| `drizzle/0007_public_view_owner_rights.sql` | Makes `public.public_licensee` an owner-rights view, adds `legacy_key`, removes every anon grant and policy on licensing data | **Only after** the server-side verify pages are deployed everywhere |
+| `drizzle/0007_public_view_owner_rights.sql` | Makes `public.public_licensee` an owner-rights view, adds `legacy_key`, removes every anon grant and policy on licensing data | **Only after** the gate in §1 is met |
 
 All three are idempotent. Each runs in one transaction and rolls back completely
-on the first error. The runner holds the sync advisory lock, so it waits for a
-running sync cycle to finish and the next cycle waits for it; do not pause the
-scheduled tasks.
+on the first error. The runner refuses a file that contains its own `BEGIN;`,
+`COMMIT;` or `ROLLBACK;`.
+
+The runner holds the sync advisory lock. It waits for a sync run in progress to
+finish; a sync run that starts while a file is being applied **skips** (lock busy)
+and the next run catches up. Do not pause the scheduled tasks, and do not apply
+near the 02:00 nightly full sync + reconcile.
 
 ## 1. Apply, in this order
 
@@ -22,31 +31,54 @@ it prints `PASS` / `FAIL` lines with counts only and exits 1 on any failure.
 ```powershell
 npx tsx scripts/apply-sql.ts drizzle/0005_public_cms_lockdown.sql
 npx tsx scripts/verify-rls.ts --stage=0005
+```
 
+After 0005, on the Preview deployment: load the home page and `/news`, sign in,
+and save one CMS edit. That confirms the app's own connection still reads and
+writes.
+
+```powershell
 npx tsx scripts/apply-sql.ts drizzle/0006_db_roles.sql
 npx tsx scripts/verify-rls.ts --stage=0006
 ```
 
-0005, 0006 and 0007 each take ACCESS EXCLUSIVE locks for the length of their
-transaction (a few seconds): 0005 on every table in `public`, 0006 on every table
-in `public` and on the allow-listed `lsbd` tables (creating a policy needs the
-lock), 0007 on the view, `lsbd.license` and `lsbd.person`. Site queries on those
-tables wait meanwhile, so apply outside busy moments.
+**After each file** (0005, 0006 and 0007): confirm the next quick sync is `ok` on
+`/admin/sync`.
 
-Then stop until the gate below is met.
+### Locks taken during an apply
 
-**Gate for 0007:** the build in which `/verify` reads `public.public_licensee`
-through the server connection (commit `c7176b6` or later) is deployed to **every**
-environment that serves verify: Production and any Preview that people use. An
-older deployment still reads the view with the anon key and will show no results
-once 0007 is applied.
+Each file takes ACCESS EXCLUSIVE locks for the length of its transaction (a few
+seconds). Site queries on the locked tables wait meanwhile, so apply outside busy
+moments.
+
+| File | Locked |
+| --- | --- |
+| 0005 | every table in `public` (the CMS tables, `users`, `audit_log`) |
+| 0006 | every table in `public`; the allow-listed `lsbd` tables (creating a policy needs the lock); `lsbd_raw._sync_runs` and `lsbd_raw._sync_tables` |
+| 0007 | the view `public.public_licensee`, `lsbd.license` and `lsbd.person` |
+
+The `lsbd` tables that are not on the allow-list are not locked by any of the
+three files.
+
+### Gate for 0007
+
+Stop here until the gate is met: **no Preview still in use may run code older
+than commit `c7176b6`.** From that commit on, verify reads
+`public.public_licensee` through the server connection; older code reads the view
+through the anon key and would show no results once 0007 is applied.
 
 ```powershell
 npx tsx scripts/apply-sql.ts drizzle/0007_public_view_owner_rights.sql
 npx tsx scripts/verify-rls.ts --stage=0007
 ```
 
-Then load `/verify` on the live site and search a known name.
+Then load `/public/verify` on the **Preview** deployment and search a known name.
+
+For `public_licensee` the check passes with `not visible to anon (PGRST205)`:
+after 0007 anon has no privilege on the view, so PostgREST hides the relation
+instead of answering permission denied. If a copy of the script from before that
+change prints `unchecked: error PGRST205` for `public_licensee`, that is the same
+thing, not exposure. For `users`, `audit_log` and `posts` that code stays a FAIL.
 
 The stages are cumulative (`--stage=0006` repeats the 0005 checks). With no flag
 the script runs everything, which is the check to use from then on.
@@ -54,6 +86,14 @@ the script runs everything, which is the check to use from then on.
 0007 starts with a guard: it refuses to run unless the view's owner bypasses RLS
 or owns `lsbd.license` and `lsbd.person`. Without that the view would return no
 rows for anyone.
+
+### After all three
+
+- The nightly reconcile still passes (check the morning after).
+- `/api/search?q=<a draft title>` on the Preview returns no draft.
+- The six-role check on the Preview: signed in as each of `admin`, `staff`,
+  `discipline`, `finance`, `inspector`, `board`, only `admin` and `staff` can
+  write CMS content.
 
 ### Rollback of 0007
 
@@ -82,47 +122,58 @@ After the rollback:
 `tests/it/grants.test.ts` exercises this rollback (inside its rolled-back
 transaction).
 
-## 2. Give the roles a login
+## 2. Give `lsbd_app` a login
 
 0006 creates both roles `NOLOGIN` with no password. Passwords never go in a file
 in the repo.
 
-1. Generate two long random passwords (letters and digits only, so they need no
-   URL-escaping) and store them in the password manager.
+**Only `lsbd_app` gets `LOGIN` and a password at this stage. Leave
+`lsbd_staff_ro` `NOLOGIN` for now:** nothing reads `LSBD_RO_URL` until Stage 2,
+and which free-text columns that role may read is undecided.
+
+1. Generate one long random password (letters and digits only, so it needs no
+   URL-escaping) and store it in the password manager.
 2. In the Supabase dashboard SQL editor (or `psql`, where `\password lsbd_app`
    avoids typing the password into a statement):
 
    ```sql
-   ALTER ROLE lsbd_app      LOGIN PASSWORD '<password 1>';
-   ALTER ROLE lsbd_staff_ro LOGIN PASSWORD '<password 2>';
+   ALTER ROLE lsbd_app LOGIN PASSWORD '<password>';
    ```
 
-3. Build the pooler URLs. Through the Supabase pooler the user name is
-   `<role>.<projectref>`; host and database are the same as the existing
-   `POSTGRES_URL`. Use the transaction pooler (port 6543) for the site:
+3. Build the pooler URL. Host and database are the same as the existing
+   `POSTGRES_URL`; use the transaction pooler (port 6543) for the site:
 
    ```
-   postgresql://lsbd_app.<projectref>:<password 1>@aws-1-us-west-1.pooler.supabase.com:6543/postgres
-   postgresql://lsbd_staff_ro.<projectref>:<password 2>@aws-1-us-west-1.pooler.supabase.com:6543/postgres
+   postgresql://lsbd_app.<projectref>:<password>@aws-1-us-west-1.pooler.supabase.com:6543/postgres
    ```
 
-Both roles have `statement_timeout = 30s` set on the role.
+4. **Test the `lsbd_app` login through the pooler before changing any Vercel
+   variable.** Two things are **unverified** for a custom role on this project:
+   - the pooler user name format `<role>.<projectref>`;
+   - whether the role-level `statement_timeout = 30s` (set by 0006) takes effect
+     through port 6543.
 
-## 3. Vercel variables
+   Connect with the URL and run `SELECT current_user; SHOW statement_timeout;`.
+   If the login fails, stop and leave Vercel alone. If the timeout is not `30s`,
+   record what it is before going on.
 
-| Variable | Connects as | Used for |
-| --- | --- | --- |
-| `POSTGRES_URL` | `lsbd_app` | CMS, admin, public verify, sync status |
-| `LSBD_RO_URL` | `lsbd_staff_ro` | Staff read-only views of licensing data |
+## 3. Vercel variables (Preview only)
 
-Set both on **Preview first**, redeploy the preview, and exercise: login, an admin
-edit, `/verify`, the sync status panel. Only then set them on Production and
-redeploy. Keep the old `POSTGRES_URL` value at hand until Production is confirmed;
-putting it back and redeploying is the rollback.
+**Do not point `POSTGRES_URL` at `lsbd_app` before 0007 is applied.** Until then
+the view runs with the caller's rights and `lsbd_app` has none on schema `lsbd`,
+so verify would fail.
 
-Do not point `POSTGRES_URL` at `lsbd_app` before 0007 is applied: until then the
-view runs with the caller's rights and `lsbd_app` has none on schema `lsbd`, so
-verify would fail.
+| Variable | Connects as | Used for | Set now? |
+| --- | --- | --- | --- |
+| `POSTGRES_URL` | `lsbd_app` | CMS, admin, public verify, sync status | Preview only, after 0007 and the login test in §2 |
+| `LSBD_RO_URL` | `lsbd_staff_ro` | Staff read-only views of licensing data | No (Stage 2) |
+
+Set `POSTGRES_URL` on **Preview**, redeploy the preview, and exercise: login, an
+admin edit, `/public/verify`, the sync status panel. Keep the old value at hand;
+putting it back and redeploying the preview is the rollback.
+
+Production variables and the production deploy are Stage 0b (see the top of this
+file); do not set them or redeploy `main` here.
 
 Sync, migrations and `scripts/*` keep using `SUPABASE_DB_URL_SESSION` (the
 `postgres` role). Nothing changes for them.
@@ -175,8 +226,13 @@ policy shows as empty results with no error.
 
 `tests/it/grants.test.ts` runs 0005, 0006 and 0007 against the live database
 inside one transaction that is always rolled back, and asserts what each role can
-and cannot do. It briefly locks the CMS tables and every `lsbd` table (several
-seconds), so run it outside busy moments.
+and cannot do. For several seconds it holds every lock in the §1 table at once:
+every table in `public`, the allow-listed `lsbd` tables, the two `lsbd_raw`
+status tables and the view. Run it outside busy moments and not near 02:00.
+
+`docs/RUNBOOK-SYNC.md` §3 says to pause the sync tasks around integration tests;
+this test instead takes the sync advisory lock itself, as the runner does, so it
+needs no pause (a sync run that starts meanwhile skips and the next catches up).
 
 ```powershell
 $env:LSBD_IT='1'; npx vitest run tests/it/grants.test.ts --no-file-parallelism
