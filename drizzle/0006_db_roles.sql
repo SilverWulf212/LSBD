@@ -16,7 +16,7 @@
 -- Both are NOLOGIN with no password: the user sets LOGIN and a password out of band
 -- (docs/RUNBOOK-DB-ROLES.md), never in a file.
 --
--- Additive and idempotent: nothing existing is revoked or dropped, so it is safe to
+-- Idempotent, and it only changes what the two new roles can do, so it is safe to
 -- apply at any time and to re-apply (re-apply after adding a table to public). Runs
 -- in one transaction (the runner wraps it). No ALTER DEFAULT PRIVILEGES: a new table
 -- is invisible to both roles until it is granted here.
@@ -86,9 +86,15 @@ CREATE POLICY lsbd_app_select ON lsbd_raw._sync_tables
 -- ─────────────────────────────────────────────────────────────────────────
 GRANT USAGE ON SCHEMA lsbd TO lsbd_staff_ro;
 
+-- Start from nothing, so this file is the full definition of the role's access:
+-- taking a table off the list below removes the grant on re-apply. (The role's
+-- staff_ro_select policy on that table stays, and is inert without the grant.)
+REVOKE ALL ON ALL TABLES IN SCHEMA lsbd FROM lsbd_staff_ro;
+
 -- NEVER add to this list: licensee_pii, users, logins, person_practice_stats, any
 -- transaction, renewal, complaint or vs_* table, any _src_* view or _transform_*
 -- table. A missing table fails the whole file rather than being skipped.
+-- scripts/lib/staff-ro-tables.ts holds the same list for the catalog check.
 DO $$
 DECLARE
   t text;

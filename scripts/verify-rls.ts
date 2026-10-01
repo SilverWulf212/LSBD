@@ -21,10 +21,18 @@ import WebSocket from "ws";
 import type { Client } from "pg";
 import { loadSecrets } from "./lib/secrets";
 import { connectPg } from "./lib/pg";
+import {
+  STAFF_RO_TABLES,
+  STAFF_RO_INDIVIDUAL_DENIED_COLUMNS,
+  TABLE_SELECTABLE_SQL,
+  ANY_COLUMN_SELECTABLE_SQL,
+  INDIVIDUAL_SELECTABLE_COLUMNS_SQL,
+  diffSets,
+} from "./lib/staff-ro-tables";
 
 const STAGES = ["0005", "0006", "0007"] as const;
 type Stage = (typeof STAGES)[number];
-type Role = "lsbd_staff_ro" | "lsbd_app" | "anon";
+type Role = "lsbd_staff_ro" | "lsbd_app" | "anon" | "authenticated";
 
 const DENIED = "42501"; // insufficient_privilege (table or schema)
 
@@ -53,12 +61,17 @@ function parseStage(argv: string[]): Stage {
   return v as Stage;
 }
 
-// anon over REST: an error, or zero rows, passes. Any row is a failure. A HEAD
-// request with an exact count, so no column data is fetched even when it is exposed.
+// anon over REST. PASS only on a real permission-denied answer from the database,
+// or on a successful answer with zero rows. Anything else (network failure, wrong
+// URL, stale key, 5xx) is a FAIL: it proves nothing. limit(0) returns no rows but,
+// unlike a HEAD request, does return the error body.
 async function anonRestDenied(anon: SupabaseClient, table: string): Promise<void> {
   const name = `anon REST: public.${table}`;
-  const r = await anon.from(table).select("*", { count: "exact", head: true });
-  if (r.error) return report(true, name, `denied (${r.error.code || `HTTP ${r.status}`})`);
+  const r = await anon.from(table).select("*", { count: "exact" }).limit(0);
+  if (r.error) {
+    const ok = r.error.code === DENIED;
+    return report(ok, name, ok ? "permission denied" : `unchecked: error ${r.error.code || "(no code)"}, HTTP ${r.status}`);
+  }
   report(r.count === 0, name, r.count === 0 ? "0 rows" : `${r.count ?? "unknown"} row(s) visible`);
 }
 
@@ -126,6 +139,24 @@ async function rlsEnabled(c: Client, schemas: string[]): Promise<void> {
     off.length === 0 ? "0 tables without it" : `off on: ${off.join(", ")}`);
 }
 
+// A catalog query whose result must be exactly `expected` (table or column names).
+async function expectNames(c: Client, name: string, sql: string, params: unknown[], expected: readonly string[]): Promise<void> {
+  await inSavepoint(c, "names", async () => {
+    try {
+      const r = await c.query<{ t: string }>(sql, params);
+      const { extra, missing } = diffSets(r.rows.map((x) => x.t), expected);
+      const ok = extra.length === 0 && missing.length === 0;
+      const detail = ok
+        ? `${expected.length} as expected`
+        : [extra.length ? `extra: ${extra.join(", ")}` : "", missing.length ? `missing: ${missing.join(", ")}` : ""]
+            .filter(Boolean).join("; ");
+      report(ok, name, detail);
+    } catch (e) {
+      report(false, name, pgErr(e));
+    }
+  });
+}
+
 async function main(): Promise<void> {
   const stage = parseStage(process.argv.slice(2));
   const at = (s: Stage): boolean => STAGES.indexOf(stage) >= STAGES.indexOf(s);
@@ -152,19 +183,31 @@ async function main(): Promise<void> {
     await c.query("BEGIN");
     await rlsEnabled(c, ["lsbd", "public"]);
 
-    await asRole(c, "anon", async () => {
-      await expectDenied(c, "anon", "SELECT 1 FROM public.users");
+    for (const role of ["anon", "authenticated"] as const) {
+      await asRole(c, role, async () => {
+        await expectDenied(c, role, "SELECT 1 FROM public.users");
+        if (at("0007")) {
+          await expectDenied(c, role, "SELECT 1 FROM public.public_licensee");
+          await expectDenied(c, role, "SELECT 1 FROM lsbd.license");
+        }
+      });
       if (at("0007")) {
-        await expectDenied(c, "anon", "SELECT 1 FROM public.public_licensee");
-        await expectDenied(c, "anon", "SELECT 1 FROM lsbd.license");
+        await expectNames(c, `catalog: lsbd relations selectable by ${role}`, ANY_COLUMN_SELECTABLE_SQL, [role], []);
       }
-    });
+    }
 
     if (at("0006")) {
+      await expectNames(c, "catalog: lsbd relations with a SELECT grant to lsbd_staff_ro",
+        TABLE_SELECTABLE_SQL, ["lsbd_staff_ro"], STAFF_RO_TABLES);
+      await expectNames(c, "catalog: PII columns of lsbd.individual selectable by lsbd_staff_ro",
+        INDIVIDUAL_SELECTABLE_COLUMNS_SQL, ["lsbd_staff_ro", [...STAFF_RO_INDIVIDUAL_DENIED_COLUMNS]], []);
+
       await asRole(c, "lsbd_staff_ro", async () => {
         await expectCount(c, "lsbd_staff_ro", "lsbd.license", 19000);
         await expectCount(c, "lsbd_staff_ro", "lsbd.individual", 1);
-        await expectDenied(c, "lsbd_staff_ro", "SELECT ssn FROM lsbd.individual");
+        for (const col of STAFF_RO_INDIVIDUAL_DENIED_COLUMNS) {
+          await expectDenied(c, "lsbd_staff_ro", `SELECT ${col} FROM lsbd.individual`);
+        }
         await expectDenied(c, "lsbd_staff_ro", "SELECT 1 FROM lsbd.licensee_pii");
         await expectDenied(c, "lsbd_staff_ro", "UPDATE lsbd.person SET first_name = first_name WHERE false");
         await expectDenied(c, "lsbd_staff_ro", "SELECT 1 FROM public.users");

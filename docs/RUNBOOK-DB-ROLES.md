@@ -27,6 +27,12 @@ npx tsx scripts/apply-sql.ts drizzle/0006_db_roles.sql
 npx tsx scripts/verify-rls.ts --stage=0006
 ```
 
+0005, 0006 and 0007 each take ACCESS EXCLUSIVE locks for the length of their
+transaction (a few seconds): 0005 on every table in `public`, 0006 on every table
+in `public` and on the allow-listed `lsbd` tables (creating a policy needs the
+lock), 0007 on the view, `lsbd.license` and `lsbd.person`. Site queries on those
+tables wait meanwhile, so apply outside busy moments.
+
 Then stop until the gate below is met.
 
 **Gate for 0007:** the build in which `/verify` reads `public.public_licensee`
@@ -48,6 +54,33 @@ the script runs everything, which is the check to use from then on.
 0007 starts with a guard: it refuses to run unless the view's owner bypasses RLS
 or owns `lsbd.license` and `lsbd.person`. Without that the view would return no
 rows for anyone.
+
+### Rollback of 0007
+
+Use this if, after 0007, a deployment is found that still reads verify with the
+anon key (its verify pages show no results). It restores the state of
+`drizzle/0002_rls.sql` lines 41-89: anon's `USAGE` on schema `lsbd`, its column
+grants and two policies on `lsbd.license` / `lsbd.person`, and the caller-rights
+view readable by anon. The whole of 0002 is idempotent, so re-apply the file,
+then 0006 (0002 drops and recreates the view, which removes `lsbd_app`'s grant
+on it):
+
+```powershell
+npx tsx scripts/apply-sql.ts drizzle/0002_rls.sql
+npx tsx scripts/apply-sql.ts drizzle/0006_db_roles.sql
+npx tsx scripts/verify-rls.ts --stage=0006
+```
+
+After the rollback:
+- the view has its 12 original columns again (no `legacy_key`);
+- the view runs with the caller's rights, so a site connected as `lsbd_app`
+  cannot read it: `POSTGRES_URL` must be the `postgres` URL until 0007 is
+  re-applied;
+- `verify-rls.ts --stage=0007` fails, by design. Fix the old deployment, then
+  apply 0007 again.
+
+`tests/it/grants.test.ts` exercises this rollback (inside its rolled-back
+transaction).
 
 ## 2. Give the roles a login
 
@@ -130,7 +163,10 @@ table is invisible to the site until it is granted.
   Re-applying `0006_db_roles.sql` does the grant, policy and sequence steps for
   every table in `public` (it does not enable RLS).
 - **New `lsbd` table staff should read:** add its name to the list in
-  `0006_db_roles.sql` and re-apply. Check the "never" list first.
+  `0006_db_roles.sql` and to `scripts/lib/staff-ro-tables.ts` (the check compares
+  the two through the catalog), then re-apply. Check the "never" list first.
+  0006 revokes everything from `lsbd_staff_ro` in `lsbd` before granting, so
+  removing a name from the list removes the access on re-apply.
 
 The symptom of a missed grant is `permission denied for table <table>`; a missed
 policy shows as empty results with no error.
@@ -139,8 +175,8 @@ policy shows as empty results with no error.
 
 `tests/it/grants.test.ts` runs 0005, 0006 and 0007 against the live database
 inside one transaction that is always rolled back, and asserts what each role can
-and cannot do. It briefly locks the CMS tables and `lsbd.license` / `lsbd.person`
-(a few seconds), so run it outside busy moments.
+and cannot do. It briefly locks the CMS tables and every `lsbd` table (several
+seconds), so run it outside busy moments.
 
 ```powershell
 $env:LSBD_IT='1'; npx vitest run tests/it/grants.test.ts --no-file-parallelism
