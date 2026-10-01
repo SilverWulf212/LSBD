@@ -71,7 +71,39 @@ const CASES: Array<[string, boolean]> = [
   ],
   ["SELECT N'x' AS t, COUNT_BIG(*) AS n, CHECKSUM_AGG(BINARY_CHECKSUM(*)) AS fp FROM dbo.[tblFees] WITH (NOLOCK)", false],
   ["SELECT t.name, SCHEMA_NAME(t.schema_id) AS s, 1 AS [rowCount] FROM sys.tables t", false],
+  // M1 (R42): statements that end or escape the wrapper transaction, or switch database.
+  ["SELECT 1; ROLLBACK", true],
+  ["SELECT 1\nROLLBACK TRANSACTION", true],
+  ["SAVE TRANSACTION s1; SELECT 1", true],
+  ["USE master; SELECT 1", true],
+  ["SELECT 1 /* x */ ROLLBACK", true],
+  ["SELECT 1 AS [rollback], 'use' AS u, \"save\" AS s", false],
+  ["SELECT USER_NAME() AS u, c.user_type_id, saved_at, used, rollbacks FROM sys.columns c", false],
+  // R38 delete re-check (PK point lookup) must pass.
+  ["SELECT [ID] AS k FROM dbo.[tblDenHyg] WHERE [ID] IN (2, 3)", false],
+  ["SELECT [Code] AS k FROM dbo.[S] WHERE [Code] IN (N'O''B')", false],
 ];
+
+function runBridgeGuardMode(requests: object[]): Promise<Record<string, unknown>[]> {
+  return new Promise((resolve, reject) => {
+    const p = spawn(
+      "powershell.exe",
+      ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", BRIDGE, "-Mode", "guard"],
+      { stdio: ["pipe", "pipe", "pipe"], windowsHide: true },
+    );
+    let out = "";
+    let err = "";
+    p.stdout.setEncoding("utf8").on("data", (c: string) => (out += c));
+    p.stderr.setEncoding("utf8").on("data", (c: string) => (err += c));
+    p.on("error", reject);
+    p.on("close", (code) => {
+      if (code !== 0) return reject(new Error(`guard exited ${code}: ${err}`));
+      resolve(out.split(/\r?\n/).filter((l) => l.trim() !== "").map((l) => JSON.parse(l) as Record<string, unknown>));
+    });
+    for (const r of requests) p.stdin.write(JSON.stringify(r) + "\n");
+    p.stdin.end();
+  });
+}
 
 function runGuard(sqls: string[]): Promise<boolean[]> {
   return new Promise((resolve, reject) => {
@@ -111,4 +143,49 @@ describe.skipIf(process.platform !== "win32")("bridge SELECT-only guard (offline
       expect(results[i]).toBe(refused);
     },
   );
+});
+
+// M1 (R42): after EXECUTE AS, every VM connection checks the impersonated user's role
+// memberships and database permissions and fails closed unless it is the expected read-only
+// user: db_denydatawriter = 1, no write-capable role, no database-level write permission.
+const GOOD = {
+  u: "lsbdverify",
+  denywriter: 1,
+  owner: 0,
+  writer: 0,
+  ddl: 0,
+  sec: 0,
+  acc: 0,
+  bkp: 0,
+  db_alter: 0,
+  db_control: 0,
+  db_create_table: 0,
+  db_insert: 0,
+  db_update: 0,
+  db_delete: 0,
+  db_execute: 0,
+};
+const ROLE_CASES: Array<[string, Record<string, unknown>, RegExp | null]> = [
+  ["the live lsbdverify profile passes", GOOD, null],
+  ["another user", { ...GOOD, u: "dbo" }, /user/],
+  ["not in db_denydatawriter", { ...GOOD, denywriter: 0 }, /denywriter/],
+  ["db_denydatawriter unknown (NULL)", { ...GOOD, denywriter: null }, /denywriter/],
+  ["db_owner member", { ...GOOD, owner: 1 }, /owner/],
+  ["db_datawriter member", { ...GOOD, writer: 1 }, /writer/],
+  ["db_ddladmin member", { ...GOOD, ddl: 1 }, /ddl/],
+  ["database INSERT permission", { ...GOOD, db_insert: 1 }, /db_insert/],
+  ["a check missing from the row fails closed", (({ db_alter: _x, ...rest }) => rest)(GOOD), /db_alter/],
+];
+
+describe.skipIf(process.platform !== "win32")("bridge read-only role check (offline)", () => {
+  let results: Record<string, unknown>[] = [];
+  beforeAll(async () => {
+    results = await runBridgeGuardMode(ROLE_CASES.map(([, roles]) => ({ roles, expect: "lsbdverify" })));
+  }, 60_000);
+
+  it.each(ROLE_CASES.map(([name, , problem], i) => [i, name, problem] as const))("#%i %s", (i, _name, problem) => {
+    const got = results[i]?.problem;
+    if (problem === null) expect(got).toBeNull();
+    else expect(String(got)).toMatch(problem);
+  });
 });

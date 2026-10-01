@@ -12,7 +12,10 @@
 
   Each VM connection first runs EXECUTE AS USER = 'lsbdverify' WITH NO REVERT (a
   db_datareader / db_denydatawriter user) as its own command, so SQL Server denies writes
-  regardless of the keyword guard; if that fails, the request fails. Then every query runs
+  regardless of the keyword guard; if that fails, the request fails. A second command then
+  checks that the impersonated user is exactly that user, is in db_denydatawriter, is in no
+  write-capable fixed role and holds no database-level write/DDL/EXECUTE permission; any
+  other answer fails the request closed (review M1). Then every query runs
   inside the VM through System.Data.SqlClient as
     SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; BEGIN TRAN; <sql>; ROLLBACK;
   so nothing can ever commit. SQL whose code (outside string literals and quoted
@@ -121,14 +124,18 @@ namespace LsbdBridge
     public static class Guard
     {
         // Brief keyword list, plus:
-        //  - keywords that could end or escape the ROLLBACK wrapper (commit, into, execute),
+        //  - keywords that could end or escape the ROLLBACK wrapper (commit, into, execute,
+        //    and, from the caller's SQL, rollback / save / use: a user ROLLBACK would end the
+        //    wrapper transaction so later statements autocommit; USE switches database). The
+        //    wrapper's own SET / BEGIN TRAN / ROLLBACK are added after this check, never scanned,
+        //    so they are unaffected,
         //  - non-transactional statements (backup, restore, dbcc, kill, shutdown, ...),
         //  - pass-through / side-effecting reads (openquery, openrowset, opendatasource,
         //    next value for, waitfor),
         //  - lock-escalating hints and isolation overrides.
         const string Keywords =
             "insert|update|delete|merge|drop|alter|create|truncate|exec|grant" +
-            "|execute|commit|into|revoke|deny|dbcc|backup|restore|reconfigure|shutdown|kill" +
+            "|execute|commit|rollback|save|use|into|revoke|deny|dbcc|backup|restore|reconfigure|shutdown|kill" +
             "|updatetext|writetext|enable|disable|waitfor" +
             @"|openquery|openrowset|opendatasource|next\s+value\s+for" +
             "|updlock|xlock|holdlock|tablockx|tablock|paglock|serializable|repeatableread" +
@@ -207,6 +214,52 @@ namespace LsbdBridge
             if (sql == null) return true;
             return Refuse.IsMatch(CodeOnly(sql, true)) || Refuse.IsMatch(CodeOnly(sql, false));
         }
+
+        // Runtime read-only check (review M1, ruling R42), run on every VM connection right after
+        // EXECUTE AS: the impersonated user must be exactly the expected one, a member of
+        // db_denydatawriter, in no write-capable fixed role, and hold no database-level write /
+        // DDL / EXECUTE permission. Any other answer (including NULL or a missing value) fails
+        // the request closed, so R15's guarantee cannot silently disappear if roles change.
+        // Each entry: alias, expression, required value.
+        public static readonly string[][] RoleChecks = new string[][] {
+            new string[] { "denywriter", "IS_ROLEMEMBER('db_denydatawriter')", "1" },
+            new string[] { "owner", "IS_ROLEMEMBER('db_owner')", "0" },
+            new string[] { "writer", "IS_ROLEMEMBER('db_datawriter')", "0" },
+            new string[] { "ddl", "IS_ROLEMEMBER('db_ddladmin')", "0" },
+            new string[] { "sec", "IS_ROLEMEMBER('db_securityadmin')", "0" },
+            new string[] { "acc", "IS_ROLEMEMBER('db_accessadmin')", "0" },
+            new string[] { "bkp", "IS_ROLEMEMBER('db_backupoperator')", "0" },
+            new string[] { "db_alter", "HAS_PERMS_BY_NAME(DB_NAME(), 'DATABASE', 'ALTER')", "0" },
+            new string[] { "db_control", "HAS_PERMS_BY_NAME(DB_NAME(), 'DATABASE', 'CONTROL')", "0" },
+            new string[] { "db_create_table", "HAS_PERMS_BY_NAME(DB_NAME(), 'DATABASE', 'CREATE TABLE')", "0" },
+            new string[] { "db_insert", "HAS_PERMS_BY_NAME(DB_NAME(), 'DATABASE', 'INSERT')", "0" },
+            new string[] { "db_update", "HAS_PERMS_BY_NAME(DB_NAME(), 'DATABASE', 'UPDATE')", "0" },
+            new string[] { "db_delete", "HAS_PERMS_BY_NAME(DB_NAME(), 'DATABASE', 'DELETE')", "0" },
+            new string[] { "db_execute", "HAS_PERMS_BY_NAME(DB_NAME(), 'DATABASE', 'EXECUTE')", "0" },
+        };
+
+        public static string RoleCheckSql()
+        {
+            var sb = new StringBuilder("SELECT USER_NAME() AS u");
+            foreach (var c in RoleChecks) sb.Append(", ").Append(c[1]).Append(" AS ").Append(c[0]);
+            return sb.ToString();
+        }
+
+        // null = safe; otherwise the reason (names only, no data).
+        public static string RoleProblem(string expectedUser, string user, IDictionary<string, int?> got)
+        {
+            if (string.IsNullOrEmpty(expectedUser) || !string.Equals(user, expectedUser, StringComparison.Ordinal))
+                return "impersonated user is not the expected read-only user";
+            var bad = new List<string>();
+            foreach (var c in RoleChecks)
+            {
+                int? v;
+                if (got == null || !got.TryGetValue(c[0], out v) || !v.HasValue ||
+                    v.Value.ToString(CultureInfo.InvariantCulture) != c[2])
+                    bad.Add(c[0]);
+            }
+            return bad.Count == 0 ? null : "read-only role check failed: " + string.Join(",", bad.ToArray());
+        }
     }
 
     public sealed class Pager : IDisposable
@@ -243,6 +296,27 @@ namespace LsbdBridge
                     imp.CommandText =
                         "EXECUTE AS USER = N'" + readOnlyUser.Replace("'", "''") + "' WITH NO REVERT;";
                     imp.ExecuteNonQuery();
+                }
+                // Fail closed unless the impersonated user is still read-only (M1, R42).
+                using (var chk = conn.CreateCommand())
+                {
+                    chk.CommandTimeout = 60;
+                    chk.CommandText = Guard.RoleCheckSql();
+                    string problem;
+                    using (var r = chk.ExecuteReader())
+                    {
+                        if (!r.Read()) throw new InvalidOperationException("bridge: read-only role check returned no row");
+                        string user = r.IsDBNull(0) ? null : Convert.ToString(r.GetValue(0), CultureInfo.InvariantCulture);
+                        var got = new Dictionary<string, int?>();
+                        for (int i = 0; i < Guard.RoleChecks.Length; i++)
+                        {
+                            got[Guard.RoleChecks[i][0]] = r.IsDBNull(i + 1)
+                                ? (int?)null
+                                : Convert.ToInt32(r.GetValue(i + 1), CultureInfo.InvariantCulture);
+                        }
+                        problem = Guard.RoleProblem(readOnlyUser, user, got);
+                    }
+                    if (problem != null) throw new InvalidOperationException("bridge: refusing to run: " + problem);
                 }
                 cmd = conn.CreateCommand();
                 cmd.CommandTimeout = timeout;
@@ -491,12 +565,26 @@ Add-Type -TypeDefinition $HelperSource -ReferencedAssemblies System.Data, System
 
 if ($Mode -eq 'guard') {
   # Offline self-check of the SELECT-only guard (no secrets, no VM): each stdin line
-  # {"sql":"..."} is answered with {"refused":true|false}. Used by tests/sync.
+  # {"sql":"..."} is answered with {"refused":true|false}. A line
+  # {"roles":{"u":..,"denywriter":1,..},"expect":"lsbdverify"} is answered with
+  # {"problem":null|"..."} from the same read-only role check the VM side runs. Used by tests/sync.
   while ($true) {
     $line = $stdin.ReadLine()
     if ($null -eq $line) { break }
     if ($line.Trim().Length -eq 0) { continue }
     $req = ConvertFrom-Json -InputObject $line
+    if ($null -ne $req.roles) {
+      $got = New-Object 'System.Collections.Generic.Dictionary[string,System.Nullable[int]]'
+      $user = $null
+      foreach ($p in $req.roles.PSObject.Properties) {
+        if ($p.Name -eq 'u') { $user = [string]$p.Value; continue }
+        if ($null -eq $p.Value) { $got[$p.Name] = $null } else { $got[$p.Name] = [int]$p.Value }
+      }
+      $problem = [LsbdBridge.Guard]::RoleProblem([string]$req.expect, $user, $got)
+      if ($null -eq $problem) { Send-Line '{"problem":null}' }
+      else { Send-Line ('{"problem":' + [LsbdBridge.Json]::Quote($problem) + '}') }
+      continue
+    }
     if ([LsbdBridge.Guard]::IsRefused([string]$req.sql)) { Send-Line '{"refused":true}' }
     else { Send-Line '{"refused":false}' }
   }
