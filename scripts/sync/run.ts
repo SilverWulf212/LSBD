@@ -6,11 +6,16 @@
 //   tsx scripts/sync/run.ts --mode quick|full [--tables A,B | --tables none]
 //                           [--no-transform] [--allow-mass-delete]
 //
-// Exit codes: 0 = ok or another run holds the lock; 1 = failure; 2 = mass-delete guard tripped.
+// Exit codes: 0 = ok or another run holds the lock (young holder); 1 = failure, or the lock
+// holder is older than 30 min (stale); 2 = mass-delete guard tripped.
 //
 // Safety properties:
 // - One run at a time: pg_try_advisory_lock(hashtext('lsbd_sync')) on the main client. A run
-//   that can't get it returns runId -1 and writes nothing (Review Focus 5).
+//   that can't get it returns runId -1 and writes nothing (Review Focus 5). It logs the holder
+//   (pid, application_name, age); a holder older than 30 min alerts (R37).
+// - Alerts (scripts/sync/alert.ts): ok -> healthcheck ping; failed / blocked / stale lock / any
+//   error before the run completes -> healthcheck /fail + Application event log (R37).
+// - Session timeouts: statement 10 min, lock 60 s, idle-in-transaction 10 min (scripts/lib/pg.ts).
 // - Each table is written in its own BEGIN ... COMMIT; any error rolls that table back and the
 //   loop continues with the next table (Review Focus 5).
 // - Mass-delete guard: a table that would lose > 50% of > 100 live rows is blocked (nothing
@@ -19,8 +24,8 @@
 //   fails (a missing column would otherwise silently become NULL).
 // - Output is progress and counts only: never row values, never secrets.
 
-import { spawnSync } from "node:child_process";
 import type { Client } from "pg";
+import { makeAlerter, type Alerter } from "./alert";
 import { loadSecrets } from "../lib/secrets";
 import { connectPg } from "../lib/pg";
 import { readSchema, query, closeBridge } from "./mssql";
@@ -58,6 +63,8 @@ export interface RunDeps {
   db?: () => Promise<Client>;
   /** Transform step; defaults to CALL lsbd.run_transforms. `changed` NULL = all domains. Returns orphans. */
   runTransforms?: (c: Client, changed: string[] | null) => Promise<number>;
+  /** Healthcheck + event-log alerts; defaults to the real ones (scripts/sync/alert.ts). */
+  alert?: Alerter;
 }
 
 const LOCK_KEY = "hashtext('lsbd_sync')";
@@ -140,18 +147,60 @@ export function fingerprintTrusted(p: {
   return p.fetched >= p.changed;
 }
 
-/** The best-effort event-log call. The message travels in the environment, never in the command. */
-export function eventLogInvocation(message: string): { file: string; args: string[]; env: NodeJS.ProcessEnv } {
-  return {
-    file: "powershell.exe",
-    args: [
-      "-NoProfile",
-      "-NonInteractive",
-      "-Command",
-      "Write-EventLog -LogName Application -Source LSBD-Sync -EventId 1001 -EntryType Error -Message $env:LSBD_SYNC_MSG",
-    ],
-    env: { ...process.env, LSBD_SYNC_MSG: message },
-  };
+export { eventLogInvocation } from "./alert";
+
+/** The session holding the lsbd_sync advisory lock, as seen from another session. */
+export interface LockHolder {
+  pid: number;
+  app: string;
+  state: string | null;
+  /** Seconds since the holder's last state change (query start / went idle). */
+  stateAgeSec: number | null;
+  /** Seconds since the newest 'running' _sync_runs row started (that row belongs to a sync holder). */
+  runAgeSec: number | null;
+}
+
+/** A holder older than this is stale: every scheduled run is silently skipping behind it. */
+export const STALE_LOCK_SEC = 30 * 60;
+
+/**
+ * Age of the lock: for a sync runner, since its run row started (the runner inserts it right
+ * after taking the lock); for anything else (psql, apply-transforms), since its last state change,
+ * because pooled server connections make backend_start meaningless.
+ */
+export function lockBusyVerdict(h: LockHolder | null, staleSec = STALE_LOCK_SEC): { stale: boolean; message: string } {
+  if (!h) return { stale: false, message: "another session holds the lsbd_sync lock (holder not visible); skipping" };
+  const age = h.app.startsWith(APP_NAME) && h.runAgeSec !== null ? h.runAgeSec : h.stateAgeSec;
+  const who = `pid ${h.pid}, app ${JSON.stringify(h.app.slice(0, 64))}, state ${h.state ?? "unknown"}`;
+  const held = age === null ? "for an unknown time" : `for ${Math.floor(age / 60)} min`;
+  if (age !== null && age > staleSec) {
+    return {
+      stale: true,
+      message:
+        `LSBD sync blocked: the lsbd_sync lock has been held ${held} (${who}). Every scheduled run is ` +
+        `skipping. Check pg_stat_activity; if the holder is dead or hung, pg_terminate_backend(${h.pid}).`,
+    };
+  }
+  return { stale: false, message: `another session holds the lsbd_sync lock (${who}, held ${held}); skipping` };
+}
+
+async function lockHolder(c: Client): Promise<LockHolder | null> {
+  // Advisory lock on a bigint key k: classid = high 32 bits, objid = low 32 bits, objsubid = 1.
+  const r = await c.query<{ pid: number; app: string | null; state: string | null; state_age: string | null; run_age: string | null }>(
+    `SELECT a.pid, a.application_name AS app, a.state,
+            EXTRACT(EPOCH FROM (now() - a.state_change))::bigint AS state_age,
+            (SELECT EXTRACT(EPOCH FROM (now() - r.started_at))::bigint FROM lsbd_raw._sync_runs r
+              WHERE r.status = 'running' ORDER BY r.id DESC LIMIT 1) AS run_age
+       FROM pg_locks l JOIN pg_stat_activity a ON a.pid = l.pid
+      WHERE l.locktype = 'advisory' AND l.granted AND l.objsubid = 1
+        AND l.classid = ((${LOCK_KEY}::bigint >> 32) & 4294967295)::oid
+        AND l.objid = (${LOCK_KEY}::bigint & 4294967295)::oid
+      LIMIT 1`,
+  );
+  const row = r.rows[0];
+  if (!row) return null;
+  const num = (v: string | null): number | null => (v === null || v === undefined ? null : Number(v));
+  return { pid: Number(row.pid), app: row.app ?? "", state: row.state, stateAgeSec: num(row.state_age), runAgeSec: num(row.run_age) };
 }
 
 /** Throws unless the row's keys are exactly the expected column set. Reports names only. */
@@ -412,41 +461,18 @@ async function syncNoPkTable(ctx: Ctx, t: SourceTable, adds: Drift["add"], fp: F
   return { blocked: false, path: changed ? "replace" : "same", ins, upd: 0, del, liveBefore: rawHashes.length };
 }
 
-function healthcheckUrl(): string | undefined {
-  const env = process.env.SYNC_HEALTHCHECK_URL;
-  if (env) return env;
-  try {
-    return loadSecrets()["SYNC_HEALTHCHECK_URL"] || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-async function notify(summary: RunSummary, error: string | null): Promise<void> {
-  const url = healthcheckUrl();
-  if (url) {
-    const target = summary.status === "ok" ? url : `${url.replace(/\/+$/, "")}/fail`;
-    try {
-      await fetch(target, { method: "GET", signal: AbortSignal.timeout(10_000) });
-    } catch (e) {
-      console.error(`healthcheck ping failed: ${errMsg(e)}`);
-    }
-  }
-  if (summary.status === "failed" || summary.status === "blocked") {
-    const message = `LSBD sync run ${summary.runId} ${summary.status}: ${error ?? ""}`.slice(0, 4000);
-    try {
-      const inv = eventLogInvocation(message);
-      const r = spawnSync(inv.file, inv.args, { env: inv.env, windowsHide: true, timeout: 30_000, encoding: "utf8" });
-      if (r.status !== 0) console.error("event log write failed (is the LSBD-Sync source registered?)");
-    } catch (e) {
-      console.error(`event log write failed: ${errMsg(e)}`);
-    }
+/** ok -> healthcheck ping; failed / blocked -> healthcheck /fail + event log (redacted text only). */
+async function notify(alert: Alerter, summary: RunSummary, error: string | null): Promise<void> {
+  if (summary.status === "ok") await alert.ok();
+  else if (summary.status === "failed" || summary.status === "blocked") {
+    await alert.fail(`LSBD sync run ${summary.runId} ${summary.status}: ${error ?? ""}`.slice(0, 4000));
   }
 }
 
 export async function runSync(opts: RunOptions, deps?: RunDeps): Promise<RunSummary> {
   const rs = deps?.readSchema ?? readSchema;
   const q = deps?.query ?? query;
+  const alert = deps?.alert ?? makeAlerter({ eventId: 1001 });
   const summary: RunSummary = {
     runId: -1,
     status: "skipped",
@@ -461,11 +487,26 @@ export async function runSync(opts: RunOptions, deps?: RunDeps): Promise<RunSumm
   const t0 = Date.now();
   let c: Client | null = null;
   let locked = false;
+  let notified = false;
   try {
     c = await (deps?.db ?? defaultDb)();
     const lock = await c.query<{ got: boolean }>(`SELECT pg_try_advisory_lock(${LOCK_KEY}) AS got`);
     if (!lock.rows[0].got) {
-      log("another sync run holds the lsbd_sync lock; skipping");
+      // Busy: name the holder. A young holder is a normal overlap (quiet skip, exit 0). A holder
+      // older than STALE_LOCK_SEC means every run is silently skipping: fail and alert.
+      let holder: LockHolder | null = null;
+      try {
+        holder = await lockHolder(c);
+      } catch (e) {
+        log(`lock holder lookup failed: ${redact(errMsg(e))}`);
+      }
+      const v = lockBusyVerdict(holder);
+      log(v.message);
+      if (v.stale) {
+        summary.status = "failed";
+        notified = true;
+        await alert.fail(v.message);
+      }
       return summary;
     }
     locked = true;
@@ -544,8 +585,18 @@ export async function runSync(opts: RunOptions, deps?: RunDeps): Promise<RunSumm
         (failed.length ? `, failed: ${failed.join(",")}` : "") +
         (summary.schemaDrift.length ? `, drift: ${summary.schemaDrift.join("; ")}` : ""),
     );
-    await notify(summary, error);
+    notified = true;
+    await notify(alert, summary, error);
     return summary;
+  } catch (e) {
+    // Anything that escaped before the run was recorded and notified: connect, lock, abandoned
+    // cleanup, run-row insert, or the final run-row UPDATE. These used to bypass every alert.
+    if (!notified) {
+      notified = true;
+      const where = summary.runId > 0 ? `run ${summary.runId}` : "run (no run row)";
+      await alert.fail(`LSBD sync ${where} failed before the run completed: ${redact(errMsg(e))}`.slice(0, 4000));
+    }
+    throw e;
   } finally {
     if (c) {
       if (locked) await c.query(`SELECT pg_advisory_unlock(${LOCK_KEY})`).catch(() => undefined);

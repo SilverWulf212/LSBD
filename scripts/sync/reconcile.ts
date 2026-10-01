@@ -12,7 +12,8 @@
 // Section 2 (informational, never fails the run): duplicate (Type, LICENSEID) groups, orphans
 //   from the latest run, SSN normalisation failures.
 //
-// Exit: 0 = every table PASS, 1 = any FAIL or a fatal error. Strictly read-only on both sides.
+// Exit: 0 = every table PASS, 1 = any FAIL or a fatal error (both alert: event log + healthcheck
+// /fail, R37). Strictly read-only on both sides.
 // The report holds counts only, plus license numbers in Section 2. No names, SSNs or row values.
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -26,6 +27,7 @@ import { keysSql } from "./sql-gen";
 import { readRawKeys } from "./raw-writer";
 import { diffKeys, keyOf } from "./diff";
 import { redact } from "./run";
+import { makeAlerter, type Alerter } from "./alert";
 import type { KeyHash, SourceTable } from "./types";
 
 export interface Comparison {
@@ -388,13 +390,30 @@ export async function main(): Promise<number> {
   }
 }
 
+/**
+ * CLI wrapper (R37): a FAIL or a crash alerts through the event log (id 1002) + healthcheck /fail,
+ * which used to only set the exit code. A PASS sends no ping: the healthcheck's success signal
+ * belongs to the sync runs.
+ */
+export async function runReconcileCli(deps: { main?: () => Promise<number>; alert?: Alerter } = {}): Promise<number> {
+  const alert = deps.alert ?? makeAlerter({ eventId: 1002 });
+  let code: number;
+  try {
+    code = await (deps.main ?? main)();
+  } catch (e) {
+    const msg = `LSBD reconcile failed: ${redact(errMsg(e))}`;
+    console.error(msg);
+    await alert.fail(msg.slice(0, 4000));
+    return 1;
+  }
+  if (code !== 0) {
+    await alert.fail("LSBD reconcile FAIL: lsbd_raw does not match LSBDDB; see the newest reconcile-*.md in the reports folder (LSBD_REPORTS_DIR)");
+  }
+  return code;
+}
+
 if (require.main === module) {
-  main()
-    .then((code) => {
-      process.exitCode = code;
-    })
-    .catch((e) => {
-      console.error(`reconcile failed: ${redact(errMsg(e))}`);
-      process.exitCode = 1;
-    });
+  runReconcileCli().then((code) => {
+    process.exitCode = code;
+  });
 }
