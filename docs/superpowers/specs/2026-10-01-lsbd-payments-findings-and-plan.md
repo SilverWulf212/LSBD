@@ -89,7 +89,12 @@ Source: aggregate queries on `lsbd_raw."tblTransactions"` (synced from LSBDDB), 
   - **Our system must be fully exercisable while the flag is `memberbase`.**
     - The pilot/test-mode path stays reachable by staff only (allowlist or role), for UAT and a live $1 test.
   - **While in `memberbase` mode after go-live:**
-    - MSSQL stays up as member-base.net's data store, and the sync keeps pulling its writes (transactions, splits, renewal certification/details, tblDenHyg renewal dates) into Supabase.
+    - MSSQL stays up as member-base.net's data store. Its writes (transactions, splits, renewal certification/details, tblDenHyg renewal dates) must still reach Supabase, but **the current P1 sync engine cannot do this**: it must be stopped at cutover, because its transforms own `lsbd.*` (they delete rows not live in MSSQL and overwrite staff edits from MSSQL), and it impersonates `lsbdverify`, which the cutover disables.
+    - **Required (P4 cutover blocker, cutover spec §11):** a separate *post-cutover payment-ingest mode*:
+      - raw sync of the member-base payment tables only (`tblTransactions`, `tblTransSplits`, `RenewalCertification`, `RenewalDetails`, plus the tblDenHyg renewal-date fields),
+      - an append/merge-only ingest into new-system tables: no deletes, no overwrites of staff-owned columns,
+      - a dedicated read-only SQL user for the bridge (`db_datareader` + `db_denydatawriter`, created by Vincent), independent of `lsbdverify`,
+      - and spec §7's `SET READ_ONLY` step reconciled with this decision (member-base.net must keep writing while the flag is `memberbase`).
     - **Open risk:** member-base.net also *reads* licensee data from MSSQL. After cutover, staff edits happen in Supabase, so member-base.net could see stale data (new licensees, status changes, fee changes).
     - Mitigation options, decided once we know what member-base.net reads:
       - (i) A narrow reverse feed (Supabase → MSSQL) of only the fields it reads. This needs an explicit lift of the "MSSQL read-only" rule for those tables.
@@ -98,7 +103,7 @@ Source: aggregate queries on `lsbd_raw."tblTransactions"` (synced from LSBDDB), 
   - **Flipping to `lsbd`:**
     - Renew/pay entry points go to `/pay/start`.
     - member-base.net is told to stop taking payments (or its link is simply no longer shown).
-    - The sync on payment tables continues until its last writes have landed. Then the MSSQL write path is retired and credentials are rotated.
+    - The post-cutover payment-ingest mode (above; not the P1 engine) continues until member-base.net's last writes have landed. Then the MSSQL write path is retired and credentials are rotated.
 
 ## 4b. Decisions still needed
 

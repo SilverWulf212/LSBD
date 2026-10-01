@@ -256,3 +256,11 @@ two-way sync (never; full cutover instead); historical Payflow card logs.
 | PowerShell Direct throughput too slow for 15-min cadence | Tiered diff means only changed tables move; measure in P1; fall back to 30-min cadence. |
 | Transform FK violations from source orphans | Skip + count orphans; review list with Erin before cutover. |
 | Payflow product changes / credentials lost | Confirm in P1b; Stripe is the fallback (user decision needed then). |
+
+## 11. Follow-ups / P4 blockers
+
+Recorded by the final whole-branch review of the P0/P1 sync engine (ruling R36, 2026-10-01).
+
+| # | Item | Status |
+|---|---|---|
+| F1 | **Post-cutover payment-ingest mode (P4 cutover BLOCKER).** The P1 engine must stop at the §7 step 5 flip: its transforms own `lsbd.*` (they delete rows not live in `lsbd_raw` and overwrite every mapped column from MSSQL), so running them after staff write to Supabase would delete staff-created records and revert staff edits. The payments decision D1 (`2026-10-01-lsbd-payments-findings-and-plan.md` §4) keeps member-base.net writing to MSSQL after go-live, so P4 must build a separate mode: (a) raw sync of the member-base payment tables only (`tblTransactions`, `tblTransSplits`, `RenewalCertification`, `RenewalDetails`, tblDenHyg renewal dates); (b) an append/merge-only ingest into new-system tables, with no deletes and no overwrites of staff-owned columns; (c) a dedicated read-only SQL user for the bridge (`lsbd_sync_ro`: `db_datareader` + `db_denydatawriter`, created by Vincent), because step 6.1 disables `lsbdverify`; (d) step 2.3 (`SET READ_ONLY`) reconciled with D1, since member-base.net must keep writing while payments are in `memberbase` mode. | Open; not built in P0/P1. The cutover cannot proceed without it (or without a decision to stop member-base.net payments at the flip). |

@@ -1,6 +1,10 @@
 # LSBD Sync — Operator Runbook
 
-One-way interim sync: **SQL Server LSBDDB (VM LSBDSQL) → Supabase `lsbd_raw.*` → `lsbd.*`**. It runs until cutover, and afterwards for as long as member-base.net still writes to SQL Server (payments toggle in `memberbase` mode; see `docs/superpowers/specs/2026-10-01-lsbd-payments-findings-and-plan.md` §4).
+One-way interim sync: **SQL Server LSBDDB (VM LSBDSQL) → Supabase `lsbd_raw.*` → `lsbd.*`**. It runs **only until cutover**.
+
+> **STOP AT CUTOVER.** The engine as built must **not** run once staff write to Supabase. Its transforms own `lsbd.*`: they delete every row whose legacy key is not live in `lsbd_raw` (staff-created records) and overwrite every mapped column from SQL Server (staff edits). At the cutover flip, disable all three `LSBD Sync*` tasks (`pause-tasks.ps1 -Pause`) and leave them disabled. If in doubt, stop the tasks.
+>
+> Pulling member-base.net's post-cutover payment writes (payments toggle in `memberbase` mode; `docs/superpowers/specs/2026-10-01-lsbd-payments-findings-and-plan.md` §4) needs a **separate post-cutover payment-ingest mode** that does not exist yet: raw sync of the member-base payment tables only, an append-only ingest into new-system tables (no deletes, no overwrites of staff-owned columns), and a dedicated read-only SQL login instead of `lsbdverify`. It is a **P4 cutover blocker** (spec §11).
 
 Spec: `docs/superpowers/specs/2026-09-30-lsbd-migration-cutover-design.md`. Plan: `docs/superpowers/plans/2026-09-30-lsbd-p0-p1-sync-engine.md`.
 
@@ -98,14 +102,25 @@ powershell -ExecutionPolicy Bypass -File scripts\sync\install-task.ps1 -RefreshS
 - **Important:** `--allow-mass-delete` currently does **not** reach this guard. The `run.ts` wiring for it (`withMassDeleteOverride` around the `runTransforms` call, `run.ts` ~line 725) is pending; the edit was blocked for the agent and is left to the user.
 - **Steps:**
   1. Confirm the deletion is real. Compare `lsbd_raw."<Source>"` live rows against MSSQL, and ask staff.
-  2. If deliberate, run the transforms once on a single session with the override (psql or any SQL client on the **session pooler, port 5432**):
+  2. **Pause the tasks first** (elevated), so no scheduled run interleaves with the manual one:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File scripts\sync\pause-tasks.ps1 -Pause
+     ```
+  3. If deliberate, run the transforms once on a single session with the override (psql or any SQL client on the **session pooler, port 5432**). Take the sync advisory lock around the CALL, exactly as the runner does; if the lock call waits, a run is still in progress, so wait for it:
      ```sql
+     SELECT pg_advisory_lock(hashtext('lsbd_sync'));
      SET lsbd.allow_mass_delete = 'on';
      CALL lsbd.run_transforms(NULL, 0);   -- all domains
      RESET lsbd.allow_mass_delete;
+     SELECT pg_advisory_unlock(hashtext('lsbd_sync'));
      ```
-  3. Check the result: `select * from lsbd_raw._sync_runs order by id desc limit 3;` and the next quick run is `ok`.
-  4. Never leave the setting on. It is session-scoped, so close the session.
+     If the CALL errors, still run the `RESET` and the `pg_advisory_unlock` (or simply close the session, which releases both).
+  4. Resume the tasks:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File scripts\sync\pause-tasks.ps1 -Resume
+     ```
+  5. Check the result: `select * from lsbd_raw._sync_runs order by id desc limit 3;` and the next quick run is `ok`.
+  6. Never leave the setting on. It is session-scoped, so close the session.
 
 ### 4.3 Run `failed`
 1. Read the newest log in `logs\`, plus `_sync_runs.error` (it is redacted).
@@ -135,4 +150,4 @@ powershell -ExecutionPolicy Bypass -File scripts\sync\install-task.ps1 -RefreshS
 ## 6. Known caveats
 - Integration tests write synthetic bookkeeping rows into the same `lsbd_raw._sync_runs` table: synthetic keys ≥ 900000000, and `blocked`/`failed` test runs. Expect them in `/admin/sync` around test windows. A separate test database (Supabase branch) is the deferred fix.
 - Business-hours reconcile can race staff edits; trust the 02:00 report.
-- At cutover, SQL Server is retired for staff. It stays up as member-base.net's write target while the payments toggle is `memberbase`, and this sync keeps pulling those writes until the toggle flips and member-base.net is off.
+- **Cutover: stop this engine.** At the flip (spec §7 step 5), pause all `LSBD Sync*` tasks and keep them disabled; never run `run.ts`, `--tables none` or `run_transforms` against the new system of record. After cutover SQL Server is retired for staff, but it may stay up as member-base.net's write target while the payments toggle is `memberbase`. Pulling those writes requires the post-cutover payment-ingest mode (raw sync of the member-base payment tables only, append-only ingest, dedicated read-only login), which is **not built** and is a P4 cutover blocker (spec §11). Until it exists, this engine does **not** carry payments across the cutover.
