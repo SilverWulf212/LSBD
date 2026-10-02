@@ -1,4 +1,4 @@
-// Licensee detail, part 1: person, licence, other licences, addresses, education.
+// Licensee detail: part 1 (person, licence, other licences, addresses, education) and part 2 (permits, affiliations, offices, discipline).
 // Relative imports only (vitest has no `@/`). Every SQL string is one statement, no semicolon.
 import type { RoQueryFn } from "./db/lsbd-ro";
 import { formatPersonName } from "./staff-labels";
@@ -232,12 +232,19 @@ export async function loadLicenseeCore(
 
 // ---- Part 2: permits, affiliations, offices, discipline (CR3: no firm links) ----
 
+// Each list query fetches limit + 1 rows so a cut list can be reported (truncated).
+export const AFFILIATION_LIMIT = 500; // per direction
+export const OFFICE_AFFILIATION_LIMIT = 200;
+export const DISCIPLINE_LIMIT = 100;
+
+export type Section<T> = { rows: T[]; truncated: boolean };
+
 export type AffiliationRow = {
   direction: "dentist-of" | "affiliated-to"; // this licensee is the dentist | this licensee is the affiliated individual
   otherKey: number | null; // the raw legacy id on the affiliation row
   otherName: string | null;
   otherLicenseNumber: string | null;
-  otherType: string | null; // null when no person has that key
+  otherType: string | null; // null when no person has that key, or the person has no licence row
 };
 export type OfficeLinkRow = {
   id: number;
@@ -252,11 +259,15 @@ export type DisciplineRow = {
   goodStanding: boolean | null;
   notes: string | null;
 };
+export type DisciplineSection =
+  | "hidden" // not available to this role (no query sent)
+  | { linked: false; reason: string }
+  | { linked: true; rows: DisciplineRow[]; truncated: boolean };
 export type LicenseeRelations = {
-  permits: PermitRow[];
-  affiliations: AffiliationRow[];
-  offices: OfficeLinkRow[];
-  discipline: Linked<DisciplineRow> | "hidden"; // "hidden" = not available to this role (no query sent)
+  permits: Section<PermitRow>;
+  affiliations: Section<AffiliationRow>;
+  offices: Section<OfficeLinkRow>;
+  discipline: DisciplineSection;
 };
 export type LicenseeDetail = LicenseeCore & LicenseeRelations;
 
@@ -268,7 +279,7 @@ LEFT JOIN lsbd.person o ON o.legacy_key = ia.${other}
 LEFT JOIN lsbd.license ol ON ol.legacy_key = o.legacy_key
 WHERE ia.${own} = $1
 ORDER BY o.last_name NULLS LAST, ia.id
-LIMIT 200`;
+LIMIT ${AFFILIATION_LIMIT + 1}`;
 }
 const DENTIST_OF_SQL = affiliationSql("dentist_legacy_id", "individual_legacy_id");
 const AFFILIATED_TO_SQL = affiliationSql("individual_legacy_id", "dentist_legacy_id");
@@ -278,14 +289,18 @@ FROM lsbd.office_affiliation oa
 LEFT JOIN lsbd.office o ON o.id = oa.office_id
 WHERE oa.dentist_id = $1
 ORDER BY oa.id
-LIMIT 200`;
+LIMIT ${OFFICE_AFFILIATION_LIMIT + 1}`;
 
 // disciplinary.notes is free text: this statement is only ever sent with discipline.read.
 const DISCIPLINE_SQL = `SELECT start_date, end_date, good_standing, notes
 FROM lsbd.disciplinary
 WHERE individual_id = $1
 ORDER BY start_date DESC NULLS LAST, legacy_id DESC
-LIMIT 100`;
+LIMIT ${DISCIPLINE_LIMIT + 1}`;
+
+function cut<T>(rows: T[], limit: number): Section<T> {
+  return { rows: rows.slice(0, limit), truncated: rows.length > limit };
+}
 
 function mapAffiliation(direction: AffiliationRow["direction"], r: Record<string, unknown>): AffiliationRow {
   const found = rowNum(r.found_key) !== null;
@@ -311,26 +326,32 @@ export async function loadLicenseeRelations(
   caps: DetailCaps,
 ): Promise<LicenseeRelations> {
   const key = core.person.key;
-  const permits = await permitsForHolder(q, key);
+  // permitsForHolder has its own fixed LIMIT (200) and the live maximum is 13, so it is never reported as cut.
+  const permits: Section<PermitRow> = { rows: await permitsForHolder(q, key), truncated: false };
 
-  const dentistOf = await q(DENTIST_OF_SQL, [key]);
-  const affiliatedTo = await q(AFFILIATED_TO_SQL, [key]);
-  const affiliations = [
-    ...dentistOf.map((r) => mapAffiliation("dentist-of", r)),
-    ...affiliatedTo.map((r) => mapAffiliation("affiliated-to", r)),
-  ];
+  const dentistOf = cut((await q(DENTIST_OF_SQL, [key])).map((r) => mapAffiliation("dentist-of", r)), AFFILIATION_LIMIT);
+  const affiliatedTo = cut((await q(AFFILIATED_TO_SQL, [key])).map((r) => mapAffiliation("affiliated-to", r)), AFFILIATION_LIMIT);
+  const affiliations: Section<AffiliationRow> = {
+    rows: [...dentistOf.rows, ...affiliatedTo.rows],
+    truncated: dentistOf.truncated || affiliatedTo.truncated,
+  };
 
   // CR2: a NULL office_id is common and renders as not linked.
   const officeRows = await q(OFFICES_SQL, [key]);
-  const offices: OfficeLinkRow[] = officeRows.map((r) => ({
-    id: rowNum(r.id) as number,
-    officePermit: rowBool(r.office_permit),
-    officeId: rowNum(r.office_id),
-    officeName: rowStr(r.office_name),
-    officePhone: rowStr(r.phone),
-  }));
+  const offices = cut(
+    officeRows.map(
+      (r): OfficeLinkRow => ({
+        id: rowNum(r.id) as number,
+        officePermit: rowBool(r.office_permit),
+        officeId: rowNum(r.office_id),
+        officeName: rowStr(r.office_name),
+        officePhone: rowStr(r.phone),
+      }),
+    ),
+    OFFICE_AFFILIATION_LIMIT,
+  );
 
-  let discipline: LicenseeRelations["discipline"];
+  let discipline: DisciplineSection;
   if (!caps.discipline) {
     discipline = "hidden";
   } else if (core.person.individualId === null) {
@@ -338,15 +359,18 @@ export async function loadLicenseeRelations(
     discipline = { linked: false, reason: NO_INDIVIDUAL_REASON };
   } else {
     const rows = await q(DISCIPLINE_SQL, [core.person.individualId]);
-    discipline = {
-      linked: true,
-      rows: rows.map((d) => ({
-        startDate: rowIso(d.start_date),
-        endDate: rowIso(d.end_date),
-        goodStanding: rowBool(d.good_standing),
-        notes: rowStr(d.notes),
-      })),
-    };
+    const section = cut(
+      rows.map(
+        (d): DisciplineRow => ({
+          startDate: rowIso(d.start_date),
+          endDate: rowIso(d.end_date),
+          goodStanding: rowBool(d.good_standing),
+          notes: rowStr(d.notes),
+        }),
+      ),
+      DISCIPLINE_LIMIT,
+    );
+    discipline = { linked: true, ...section };
   }
 
   return { permits, affiliations, offices, discipline };

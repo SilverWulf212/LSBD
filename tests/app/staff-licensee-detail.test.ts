@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   EDUCATION_NOT_LINKED_MESSAGE, loadLicenseeCore, loadLicenseeDetail, loadLicenseeRelations, NO_INDIVIDUAL_REASON,
-  parseLicenseeKey, type LicenseeCore,
+  parseLicenseeKey, type LicenseeCore, AFFILIATION_LIMIT, OFFICE_AFFILIATION_LIMIT, DISCIPLINE_LIMIT,
 } from "../../src/lib/staff-licensee-detail";
 import type { RoQueryFn } from "../../src/lib/db/lsbd-ro";
 
@@ -174,13 +174,13 @@ describe("relations", () => {
     const c = f.calls.find((x) => x.text.includes("lsbd.disciplinary"))!;
     expect(c.params).toEqual([UUID]);
     expect(c.text).toContain("ORDER BY start_date DESC NULLS LAST, legacy_id DESC");
-    expect(r.discipline).toMatchObject({ linked: true, rows: [{ goodStanding: false, notes: "Reprimand", endDate: null }] });
+    expect(r.discipline).toMatchObject({ linked: true, truncated: false, rows: [{ goodStanding: false, notes: "Reprimand", endDate: null }] });
   });
 
   it("returns an empty linked list when the individual has no discipline", async () => {
     const f = fakeFor(null);
     const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
-    expect(r.discipline).toEqual({ linked: true, rows: [] });
+    expect(r.discipline).toEqual({ linked: true, rows: [], truncated: false });
   });
 
   it("lists affiliations in both directions", async () => {
@@ -196,7 +196,7 @@ describe("relations", () => {
     const aff = f.calls.filter((c) => c.text.includes("lsbd.individual_affiliation"));
     expect(aff).toHaveLength(2);
     for (const c of aff) expect(c.params).toEqual([12345]);
-    expect(r.affiliations).toEqual([
+    expect(r.affiliations.rows).toEqual([
       { direction: "dentist-of", otherKey: 77, otherName: "Jones, Bo", otherLicenseNumber: "55", otherType: "H" },
       { direction: "affiliated-to", otherKey: 88, otherName: "Doe, Al", otherLicenseNumber: "9", otherType: "D" },
     ]);
@@ -209,7 +209,7 @@ describe("relations", () => {
       ],
     });
     const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
-    expect(r.affiliations).toEqual([
+    expect(r.affiliations.rows).toEqual([
       { direction: "dentist-of", otherKey: 4242, otherName: null, otherLicenseNumber: null, otherType: null },
     ]);
   });
@@ -220,7 +220,7 @@ describe("relations", () => {
     });
     const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
     expect(f.calls.find((c) => c.text.includes("lsbd.office_affiliation"))!.params).toEqual([12345]);
-    expect(r.offices).toEqual([{ id: 5, officePermit: null, officeId: null, officeName: null, officePhone: null }]);
+    expect(r.offices.rows).toEqual([{ id: 5, officePermit: null, officeId: null, officeName: null, officePhone: null }]);
   });
 
   it("loads permits for the holder key and has no firm-link section (CR3)", async () => {
@@ -251,6 +251,94 @@ describe("relations", () => {
     const d = await loadLicenseeDetail(f.query, 12345, ALL);
     expect(d).toHaveProperty("licence");
     expect(d).toHaveProperty("permits");
-    expect(d!.discipline).toEqual({ linked: true, rows: [] });
+    expect(d!.discipline).toEqual({ linked: true, rows: [], truncated: false });
+  });
+});
+
+describe("relations: truncation and limits (fix round 1)", () => {
+  const affRow = (n: number) => ({
+    other_key: n, found_key: n, last_name: "L" + n, first_name: "F", middle_name: null, suffix: null, license_id: String(n), type: "D",
+  });
+  const many = (n: number, mk: (i: number) => Record<string, unknown>) => Array.from({ length: n }, (_, i) => mk(i + 1));
+
+  it("exports the limits", () => {
+    expect([AFFILIATION_LIMIT, OFFICE_AFFILIATION_LIMIT, DISCIPLINE_LIMIT]).toEqual([500, 200, 100]);
+  });
+
+  it("affiliations: limit + 1 rows returns limit rows with truncated true, SQL has limit + 1", async () => {
+    const f = fakeFor(null, { "WHERE ia.dentist_legacy_id = $1": many(AFFILIATION_LIMIT + 1, affRow) });
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(r.affiliations.rows.filter((a) => a.direction === "dentist-of")).toHaveLength(AFFILIATION_LIMIT);
+    expect(r.affiliations.truncated).toBe(true);
+    const c = f.calls.find((x) => x.text.includes("WHERE ia.dentist_legacy_id = $1"))!;
+    expect(c.text).toContain(`LIMIT ${AFFILIATION_LIMIT + 1}`);
+  });
+
+  it("affiliations: truncated when only the mirror direction is cut; exactly limit is not truncated", async () => {
+    const f = fakeFor(null, {
+      "WHERE ia.dentist_legacy_id = $1": many(AFFILIATION_LIMIT, affRow),
+      "WHERE ia.individual_legacy_id = $1": many(AFFILIATION_LIMIT + 1, affRow),
+    });
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(r.affiliations.truncated).toBe(true);
+    expect(r.affiliations.rows).toHaveLength(AFFILIATION_LIMIT * 2);
+    const g = fakeFor(null, {
+      "WHERE ia.dentist_legacy_id = $1": many(AFFILIATION_LIMIT, affRow),
+      "WHERE ia.individual_legacy_id = $1": many(AFFILIATION_LIMIT, affRow),
+    });
+    expect((await loadLicenseeRelations(g.query, withIndividual, ALL)).affiliations.truncated).toBe(false);
+  });
+
+  it("offices: limit + 1 truncates; exactly limit does not", async () => {
+    const mk = (i: number) => ({ id: i, office_permit: true, office_id: i, office_name: "O", phone: null });
+    const f = fakeFor(null, { "lsbd.office_affiliation": many(OFFICE_AFFILIATION_LIMIT + 1, mk) });
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(r.offices.rows).toHaveLength(OFFICE_AFFILIATION_LIMIT);
+    expect(r.offices.truncated).toBe(true);
+    expect(f.textMatching("lsbd.office_affiliation")).toContain(`LIMIT ${OFFICE_AFFILIATION_LIMIT + 1}`);
+    const g = fakeFor(null, { "lsbd.office_affiliation": many(OFFICE_AFFILIATION_LIMIT, mk) });
+    expect((await loadLicenseeRelations(g.query, withIndividual, ALL)).offices.truncated).toBe(false);
+  });
+
+  it("discipline: limit + 1 truncates; exactly limit does not", async () => {
+    const mk = () => ({ start_date: null, end_date: null, good_standing: true, notes: null });
+    const f = fakeFor(null, { "lsbd.disciplinary": many(DISCIPLINE_LIMIT + 1, mk) });
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(r.discipline).toMatchObject({ linked: true, truncated: true });
+    expect((r.discipline as { rows: unknown[] }).rows).toHaveLength(DISCIPLINE_LIMIT);
+    expect(f.textMatching("lsbd.disciplinary")).toContain(`LIMIT ${DISCIPLINE_LIMIT + 1}`);
+    const g = fakeFor(null, { "lsbd.disciplinary": many(DISCIPLINE_LIMIT, mk) });
+    expect(await loadLicenseeRelations(g.query, withIndividual, ALL)).toMatchObject({ discipline: { truncated: false } });
+  });
+
+  it("permits section is an object with rows and truncated", async () => {
+    const f = fakeFor(null);
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(r.permits).toEqual({ rows: [], truncated: false });
+  });
+
+  it("no statement other than the disciplinary one mentions notes (D8)", async () => {
+    const f = fakeFor(person);
+    await loadLicenseeDetail(f.query, 12345, ALL);
+    for (const c of f.calls.filter((x) => !x.text.includes("lsbd.disciplinary"))) expect(c.text).not.toMatch(/\bnotes\b/);
+  });
+
+  it("loadLicenseeDetail without discipline.read returns hidden and sends no disciplinary SQL", async () => {
+    const f = fakeFor(person);
+    const d = await loadLicenseeDetail(f.query, 12345, { contact: true, discipline: false });
+    expect(d!.discipline).toBe("hidden");
+    expect(f.calls.some((c) => c.text.includes("lsbd.disciplinary"))).toBe(false);
+  });
+
+  it("keeps a counterpart who exists but has no licence row", async () => {
+    const f = fakeFor(null, {
+      "WHERE ia.dentist_legacy_id = $1": [
+        { other_key: 5, found_key: 5, last_name: "Roe", first_name: "Jo", middle_name: null, suffix: null, license_id: null, type: null },
+      ],
+    });
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(r.affiliations.rows).toEqual([
+      { direction: "dentist-of", otherKey: 5, otherName: "Roe, Jo", otherLicenseNumber: null, otherType: null },
+    ]);
   });
 });
