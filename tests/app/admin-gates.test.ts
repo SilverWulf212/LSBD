@@ -69,6 +69,9 @@ describe("staff data gates", () => {
   const STAFF_PAGES: Record<string, string> = {
     "src/app/admin/licensees/page.tsx": 'requireCapability("licensees.read")',
     "src/app/admin/licensees/[key]/page.tsx": 'requireCapability("licensees.read")',
+    "src/app/admin/permits/page.tsx": 'requireCapability("permits.read")',
+    "src/app/admin/firms/page.tsx": 'requireCapability("permits.read")',
+    "src/app/admin/firms/[id]/page.tsx": 'requireCapability("permits.read")',
   };
   const read = (p: string) => readFileSync(join(root, p), "utf8");
   const dataParts = () =>
@@ -79,7 +82,9 @@ describe("staff data gates", () => {
       expect(existsSync(join(root, file)), file).toBe(true);
       const src = read(file);
       expect(src, file).toContain(gate);
-      expect(src.indexOf(gate), file).toBeLessThan(src.indexOf("await getLicensee"));
+      const load = src.search(/await get(Licensee|Permit|Firm)/);
+      expect(load, file).toBeGreaterThanOrEqual(0);
+      expect(src.indexOf(gate), file).toBeLessThan(load);
       expect(src, file).toContain('dynamic = "force-dynamic"');
     }
   });
@@ -110,7 +115,9 @@ describe("staff data gates", () => {
   });
 
   it("staff pages never touch the db client or format dates themselves", () => {
-    const files = walk(join(root, "src/app/admin/licensees")).filter((f) => f.endsWith(".tsx"));
+    const files = ["licensees", "permits", "firms"]
+      .flatMap((d) => walk(join(root, "src/app/admin", d)))
+      .filter((f) => f.endsWith(".tsx"));
     expect(files.length).toBeGreaterThan(0);
     for (const f of files) {
       const src = readFileSync(f, "utf8");
@@ -128,6 +135,25 @@ describe("staff data gates", () => {
   it("the detail page is the printable fact sheet", () => {
     const src = read("src/app/admin/licensees/[key]/page.tsx");
     for (const s of ["PrintButton", "print:block", "break-inside-avoid", "notFound()", "NotLinked", "OddityBadges"]) {
+      expect(src, s).toContain(s);
+    }
+  });
+
+  it("the sidebar links permits and firms by capability", () => {
+    const src = read("src/components/admin/admin-sidebar.tsx");
+    expect(src).toMatch(/href: "\/admin\/permits".*capability: "permits\.read"/);
+    expect(src).toMatch(/href: "\/admin\/firms".*capability: "permits\.read"/);
+  });
+
+  it("the firms page states the professional-association empty state", () => {
+    const src = read("src/app/admin/firms/page.tsx");
+    expect(src).toContain("No professional associations are on record");
+    expect(src).toContain("associationCount");
+  });
+
+  it("the permits page offers the personal/office split and the two filters", () => {
+    const src = read("src/app/admin/permits/page.tsx");
+    for (const s of ['name="kind"', 'name="type"', 'name="level"', "NotLinked"]) {
       expect(src, s).toContain(s);
     }
   });

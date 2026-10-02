@@ -8,6 +8,13 @@ import { parseLicenseeFilters, searchLicensees, type LicenseeFilters, type Licen
 import {
   loadLicenseeDetail, parseLicenseeKey, type DetailCaps, type LicenseeDetail,
 } from "@/lib/staff-licensee-detail";
+import {
+  listPermits, parsePermitFilters, permitFilterOptions, permitsForFirm, type PermitFilters, type PermitRow,
+} from "@/lib/staff-permits";
+import {
+  countProfessionalAssociations, firmStatusOptions, getFirm, listFirms, parseFirmFilters, parseFirmId,
+  type FirmDetail, type FirmFilters, type FirmListRow,
+} from "@/lib/staff-firms";
 import type { Paged, RawSearchParams } from "@/lib/staff-query";
 
 export async function getLicenseeList(
@@ -32,4 +39,48 @@ export async function getLicenseeDetail(
   };
   const detail = await withStaffRo((q) => loadLicenseeDetail(q, key, caps));
   return detail ? { detail, caps } : null;
+}
+
+export async function getPermitList(sp: RawSearchParams): Promise<{
+  filters: PermitFilters;
+  options: { types: string[]; levels: string[] };
+  result: Paged<PermitRow>;
+}> {
+  await requireCapability("permits.read");
+  const filters = parsePermitFilters(sp);
+  const { options, result } = await withStaffRo(async (q) => ({
+    options: await permitFilterOptions(q),
+    result: await listPermits(q, filters),
+  }));
+  return { filters, options, result };
+}
+
+export async function getFirmList(sp: RawSearchParams): Promise<{
+  filters: FirmFilters;
+  statuses: string[];
+  associationCount: number;
+  result: Paged<FirmListRow>;
+}> {
+  await requireCapability("permits.read");
+  const filters = parseFirmFilters(sp);
+  const { statuses, associationCount, result } = await withStaffRo(async (q) => ({
+    statuses: await firmStatusOptions(q),
+    associationCount: await countProfessionalAssociations(q),
+    result: await listFirms(q, filters),
+  }));
+  return { filters, statuses, associationCount, result };
+}
+
+/** null for a malformed id or an id with no firm row. CR3: no licensee-by-number section. */
+export async function getFirmDetail(
+  rawId: string,
+): Promise<{ firm: FirmDetail; permits: PermitRow[] } | null> {
+  await requireCapability("permits.read");
+  const id = parseFirmId(rawId);
+  if (id === null) return null;
+  return withStaffRo(async (q) => {
+    const firm = await getFirm(q, id);
+    if (!firm) return null;
+    return { firm, permits: await permitsForFirm(q, id) };
+  });
 }
