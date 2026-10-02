@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { UPLOAD_FOLDERS, detectUploadType, isAllowedBlobUrl, isAllowedFolder } from "../../src/lib/blob-rules";
+import { UPLOAD_FOLDERS, detectUploadType, isAllowedBlobUrl, isAllowedBlobUrlOnUpdate, isAllowedFolder } from "../../src/lib/blob-rules";
 
 const host = "https://abc123.public.blob.vercel-storage.com";
 describe("blob rules", () => {
@@ -52,5 +52,19 @@ describe("blob rules", () => {
     it("rejects empty content", () => {
       expect(detectUploadType("a.pdf", new Uint8Array())).toBeNull();
     });
+  });
+});
+
+describe("isAllowedBlobUrlOnUpdate", () => {
+  it("keeps an unchanged stored value, including the seed placeholder", () => {
+    expect(isAllowedBlobUrlOnUpdate("#", "#")).toBe(true);
+  });
+  it("rejects a changed value that is not one of our blob URLs", () => {
+    expect(isAllowedBlobUrlOnUpdate("#", `${host}/forms/a.pdf`)).toBe(false);
+    expect(isAllowedBlobUrlOnUpdate("https://evil.example/forms/a.pdf", "#")).toBe(false);
+    expect(isAllowedBlobUrlOnUpdate("#", null)).toBe(false);
+  });
+  it("accepts a new blob URL", () => {
+    expect(isAllowedBlobUrlOnUpdate(`${host}/forms/a.pdf`, "#")).toBe(true);
   });
 });

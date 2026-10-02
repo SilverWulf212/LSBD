@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { formEntrySchema } from "@/lib/validators";
 import { deleteFile } from "@/lib/blob";
-import { isAllowedBlobUrl } from "@/lib/blob-rules";
+import { isAllowedBlobUrl, isAllowedBlobUrlOnUpdate } from "@/lib/blob-rules";
 import type { DownloadableForm } from "@/types";
 
 export async function getForms(): Promise<DownloadableForm[]> {
@@ -102,7 +102,14 @@ export async function updateForm(id: number, formData: FormData) {
   const validated = formEntrySchema.parse(raw);
 
   const blobUrl = (formData.get("blobUrl") as string) || null;
-  if (blobUrl && !isAllowedBlobUrl(blobUrl)) throw new Error("Invalid file");
+  if (blobUrl) {
+    const [stored] = await db
+      .select({ blobUrl: downloadableForms.blobUrl })
+      .from(downloadableForms)
+      .where(eq(downloadableForms.id, id))
+      .limit(1);
+    if (!isAllowedBlobUrlOnUpdate(blobUrl, stored?.blobUrl)) throw new Error("Invalid file");
+  }
   const blobPathname = (formData.get("blobPathname") as string) || null;
   const fileSizeBytes = formData.get("fileSizeBytes")
     ? Number(formData.get("fileSizeBytes"))

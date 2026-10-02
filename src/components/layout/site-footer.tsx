@@ -136,12 +136,12 @@ export function SiteFooter() {
                 Accessibility Statement
               </Link>
               <span aria-hidden="true" className="text-gray-400">|</span>
-              <Link
+              <a
                 href="/sitemap.xml"
                 className="hover:text-[#CAF0F8] transition-colors focus-visible:ring-2 focus-visible:ring-[#CAF0F8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#495057] focus-visible:outline-none rounded py-1"
               >
                 Sitemap
-              </Link>
+              </a>
             </div>
           </div>
         </div>

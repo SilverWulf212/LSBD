@@ -28,6 +28,12 @@ export function isAllowedBlobUrl(url: string): boolean {
   return isAllowedFolder(first);
 }
 
+// On an edit, a file URL that is unchanged from the stored row is kept as is (seed
+// rows hold a "#" placeholder); only a new URL has to pass isAllowedBlobUrl.
+export function isAllowedBlobUrlOnUpdate(url: string, stored: string | null | undefined): boolean {
+  return url === stored || isAllowedBlobUrl(url);
+}
+
 const UPLOAD_TYPES: Record<string, { type: string; matches: (h: Uint8Array) => boolean }> = {
   pdf: { type: "application/pdf", matches: (h) => startsWith(h, [0x25, 0x50, 0x44, 0x46, 0x2d]) },
   jpg: { type: "image/jpeg", matches: (h) => startsWith(h, [0xff, 0xd8, 0xff]) },

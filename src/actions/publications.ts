@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { publicationSchema } from "@/lib/validators";
 import { deleteFile } from "@/lib/blob";
-import { isAllowedBlobUrl } from "@/lib/blob-rules";
+import { isAllowedBlobUrl, isAllowedBlobUrlOnUpdate } from "@/lib/blob-rules";
 import type { Publication } from "@/types";
 
 export async function getPublications(): Promise<Publication[]> {
@@ -102,7 +102,12 @@ export async function updatePublication(id: number, formData: FormData) {
   if (!blobUrl || !blobPathname) {
     throw new Error("A PDF file is required for publications.");
   }
-  if (!isAllowedBlobUrl(blobUrl)) throw new Error("Invalid file");
+  const [stored] = await db
+    .select({ blobUrl: publications.blobUrl })
+    .from(publications)
+    .where(eq(publications.id, id))
+    .limit(1);
+  if (!isAllowedBlobUrlOnUpdate(blobUrl, stored?.blobUrl)) throw new Error("Invalid file");
 
   await db
     .update(publications)
