@@ -1,6 +1,8 @@
 // Licensee detail, part 1: person, licence, other licences, addresses, education.
 // Relative imports only (vitest has no `@/`). Every SQL string is one statement, no semicolon.
 import type { RoQueryFn } from "./db/lsbd-ro";
+import { formatPersonName } from "./staff-labels";
+import { permitsForHolder, type PermitRow } from "./staff-permits";
 import { rowBool, rowIso, rowNum, rowStr } from "./staff-query";
 
 export type DetailCaps = { contact: boolean; discipline: boolean }; // contact = pii.read, discipline = discipline.read
@@ -226,4 +228,136 @@ export async function loadLicenseeCore(
   };
 
   return { person, contact, licence, otherLicences, addresses, education };
+}
+
+// ---- Part 2: permits, affiliations, offices, discipline (CR3: no firm links) ----
+
+export type AffiliationRow = {
+  direction: "dentist-of" | "affiliated-to"; // this licensee is the dentist | this licensee is the affiliated individual
+  otherKey: number | null; // the raw legacy id on the affiliation row
+  otherName: string | null;
+  otherLicenseNumber: string | null;
+  otherType: string | null; // null when no person has that key
+};
+export type OfficeLinkRow = {
+  id: number;
+  officePermit: boolean | null;
+  officeId: number | null;
+  officeName: string | null;
+  officePhone: string | null;
+};
+export type DisciplineRow = {
+  startDate: string | null;
+  endDate: string | null;
+  goodStanding: boolean | null;
+  notes: string | null;
+};
+export type LicenseeRelations = {
+  permits: PermitRow[];
+  affiliations: AffiliationRow[];
+  offices: OfficeLinkRow[];
+  discipline: Linked<DisciplineRow> | "hidden"; // "hidden" = not available to this role (no query sent)
+};
+export type LicenseeDetail = LicenseeCore & LicenseeRelations;
+
+// Only the other licensee's name and licence identifiers are selected, never their contact columns.
+function affiliationSql(own: "dentist_legacy_id" | "individual_legacy_id", other: "dentist_legacy_id" | "individual_legacy_id"): string {
+  return `SELECT ia.${other} AS other_key, o.legacy_key AS found_key, o.last_name, o.first_name, o.middle_name, o.suffix, ol.license_id, ol.type::text AS type
+FROM lsbd.individual_affiliation ia
+LEFT JOIN lsbd.person o ON o.legacy_key = ia.${other}
+LEFT JOIN lsbd.license ol ON ol.legacy_key = o.legacy_key
+WHERE ia.${own} = $1
+ORDER BY o.last_name NULLS LAST, ia.id
+LIMIT 200`;
+}
+const DENTIST_OF_SQL = affiliationSql("dentist_legacy_id", "individual_legacy_id");
+const AFFILIATED_TO_SQL = affiliationSql("individual_legacy_id", "dentist_legacy_id");
+
+const OFFICES_SQL = `SELECT oa.id, oa.office_permit, oa.office_id, o.office_name, o.phone
+FROM lsbd.office_affiliation oa
+LEFT JOIN lsbd.office o ON o.id = oa.office_id
+WHERE oa.dentist_id = $1
+ORDER BY oa.id
+LIMIT 200`;
+
+// disciplinary.notes is free text: this statement is only ever sent with discipline.read.
+const DISCIPLINE_SQL = `SELECT start_date, end_date, good_standing, notes
+FROM lsbd.disciplinary
+WHERE individual_id = $1
+ORDER BY start_date DESC NULLS LAST, legacy_id DESC
+LIMIT 100`;
+
+function mapAffiliation(direction: AffiliationRow["direction"], r: Record<string, unknown>): AffiliationRow {
+  const found = rowNum(r.found_key) !== null;
+  return {
+    direction,
+    otherKey: rowNum(r.other_key),
+    otherName: found
+      ? formatPersonName({
+          lastName: rowStr(r.last_name),
+          firstName: rowStr(r.first_name),
+          middleName: rowStr(r.middle_name),
+          suffix: rowStr(r.suffix),
+        })
+      : null,
+    otherLicenseNumber: found ? rowStr(r.license_id) : null,
+    otherType: found ? rowStr(r.type) : null,
+  };
+}
+
+export async function loadLicenseeRelations(
+  q: RoQueryFn,
+  core: LicenseeCore,
+  caps: DetailCaps,
+): Promise<LicenseeRelations> {
+  const key = core.person.key;
+  const permits = await permitsForHolder(q, key);
+
+  const dentistOf = await q(DENTIST_OF_SQL, [key]);
+  const affiliatedTo = await q(AFFILIATED_TO_SQL, [key]);
+  const affiliations = [
+    ...dentistOf.map((r) => mapAffiliation("dentist-of", r)),
+    ...affiliatedTo.map((r) => mapAffiliation("affiliated-to", r)),
+  ];
+
+  // CR2: a NULL office_id is common and renders as not linked.
+  const officeRows = await q(OFFICES_SQL, [key]);
+  const offices: OfficeLinkRow[] = officeRows.map((r) => ({
+    id: rowNum(r.id) as number,
+    officePermit: rowBool(r.office_permit),
+    officeId: rowNum(r.office_id),
+    officeName: rowStr(r.office_name),
+    officePhone: rowStr(r.phone),
+  }));
+
+  let discipline: LicenseeRelations["discipline"];
+  if (!caps.discipline) {
+    discipline = "hidden";
+  } else if (core.person.individualId === null) {
+    // CR6: never compare NULL to NULL; say it cannot be looked up.
+    discipline = { linked: false, reason: NO_INDIVIDUAL_REASON };
+  } else {
+    const rows = await q(DISCIPLINE_SQL, [core.person.individualId]);
+    discipline = {
+      linked: true,
+      rows: rows.map((d) => ({
+        startDate: rowIso(d.start_date),
+        endDate: rowIso(d.end_date),
+        goodStanding: rowBool(d.good_standing),
+        notes: rowStr(d.notes),
+      })),
+    };
+  }
+
+  return { permits, affiliations, offices, discipline };
+}
+
+export async function loadLicenseeDetail(
+  q: RoQueryFn,
+  key: number,
+  caps: DetailCaps,
+): Promise<LicenseeDetail | null> {
+  const core = await loadLicenseeCore(q, key, caps);
+  if (core === null) return null;
+  return { ...core, ...(await loadLicenseeRelations(q, core, caps)) };
 }

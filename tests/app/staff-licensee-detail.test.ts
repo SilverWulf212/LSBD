@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  EDUCATION_NOT_LINKED_MESSAGE, loadLicenseeCore, NO_INDIVIDUAL_REASON, parseLicenseeKey,
+  EDUCATION_NOT_LINKED_MESSAGE, loadLicenseeCore, loadLicenseeDetail, loadLicenseeRelations, NO_INDIVIDUAL_REASON,
+  parseLicenseeKey, type LicenseeCore,
 } from "../../src/lib/staff-licensee-detail";
 import type { RoQueryFn } from "../../src/lib/db/lsbd-ro";
 
@@ -134,5 +135,122 @@ describe("staff-licensee-detail", () => {
     const f = fakeFor(person);
     await loadLicenseeCore(f.query, 12345, ALL);
     for (const c of f.calls) expect(c.text).not.toContain(";");
+  });
+});
+
+function coreOf(individualId: string | null): LicenseeCore {
+  return {
+    person: {
+      key: 12345, personId: 7, individualId, firstName: "Ann", middleName: null, lastName: "Smith",
+      licenseName: null, marriedName: null, prefix: null, suffix: null, useLicenseName: false,
+    },
+    contact: null, licence: null, otherLicences: { linked: false, reason: NO_INDIVIDUAL_REASON },
+    addresses: [], education: { rows: [], detailNotLinked: true, message: EDUCATION_NOT_LINKED_MESSAGE },
+  };
+}
+const withIndividual = coreOf(UUID);
+const noIndividual = coreOf(null);
+
+describe("relations", () => {
+  it("sends no discipline query without discipline.read", async () => {
+    const f = fakeFor(null);
+    const r = await loadLicenseeRelations(f.query, withIndividual, { contact: true, discipline: false });
+    expect(r.discipline).toBe("hidden");
+    expect(f.calls.some((c) => c.text.includes("lsbd.disciplinary"))).toBe(false);
+  });
+
+  it("says discipline cannot be looked up when individual_id is NULL", async () => {
+    const f = fakeFor(null);
+    const r = await loadLicenseeRelations(f.query, noIndividual, ALL);
+    expect(r.discipline).toEqual({ linked: false, reason: NO_INDIVIDUAL_REASON });
+    expect(f.calls.some((c) => c.text.includes("lsbd.disciplinary"))).toBe(false);
+  });
+
+  it("loads discipline by the individual uuid, newest first", async () => {
+    const f = fakeFor(null, {
+      "lsbd.disciplinary": [{ start_date: new Date("2020-03-01T06:00:00Z"), end_date: null, good_standing: false, notes: "Reprimand" }],
+    });
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    const c = f.calls.find((x) => x.text.includes("lsbd.disciplinary"))!;
+    expect(c.params).toEqual([UUID]);
+    expect(c.text).toContain("ORDER BY start_date DESC NULLS LAST, legacy_id DESC");
+    expect(r.discipline).toMatchObject({ linked: true, rows: [{ goodStanding: false, notes: "Reprimand", endDate: null }] });
+  });
+
+  it("returns an empty linked list when the individual has no discipline", async () => {
+    const f = fakeFor(null);
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(r.discipline).toEqual({ linked: true, rows: [] });
+  });
+
+  it("lists affiliations in both directions", async () => {
+    const f = fakeFor(null, {
+      "WHERE ia.dentist_legacy_id = $1": [
+        { other_key: 77, found_key: 77, last_name: "Jones", first_name: "Bo", middle_name: null, suffix: null, license_id: "55", type: "H" },
+      ],
+      "WHERE ia.individual_legacy_id = $1": [
+        { other_key: 88, found_key: 88, last_name: "Doe", first_name: "Al", middle_name: null, suffix: null, license_id: "9", type: "D" },
+      ],
+    });
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    const aff = f.calls.filter((c) => c.text.includes("lsbd.individual_affiliation"));
+    expect(aff).toHaveLength(2);
+    for (const c of aff) expect(c.params).toEqual([12345]);
+    expect(r.affiliations).toEqual([
+      { direction: "dentist-of", otherKey: 77, otherName: "Jones, Bo", otherLicenseNumber: "55", otherType: "H" },
+      { direction: "affiliated-to", otherKey: 88, otherName: "Doe, Al", otherLicenseNumber: "9", otherType: "D" },
+    ]);
+  });
+
+  it("keeps an affiliation whose other person does not exist", async () => {
+    const f = fakeFor(null, {
+      "WHERE ia.dentist_legacy_id = $1": [
+        { other_key: 4242, found_key: null, last_name: null, first_name: null, middle_name: null, suffix: null, license_id: null, type: null },
+      ],
+    });
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(r.affiliations).toEqual([
+      { direction: "dentist-of", otherKey: 4242, otherName: null, otherLicenseNumber: null, otherType: null },
+    ]);
+  });
+
+  it("keeps an office affiliation with a NULL office", async () => {
+    const f = fakeFor(null, {
+      "lsbd.office_affiliation": [{ id: 5, office_permit: null, office_id: null, office_name: null, phone: null }],
+    });
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(f.calls.find((c) => c.text.includes("lsbd.office_affiliation"))!.params).toEqual([12345]);
+    expect(r.offices).toEqual([{ id: 5, officePermit: null, officeId: null, officeName: null, officePhone: null }]);
+  });
+
+  it("loads permits for the holder key and has no firm-link section (CR3)", async () => {
+    const f = fakeFor(null);
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(f.calls.find((c) => c.text.includes("FROM lsbd.permits"))!.params).toEqual([12345]);
+    expect(r).not.toHaveProperty("firmLinks");
+    for (const c of f.calls) expect(c.text).not.toMatch(/pllc_number|pa_number|SELECT \*|\.\*/);
+  });
+
+  it("never selects individual notes or inactive_reason, and sends single statements", async () => {
+    const f = fakeFor(null);
+    await loadLicenseeRelations(f.query, withIndividual, ALL);
+    for (const c of f.calls) {
+      expect(c.text).not.toMatch(/inactive_reason|lsbd\.individual\b|\bemail\b|phone1|\bfax\b/);
+      expect(c.text).not.toContain(";");
+    }
+  });
+
+  it("loadLicenseeDetail returns null for an unknown key and runs one query", async () => {
+    const f = fakeFor(null);
+    expect(await loadLicenseeDetail(f.query, 999, ALL)).toBeNull();
+    expect(f.calls).toHaveLength(1);
+  });
+
+  it("loadLicenseeDetail merges core and relations", async () => {
+    const f = fakeFor(person);
+    const d = await loadLicenseeDetail(f.query, 12345, ALL);
+    expect(d).toHaveProperty("licence");
+    expect(d).toHaveProperty("permits");
+    expect(d!.discipline).toEqual({ linked: true, rows: [] });
   });
 });
