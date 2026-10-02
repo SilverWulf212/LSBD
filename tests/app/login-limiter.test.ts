@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DUMMY_BCRYPT_HASH,
+  limiterErrorTag,
   LOGIN_LIMITS,
   loginKeys,
   verifyCredentials,
@@ -157,8 +158,31 @@ describe("verifyCredentials", () => {
     expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), deps)).toBeNull();
     expect(compared).toHaveLength(0);
     expect(err).toHaveBeenCalledTimes(1);
-    expect(err.mock.calls[0][0]).toBe("login limiter unavailable:");
+    expect(err.mock.calls[0]).toEqual(["login limiter unavailable:", "Error"]);
     expect(JSON.stringify(err.mock.calls)).not.toMatch(/erin@lsbd\.org|good/);
+  });
+
+  it("logs only the error class and code, never the key, query or password", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const real = Object.assign(new Error("Failed query: insert ... params: email:erin@lsbd.org"), {
+      name: "DrizzleQueryError",
+      cause: Object.assign(new Error("relation does not exist"), { code: "42P01" }),
+    });
+    const { deps } = setup();
+    deps.store = { ...deps.store, record: async () => { throw real; } };
+    expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), deps)).toBeNull();
+    const logged = err.mock.calls.flat().join(" ");
+    expect(logged).toContain("DrizzleQueryError 42P01");
+    expect(logged).not.toContain("erin@lsbd.org");
+    expect(logged).not.toContain("params");
+    expect(logged).not.toContain("good");
+  });
+
+  it("limiterErrorTag handles odd inputs", () => {
+    expect(limiterErrorTag(new Error("x"))).toBe("Error");
+    expect(limiterErrorTag("boom")).toBe("unknown");
+    expect(limiterErrorTag(null)).toBe("unknown");
+    expect(limiterErrorTag(Object.assign(new Error("m"), { code: "ECONNRESET" }))).toBe("Error ECONNRESET");
   });
 
   it("fails closed when the store cannot count", async () => {
@@ -176,7 +200,7 @@ describe("verifyCredentials", () => {
     deps.store = { ...deps.store, clear: async () => { throw new Error("db down"); } };
     expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), deps)).not.toBeNull();
     expect(err).toHaveBeenCalledTimes(1);
-    expect(err.mock.calls[0][0]).toBe("login limiter clear failed:");
+    expect(err.mock.calls[0]).toEqual(["login limiter clear failed:", "Error"]);
     expect(JSON.stringify(err.mock.calls)).not.toMatch(/erin@lsbd\.org|good/);
   });
 

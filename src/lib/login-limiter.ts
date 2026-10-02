@@ -35,6 +35,20 @@ const inputSchema = z.object({
   password: z.string().min(1).max(200),
 });
 
+/**
+ * What may be logged about a store error: class name plus a short code, never the
+ * message, stack, query or params (Drizzle's message embeds the params, i.e. the
+ * limiter keys, which contain the email address and IP).
+ */
+export function limiterErrorTag(err: unknown): string {
+  if (typeof err !== "object" || err === null) return "unknown";
+  const e = err as { name?: unknown; code?: unknown; cause?: unknown };
+  const name = typeof e.name === "string" && e.name ? e.name : "Error";
+  const causeCode = typeof e.cause === "object" && e.cause !== null ? (e.cause as { code?: unknown }).code : undefined;
+  const code = typeof causeCode === "string" ? causeCode : typeof e.code === "string" ? e.code : undefined;
+  return code ? `${name} ${code}` : name;
+}
+
 export function loginKeys(ip: string, email: string): { ip: string; email: string } {
   return { ip: `ip:${ip}`, email: `email:${email.trim().toLowerCase()}` };
 }
@@ -62,7 +76,7 @@ export async function verifyCredentials(
     ]);
     if (ipCount > LOGIN_LIMITS.perIp || emailCount > LOGIN_LIMITS.perEmail) return null;
   } catch (err) {
-    console.error("login limiter unavailable:", err); // fail closed
+    console.error("login limiter unavailable:", limiterErrorTag(err)); // fail closed
     return null;
   }
 
@@ -73,7 +87,7 @@ export async function verifyCredentials(
   try {
     await store.clear(keys.email);
   } catch (err) {
-    console.error("login limiter clear failed:", err);
+    console.error("login limiter clear failed:", limiterErrorTag(err));
   }
   return { id: String(user.id), email: user.email, name: user.name, role: user.role };
 }

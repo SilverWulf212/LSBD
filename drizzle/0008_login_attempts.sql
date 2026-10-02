@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS public.login_attempts (
 
 CREATE INDEX IF NOT EXISTS login_attempts_key_time ON public.login_attempts (key, attempted_at);
 
+-- Serves the global 24-hour prune (DELETE ... WHERE attempted_at < ...).
+CREATE INDEX IF NOT EXISTS login_attempts_time ON public.login_attempts (attempted_at);
+
 ALTER TABLE public.login_attempts ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.login_attempts FROM anon, authenticated;
 REVOKE ALL ON SEQUENCE public.login_attempts_id_seq FROM anon, authenticated;
