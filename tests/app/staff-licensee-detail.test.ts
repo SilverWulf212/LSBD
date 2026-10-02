@@ -53,13 +53,18 @@ describe("staff-licensee-detail", () => {
     expect(core!.person.lastName).toBe("Smith");
     expect(core!.addresses).toEqual([]);
     expect(core!.education.rows).toEqual([]);
+    // The licence-less person still gets its address and school lookups.
+    expect(f.calls.some((c) => c.text.includes("lsbd.person_address"))).toBe(true);
+    expect(f.calls.some((c) => c.text.includes("lsbd.person_education"))).toBe(true);
   });
 
   it("does not query or return contact fields without pii.read", async () => {
     const f = fakeFor(person);
     const core = await loadLicenseeCore(f.query, 12345, NO_PII);
     expect(core!.contact).toBeNull();
-    expect(f.calls[0].text).not.toMatch(/email|phone1|fax/);
+    for (const col of ["email", "url", "phone1", "ext1", "phone2", "ext2", "fax"]) {
+      expect(f.calls[0].text, col).not.toMatch(new RegExp(`\b${col}\b`));
+    }
     expect(f.textMatching("lsbd.person_address")).toContain("address_type = 'office'");
   });
 
@@ -132,9 +137,11 @@ describe("staff-licensee-detail", () => {
   });
 
   it("sends only single statements", async () => {
-    const f = fakeFor(person);
-    await loadLicenseeCore(f.query, 12345, ALL);
-    for (const c of f.calls) expect(c.text).not.toContain(";");
+    for (const caps of [ALL, NO_PII, { contact: true, discipline: false }, { contact: false, discipline: true }]) {
+      const f = fakeFor(person);
+      await loadLicenseeCore(f.query, 12345, caps);
+      for (const c of f.calls) expect(c.text).not.toContain(";");
+    }
   });
 });
 
@@ -328,6 +335,18 @@ describe("relations: truncation and limits (fix round 1)", () => {
     const d = await loadLicenseeDetail(f.query, 12345, { contact: true, discipline: false });
     expect(d!.discipline).toBe("hidden");
     expect(f.calls.some((c) => c.text.includes("lsbd.disciplinary"))).toBe(false);
+  });
+
+  it("builds counterpart names from trimmed parts", async () => {
+    const cr = "\r";
+    const f = fakeFor(null, {
+      "WHERE ia.dentist_legacy_id = $1": [
+        { other_key: 5, found_key: 5, last_name: "Roe", first_name: cr, middle_name: " ", suffix: null, license_id: null, type: null },
+        { other_key: 6, found_key: 6, last_name: cr, first_name: "Jo", middle_name: null, suffix: null, license_id: null, type: null },
+      ],
+    });
+    const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
+    expect(r.affiliations.rows.map((a) => a.otherName)).toEqual(["Roe", "Jo"]);
   });
 
   it("keeps a counterpart who exists but has no licence row", async () => {

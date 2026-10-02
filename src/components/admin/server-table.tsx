@@ -38,16 +38,16 @@ export function ServerTable<T>({
         <Table>
           <TableHeader>
             <TableRow>
-              {columns.map((c) => (
-                <TableHead key={c.header} className={c.className}>{c.header}</TableHead>
+              {columns.map((c, i) => (
+                <TableHead key={i} className={c.className}>{c.header}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((row) => (
               <TableRow key={rowKey(row)}>
-                {columns.map((c) => (
-                  <TableCell key={c.header} className={c.className}>{c.cell(row)}</TableCell>
+                {columns.map((c, i) => (
+                  <TableCell key={i} className={c.className}>{c.cell(row)}</TableCell>
                 ))}
               </TableRow>
             ))}
@@ -69,7 +69,7 @@ export function ServerTable<T>({
                 </PaginationItem>
               ) : (
                 <PaginationItem key={p}>
-                  <PaginationLink href={href(p)} isActive={p === page}>{p}</PaginationLink>
+                  <PaginationLink href={href(p)} isActive={p === page} aria-label={`Go to page ${p}`}>{p}</PaginationLink>
                 </PaginationItem>
               ),
             )}

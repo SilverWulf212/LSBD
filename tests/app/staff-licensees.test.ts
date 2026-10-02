@@ -60,9 +60,24 @@ describe("staff-licensees", () => {
   it("orders with a unique tie-break", async () => {
     const f = fake([]);
     await searchLicensees(f.query, NONE);
-    expect(f.calls[0].text).toMatch(
-      /ORDER BY p\.last_name NULLS LAST, p\.first_name NULLS LAST, p\.legacy_key\n/,
+    expect(f.calls[0].text).toContain(
+      "ORDER BY btrim(p.last_name, E' \\t\\r\\n') NULLS LAST, btrim(p.first_name, E' \\t\\r\\n') NULLS LAST, p.legacy_key\n",
     );
+  });
+
+  it("starts from person and left-joins the licence", async () => {
+    const f = fake([]);
+    await searchLicensees(f.query, NONE);
+    expect(f.calls[0].text).toMatch(/FROM lsbd\.person p\s+LEFT JOIN lsbd\.license l ON l\.legacy_key = p\.legacy_key/);
+  });
+
+  it("names the backslash escape on every ILIKE", async () => {
+    const f = fake([]);
+    await searchLicensees(f.query, { ...NONE, last: "a", first: "b", city: "c" });
+    const text = f.calls[0].text;
+    const likes = text.match(/ILIKE \$\d+( ESCAPE '\\')?/g) ?? [];
+    expect(likes).toHaveLength(4); // last, married name, first, city
+    for (const l of likes) expect(l.endsWith("ESCAPE '\\'"), l).toBe(true);
   });
 
   it("binds offset 19275 for page 772", async () => {

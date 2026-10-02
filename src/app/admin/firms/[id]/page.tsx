@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { requireCapability } from "@/lib/auth-utils";
 import { can } from "@/lib/auth-capabilities";
 import { getFirmDetail } from "@/lib/staff-data";
@@ -71,6 +71,7 @@ export default async function FirmDetailPage({ params }: { params: Promise<{ id:
   try {
     data = await getFirmDetail(id);
   } catch (e) {
+    unstable_rethrow(e);
     console.error("firm detail load failed", e);
     loadError = "Could not read this firm record from the database.";
   }

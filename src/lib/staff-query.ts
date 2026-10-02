@@ -58,7 +58,8 @@ export function rangeText(page: number, pageSize: number, total: number, count: 
 }
 
 /**
- * `sql` has no LIMIT and selects `count(*) OVER() AS total`. A page past the last row
+ * `sql` has no LIMIT and selects `count(*) OVER() AS total`. Its ORDER BY must be deterministic
+ * (end with a unique tie-break) or OFFSET paging can repeat or skip rows. A page past the last row
  * falls back to page 1 (one extra query).
  */
 export async function runPaged<T>(
@@ -90,7 +91,7 @@ export function rowIso(v: unknown): string | null {
   return v instanceof Date ? v.toISOString() : String(v);
 }
 export function rowNum(v: unknown): number | null {
-  if (v === null || v === undefined) return null;
+  if (v === null || v === undefined || v === "") return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }

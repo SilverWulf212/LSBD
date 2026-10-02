@@ -60,6 +60,7 @@ describe("staff-query", () => {
     const r = await runPaged(f.query, "SELECT id, count(*) OVER() AS total FROM t", [], 5, (row) => ({ id: row.id }));
     expect(f.calls).toHaveLength(2);
     expect(f.calls[1].params.at(-1)).toBe(0);
+    expect(f.calls[1].text).toBe(f.calls[0].text);
     expect(r.page).toBe(1);
     expect(r.total).toBe(40);
   });
@@ -73,6 +74,7 @@ describe("staff-query", () => {
     expect(rowIso(new Date("2027-01-01T05:59:59Z"))).toBe("2027-01-01T05:59:59.000Z");
     expect(rowNum("19285")).toBe(19285);
     expect(rowNum(null)).toBeNull();
+    expect(rowNum("")).toBeNull();
     expect(rowStr(undefined)).toBeNull();
     expect(rowBool(null)).toBeNull();
   });
@@ -82,5 +84,7 @@ describe("staff-query", () => {
     expect(src).toContain("@/components/ui/pagination");
     expect(src).toContain("pageHref(");
     expect(src).toContain("pageWindow(");
+    expect(src).toContain("aria-label={`Go to page ${p}`}");
+    expect(src).not.toContain("key={c.header}");
   });
 });

@@ -17,6 +17,14 @@ describe("staff labels", () => {
     expect([...LICENSE_CLASSES]).toEqual(licenseClassEnum.enumValues);
   });
 
+  it("shows Object.prototype names as the code, not a function", () => {
+    for (const code of ["constructor", "toString", "__proto__"]) {
+      expect(statusLabel(code)).toBe(code);
+      expect(classLabel(code)).toBe(code);
+      expect(typeLabel(code)).toBe(code);
+    }
+  });
+
   it("labels every status and class code (CR5)", () => {
     expect(LICENSE_STATUSES.map(statusLabel)).toEqual([
       "Active", "Suspended", "Revoked", "Reprimanded", "Archived", "Probation", "Deceased",

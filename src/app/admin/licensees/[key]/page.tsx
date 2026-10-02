@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { requireCapability } from "@/lib/auth-utils";
 import { getLicenseeDetail } from "@/lib/staff-data";
 import { formatCentralDate, formatCentralDateTime } from "@/lib/central-time";
@@ -51,8 +51,13 @@ function Fields({ items }: { items: [string, React.ReactNode][] }) {
   );
 }
 
-function CutNote({ n }: { n: number }) {
-  return <p className="text-xs text-muted-foreground">Showing the first {n}. More exist.</p>;
+function CutNote({ n, each }: { n: number; each?: boolean }) {
+  return (
+    <p className="text-xs text-muted-foreground">
+      Showing the first {n}
+      {each ? " in each direction" : ""}. More exist.
+    </p>
+  );
 }
 
 function formatAddress(a: AddressRow): string {
@@ -112,6 +117,7 @@ export default async function LicenseeDetailPage({ params }: { params: Promise<{
   try {
     data = await getLicenseeDetail(key);
   } catch (e) {
+    unstable_rethrow(e);
     console.error("licensee detail load failed", e);
     loadError = "Could not read this licensee record from the database.";
   }
@@ -186,12 +192,16 @@ export default async function LicenseeDetailPage({ params }: { params: Promise<{
                 ["Current", licence.isCurrent === null ? null : licence.isCurrent ? "Yes" : "No"],
                 ["Credential exam", licence.credentialExam],
                 ["Action", t(licence.action)],
-                ["Name on licence", t(person.licenseName)],
-                ["Married name", t(person.marriedName)],
               ]}
             />
           </>
         )}
+        <Fields
+          items={[
+            ["Name on licence", t(person.licenseName)],
+            ["Married name", t(person.marriedName)],
+          ]}
+        />
       </Section>
 
       <Section title="Other licences of this individual">
@@ -320,7 +330,7 @@ export default async function LicenseeDetailPage({ params }: { params: Promise<{
             <AffiliationList rows={affiliatedTo} />
           </div>
         )}
-        {detail.affiliations.truncated && <CutNote n={AFFILIATION_LIMIT} />}
+        {detail.affiliations.truncated && <CutNote n={AFFILIATION_LIMIT} each />}
       </Section>
 
       <Section title="Offices">
@@ -352,7 +362,7 @@ export default async function LicenseeDetailPage({ params }: { params: Promise<{
               <NotLinked detail={detail.discipline.reason} />
             </p>
           ) : detail.discipline.rows.length === 0 ? (
-            <p>No discipline records.</p>
+            <p>No discipline records are linked to this individual.</p>
           ) : (
             <ul className="space-y-2">
               {detail.discipline.rows.map((d, i) => (

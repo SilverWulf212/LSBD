@@ -1,14 +1,16 @@
 import React from "react";
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
 import { requireCapability } from "@/lib/auth-utils";
 import { can } from "@/lib/auth-capabilities";
 import { getPermitList } from "@/lib/staff-data";
 import { formatCentralDate } from "@/lib/central-time";
-import type { PermitRow } from "@/lib/staff-permits";
+import { parsePermitFilters, type PermitRow } from "@/lib/staff-permits";
 import type { RawSearchParams } from "@/lib/staff-query";
 import { ServerTable, type ServerTableColumn } from "@/components/admin/server-table";
 import { PermitHolder } from "@/components/admin/permit-holder";
 import { NotLinked } from "@/components/admin/not-linked";
+import { SELECT_CLASS, trim } from "@/components/admin/staff-ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -18,11 +20,6 @@ export const metadata = {
 };
 
 export const dynamic = "force-dynamic";
-
-const SELECT_CLASS =
-  "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-const trim = (v: string | null) => (v === null ? null : v.trim() || null);
 
 export default async function PermitsPage({
   searchParams,
@@ -38,6 +35,7 @@ export default async function PermitsPage({
   try {
     data = await getPermitList(sp);
   } catch (e) {
+    unstable_rethrow(e);
     console.error("permit list load failed", e);
     loadError = "Could not read permit records from the database.";
   }
@@ -69,9 +67,10 @@ export default async function PermitsPage({
     },
   ];
 
-  const f = data?.filters;
+  // Parsed from the request, not the loaded data, so a failed load keeps what was typed.
+  const f = parsePermitFilters(sp);
   // A hand-edited ?type=nitrous still selects the "Nitrous" option.
-  const selectedType = data?.options.types.find((t) => t.toLowerCase() === f?.type.toLowerCase()) ?? f?.type ?? "";
+  const selectedType = data?.options.types.find((t) => t.toLowerCase() === f.type.toLowerCase()) ?? f.type;
 
   return (
     <div className="space-y-6">
@@ -88,7 +87,7 @@ export default async function PermitsPage({
           <form action="/admin/permits" method="get" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="kind">Kind</Label>
-              <select id="kind" name="kind" defaultValue={f?.kind ?? ""} className={SELECT_CLASS}>
+              <select id="kind" name="kind" defaultValue={f.kind ?? ""} className={SELECT_CLASS}>
                 <option value="">All</option>
                 <option value="personal">Personal</option>
                 <option value="office">Office</option>
@@ -105,7 +104,7 @@ export default async function PermitsPage({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="level">Level</Label>
-              <select id="level" name="level" defaultValue={f?.level ?? ""} className={SELECT_CLASS}>
+              <select id="level" name="level" defaultValue={f.level ?? ""} className={SELECT_CLASS}>
                 <option value="">All</option>
                 {data?.options.levels.map((l) => (
                   <option key={l} value={l}>{l}</option>
@@ -128,7 +127,7 @@ export default async function PermitsPage({
         </div>
       )}
 
-      {data && f && (
+      {data && (
         <ServerTable
           columns={columns}
           rows={data.result.rows}

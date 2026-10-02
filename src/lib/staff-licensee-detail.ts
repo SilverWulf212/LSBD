@@ -302,6 +302,9 @@ function cut<T>(rows: T[], limit: number): Section<T> {
   return { rows: rows.slice(0, limit), truncated: rows.length > limit };
 }
 
+// Source names can carry stray whitespace (including carriage returns); blank parts count as missing.
+const trimmed = (v: unknown): string | null => rowStr(v)?.trim() || null;
+
 function mapAffiliation(direction: AffiliationRow["direction"], r: Record<string, unknown>): AffiliationRow {
   const found = rowNum(r.found_key) !== null;
   return {
@@ -309,10 +312,10 @@ function mapAffiliation(direction: AffiliationRow["direction"], r: Record<string
     otherKey: rowNum(r.other_key),
     otherName: found
       ? formatPersonName({
-          lastName: rowStr(r.last_name),
-          firstName: rowStr(r.first_name),
-          middleName: rowStr(r.middle_name),
-          suffix: rowStr(r.suffix),
+          lastName: trimmed(r.last_name),
+          firstName: trimmed(r.first_name),
+          middleName: trimmed(r.middle_name),
+          suffix: trimmed(r.suffix),
         })
       : null,
     otherLicenseNumber: found ? rowStr(r.license_id) : null,

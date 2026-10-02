@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
 import { requireCapability } from "@/lib/auth-utils";
 import { getLicenseeList } from "@/lib/staff-data";
 import { formatCentralDate } from "@/lib/central-time";
@@ -7,10 +8,11 @@ import {
   LICENSE_STATUSES, LICENSE_TYPES, classLabel, formatPersonName, statusLabel, typeLabel,
 } from "@/lib/staff-labels";
 import { licenceOddities } from "@/lib/staff-oddities";
-import type { LicenseeListRow } from "@/lib/staff-licensees";
+import { parseLicenseeFilters, type LicenseeListRow } from "@/lib/staff-licensees";
 import type { RawSearchParams } from "@/lib/staff-query";
 import { ServerTable, type ServerTableColumn } from "@/components/admin/server-table";
 import { OddityBadges } from "@/components/admin/oddity-badges";
+import { SELECT_CLASS, trim } from "@/components/admin/staff-ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,11 +23,6 @@ export const metadata = {
 };
 
 export const dynamic = "force-dynamic";
-
-const SELECT_CLASS =
-  "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-const trim = (v: string | null) => (v === null ? null : v.trim() || null);
 
 function NoLicence() {
   return <span className="text-muted-foreground italic">No licence record</span>;
@@ -44,6 +41,7 @@ export default async function LicenseesPage({
   try {
     data = await getLicenseeList(sp);
   } catch (e) {
+    unstable_rethrow(e);
     console.error("licensee list load failed", e);
     loadError = "Could not read licensee records from the database.";
   }
@@ -82,7 +80,8 @@ export default async function LicenseesPage({
     { header: "Office city", cell: (r) => trim(r.officeCity) ?? "—" },
   ];
 
-  const f = data?.filters;
+  // Parsed from the request, not the loaded data, so a failed load keeps what was typed.
+  const f = parseLicenseeFilters(sp);
 
   return (
     <div className="space-y-6">
@@ -98,23 +97,23 @@ export default async function LicenseesPage({
           <form action="/admin/licensees" method="get" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="last">Last or married name</Label>
-              <Input id="last" name="last" defaultValue={f?.last ?? ""} maxLength={100} />
+              <Input id="last" name="last" defaultValue={f.last ?? ""} maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="first">First name</Label>
-              <Input id="first" name="first" defaultValue={f?.first ?? ""} maxLength={100} />
+              <Input id="first" name="first" defaultValue={f.first ?? ""} maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="number">Licence number</Label>
-              <Input id="number" name="number" defaultValue={f?.number ?? ""} maxLength={20} />
+              <Input id="number" name="number" defaultValue={f.number ?? ""} maxLength={20} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="city">Office city</Label>
-              <Input id="city" name="city" defaultValue={f?.city ?? ""} maxLength={100} />
+              <Input id="city" name="city" defaultValue={f.city ?? ""} maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="type">Type</Label>
-              <select id="type" name="type" defaultValue={f?.type ?? ""} className={SELECT_CLASS}>
+              <select id="type" name="type" defaultValue={f.type ?? ""} className={SELECT_CLASS}>
                 <option value="">All</option>
                 {LICENSE_TYPES.map((t) => (
                   <option key={t} value={t}>{typeLabel(t)}</option>
@@ -123,7 +122,7 @@ export default async function LicenseesPage({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="status">Status</Label>
-              <select id="status" name="status" defaultValue={f?.status ?? ""} className={SELECT_CLASS}>
+              <select id="status" name="status" defaultValue={f.status ?? ""} className={SELECT_CLASS}>
                 <option value="">All</option>
                 {LICENSE_STATUSES.map((s) => (
                   <option key={s} value={s}>{statusLabel(s)}</option>
@@ -147,7 +146,7 @@ export default async function LicenseesPage({
         </div>
       )}
 
-      {data && f && (
+      {data && (
         <ServerTable
           columns={columns}
           rows={data.result.rows}

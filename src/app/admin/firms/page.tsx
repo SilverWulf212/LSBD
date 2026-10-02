@@ -1,11 +1,13 @@
 import React from "react";
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
 import { requireCapability } from "@/lib/auth-utils";
 import { getFirmList } from "@/lib/staff-data";
 import { formatCentralDate } from "@/lib/central-time";
-import type { FirmListRow } from "@/lib/staff-firms";
+import { parseFirmFilters, type FirmListRow } from "@/lib/staff-firms";
 import type { RawSearchParams } from "@/lib/staff-query";
 import { ServerTable, type ServerTableColumn } from "@/components/admin/server-table";
+import { SELECT_CLASS, trim } from "@/components/admin/staff-ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,11 +18,6 @@ export const metadata = {
 };
 
 export const dynamic = "force-dynamic";
-
-const SELECT_CLASS =
-  "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-const trim = (v: string | null) => (v === null ? null : v.trim() || null);
 
 export default async function FirmsPage({
   searchParams,
@@ -35,6 +32,7 @@ export default async function FirmsPage({
   try {
     data = await getFirmList(sp);
   } catch (e) {
+    unstable_rethrow(e);
     console.error("firm list load failed", e);
     loadError = "Could not read firm records from the database.";
   }
@@ -56,7 +54,8 @@ export default async function FirmsPage({
     { header: "Expires", cell: (r) => formatCentralDate(r.dateUntil) },
   ];
 
-  const f = data?.filters;
+  // Parsed from the request, not the loaded data, so a failed load keeps what was typed.
+  const f = parseFirmFilters(sp);
 
   return (
     <div className="space-y-6">
@@ -72,19 +71,19 @@ export default async function FirmsPage({
           <form action="/admin/firms" method="get" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="name">Name contains</Label>
-              <Input id="name" name="name" defaultValue={f?.name ?? ""} maxLength={100} />
+              <Input id="name" name="name" defaultValue={f.name ?? ""} maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="number">Registration number</Label>
-              <Input id="number" name="number" defaultValue={f?.number ?? ""} maxLength={20} />
+              <Input id="number" name="number" defaultValue={f.number ?? ""} maxLength={20} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="city">City</Label>
-              <Input id="city" name="city" defaultValue={f?.city ?? ""} maxLength={100} />
+              <Input id="city" name="city" defaultValue={f.city ?? ""} maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="status">Status</Label>
-              <select id="status" name="status" defaultValue={f?.status ?? ""} className={SELECT_CLASS}>
+              <select id="status" name="status" defaultValue={f.status ?? ""} className={SELECT_CLASS}>
                 <option value="">All</option>
                 {data?.statuses.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -107,7 +106,7 @@ export default async function FirmsPage({
         </div>
       )}
 
-      {data && f && (
+      {data && (
         <>
           <ServerTable
             columns={columns}

@@ -60,7 +60,7 @@ export const NOT_LINKED_TEXT = "not linked";
 
 function lookup(map: Partial<Record<string, string>>, code: string | null, empty: string): string {
   if (code === null || code === "") return empty;
-  return map[code] ?? code;
+  return Object.hasOwn(map, code) ? (map[code] as string) : code;
 }
 
 export function typeLabel(code: string | null): string {

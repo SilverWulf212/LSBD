@@ -170,4 +170,35 @@ describe("staff data gates", () => {
       expect(src, s).toContain(s);
     }
   });
+
+  it("the licensee detail page renders contact only when present and skips hidden discipline", () => {
+    const src = read("src/app/admin/licensees/[key]/page.tsx");
+    expect(src).toContain("{contact && (");
+    expect(src).toContain('detail.discipline !== "hidden"');
+    expect(src).toContain("Name on licence");
+    expect(src).toContain("No discipline records are linked to this individual.");
+  });
+
+  it("staff pages rethrow framework errors and read filters from the request", () => {
+    for (const file of Object.keys(STAFF_PAGES)) {
+      expect(read(file), file).toContain("unstable_rethrow(e)");
+    }
+    for (const [file, parse] of [
+      ["src/app/admin/licensees/page.tsx", "parseLicenseeFilters(sp)"],
+      ["src/app/admin/permits/page.tsx", "parsePermitFilters(sp)"],
+      ["src/app/admin/firms/page.tsx", "parseFirmFilters(sp)"],
+    ]) {
+      expect(read(file), file).toContain(parse);
+      expect(read(file), file).not.toContain("data?.filters");
+    }
+  });
+
+  it("the list pages share one select style and trim helper", () => {
+    for (const d of ["licensees", "permits", "firms"]) {
+      const src = read(`src/app/admin/${d}/page.tsx`);
+      expect(src, d).toContain("@/components/admin/staff-ui");
+      expect(src, d).not.toContain("const SELECT_CLASS");
+      expect(src, d).not.toContain("const trim =");
+    }
+  });
 });

@@ -16,44 +16,48 @@ const ALLOWED = new Set<string>([
   "license_type", "license_status", "license_class", "address_type", // enum types
 ]);
 
+const FORBIDDEN = [
+  "licensee_pii", "person_practice_stats", "lsbd_raw", "transactions", "transaction_splits",
+  "renewals", "renewal_", "complaint", "logins", "lsbd.users",
+  "pllc_number", "pa_number",
+];
+
+/** Every rule the staff SQL must obey, as a list of violations (empty = clean). */
+function violations(text: string): string[] {
+  const out: string[] = [];
+  for (const m of text.matchAll(/\blsbd\.([a-z_]+)/g)) {
+    if (!ALLOWED.has(m[1])) out.push(`references lsbd.${m[1]}`);
+  }
+  if (/SELECT\s+(DISTINCT\s+)?\*/i.test(text)) out.push("selects *");
+  if (/\b[a-z][a-z0-9_]*\.\*/i.test(text)) out.push("selects alias.*");
+  for (const w of FORBIDDEN) if (text.includes(w)) out.push(`mentions ${w}`);
+  if (/\blsbd\.education(_type)?\b/.test(text)) out.push("reads lsbd.education");
+  if (/\blsbd\.individual\b(?!_)/.test(text) && /\b(ssn|dob|sex|race)\b/i.test(text)) {
+    out.push("selects PII columns of lsbd.individual");
+  }
+  return out;
+}
+
 describe("staff SQL guard", () => {
   it("finds staff modules", () => {
     expect(files.length).toBeGreaterThan(0);
   });
 
-  it("reads only relations granted to lsbd_staff_ro", () => {
-    for (const f of files) {
-      for (const m of f.text.matchAll(/\blsbd\.([a-z_]+)/g)) {
-        expect(ALLOWED.has(m[1]), `${f.name} references lsbd.${m[1]}`).toBe(true);
-      }
-    }
+  it("every staff module is clean", () => {
+    for (const f of files) expect(violations(f.text), f.name).toEqual([]);
   });
 
-  it("never selects *", () => {
-    for (const f of files) {
-      expect(f.text, f.name).not.toMatch(/SELECT\s+\*/i);
-      expect(f.text, f.name).not.toMatch(/\b[a-z][a-z0-9_]*\.\*/);
-    }
-  });
-
-  it("never names a forbidden relation or column", () => {
-    const forbidden = [
-      "licensee_pii", "person_practice_stats", "lsbd_raw", "transactions", "transaction_splits",
-      "renewals", "renewal_", "complaint", "logins", "lsbd.users",
-      "pllc_number", "pa_number",
+  it("flags what it is meant to flag", () => {
+    const bad: [string, string][] = [
+      ["SELECT * FROM lsbd.licensee_pii", "selects *"],
+      ["SELECT DISTINCT * FROM lsbd.person", "selects *"],
+      ["SELECT P.* FROM lsbd.person P", "selects alias.*"],
+      ["SELECT a FROM lsbd.education", "reads lsbd.education"],
+      ["SELECT pllc_number FROM lsbd.license", "mentions pllc_number"],
+      ["select i.ssn from lsbd.individual i", "selects PII columns of lsbd.individual"],
     ];
-    for (const f of files) {
-      for (const w of forbidden) expect(f.text, `${f.name} mentions ${w}`).not.toContain(w);
-      expect(f.text, f.name).not.toMatch(/\blsbd\.education(_type)?\b/);
-    }
-  });
-
-  it("never selects PII columns of lsbd.individual", () => {
-    for (const f of files) {
-      if (/\blsbd\.individual\b(?!_)/.test(f.text)) {
-        expect(f.text, f.name).not.toMatch(/\b(ssn|dob|sex|race)\b/);
-      }
-    }
+    for (const [sql, want] of bad) expect(violations(sql), sql).toContain(want);
+    expect(violations("SELECT p.id FROM lsbd.person p")).toEqual([]);
   });
 
   it("goes through withStaffRo only", () => {
