@@ -7,6 +7,7 @@ import { eq, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { postSchema } from "@/lib/validators";
+import { sanitizePostHtml } from "@/lib/sanitize-post-html";
 import type { Post } from "@/types";
 
 export async function getPosts(): Promise<Post[]> {
@@ -49,7 +50,7 @@ export async function createPost(formData: FormData) {
     .values({
       title: validated.title,
       slug: validated.slug,
-      content: validated.content,
+      content: sanitizePostHtml(validated.content),
       excerpt: validated.excerpt || null,
       featuredImage: validated.featuredImage || null,
       status: validated.status,
@@ -101,7 +102,7 @@ export async function updatePost(id: number, formData: FormData) {
     .set({
       title: validated.title,
       slug: validated.slug,
-      content: validated.content,
+      content: sanitizePostHtml(validated.content),
       excerpt: validated.excerpt || null,
       featuredImage: validated.featuredImage || null,
       status: validated.status,
