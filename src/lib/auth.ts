@@ -3,10 +3,11 @@ import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { clientIp } from "@/lib/client-ip";
 import { verifyCredentials } from "@/lib/login-limiter";
 import { pgAttemptStore } from "@/lib/login-attempts-store";
+import { refreshSessionToken, SESSION_MAX_AGE_SECONDS } from "@/lib/session-refresh";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -42,15 +43,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_SECONDS },
   pages: { signIn: "/admin/login" },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id!;
         token.role = user.role;
+        token.checkedAt = Date.now();
+        return token;
       }
-      return token;
+      // Later requests: re-check the user every few minutes; null ends the session.
+      return refreshSessionToken(
+        token,
+        async (id) => {
+          const [row] = await db
+            .select({ role: users.role, updatedAt: users.updatedAt })
+            .from(users)
+            .where(eq(users.id, id))
+            .limit(1);
+          return row;
+        },
+        Date.now()
+      );
     },
     async session({ session, token }) {
       if (session.user) {
