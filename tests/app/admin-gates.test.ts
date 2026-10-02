@@ -64,3 +64,71 @@ describe("admin gates", () => {
     expect(src).toContain("getSessionWith(");
   });
 });
+
+describe("staff data gates", () => {
+  const STAFF_PAGES: Record<string, string> = {
+    "src/app/admin/licensees/page.tsx": 'requireCapability("licensees.read")',
+    "src/app/admin/licensees/[key]/page.tsx": 'requireCapability("licensees.read")',
+  };
+  const read = (p: string) => readFileSync(join(root, p), "utf8");
+  const dataParts = () =>
+    read("src/lib/staff-data.ts").split("export async function ").slice(1);
+
+  it("each staff page gates on its capability before loading data", () => {
+    for (const [file, gate] of Object.entries(STAFF_PAGES)) {
+      expect(existsSync(join(root, file)), file).toBe(true);
+      const src = read(file);
+      expect(src, file).toContain(gate);
+      expect(src.indexOf(gate), file).toBeLessThan(src.indexOf("await getLicensee"));
+      expect(src, file).toContain('dynamic = "force-dynamic"');
+    }
+  });
+
+  it("every staff-data function checks a capability before opening the transaction", () => {
+    const parts = dataParts();
+    expect(parts.length).toBeGreaterThan(0);
+    for (const part of parts) {
+      const gate = part.indexOf("requireCapability(");
+      expect(gate, part.slice(0, 30)).toBeGreaterThanOrEqual(0);
+      expect(gate).toBeLessThan(part.indexOf("withStaffRo("));
+    }
+  });
+
+  it("no auth or db call sits inside a withStaffRo callback", () => {
+    for (const part of dataParts()) {
+      const inside = part.slice(part.indexOf("withStaffRo(") + "withStaffRo(".length);
+      for (const bad of ["requireCapability(", "auth(", "db."]) {
+        expect(inside, bad).not.toContain(bad);
+      }
+    }
+  });
+
+  it("section capabilities come from the session role", () => {
+    const src = read("src/lib/staff-data.ts");
+    expect(src).toContain('can(session.user.role, "pii.read")');
+    expect(src).toContain('can(session.user.role, "discipline.read")');
+  });
+
+  it("staff pages never touch the db client or format dates themselves", () => {
+    const files = walk(join(root, "src/app/admin/licensees")).filter((f) => f.endsWith(".tsx"));
+    expect(files.length).toBeGreaterThan(0);
+    for (const f of files) {
+      const src = readFileSync(f, "utf8");
+      for (const bad of ["@/lib/db", "withStaffRo", "toLocaleDateString(", "toLocaleString("]) {
+        expect(src, `${rel(f)} ${bad}`).not.toContain(bad);
+      }
+    }
+  });
+
+  it("the sidebar links staff screens by capability", () => {
+    const src = read("src/components/admin/admin-sidebar.tsx");
+    expect(src).toMatch(/href: "\/admin\/licensees".*capability: "licensees\.read"/);
+  });
+
+  it("the detail page is the printable fact sheet", () => {
+    const src = read("src/app/admin/licensees/[key]/page.tsx");
+    for (const s of ["PrintButton", "print:block", "break-inside-avoid", "notFound()", "NotLinked", "OddityBadges"]) {
+      expect(src, s).toContain(s);
+    }
+  });
+});

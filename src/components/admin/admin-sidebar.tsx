@@ -17,6 +17,7 @@ import {
   Layers,
   Shield,
   RefreshCw,
+  BadgeCheck,
 } from "lucide-react";
 import type { LsbdRole } from "@/lib/auth-roles";
 import { can, type Capability } from "@/lib/auth-capabilities";
@@ -30,6 +31,7 @@ type SidebarItem = {
 
 const sidebarItems: SidebarItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard, capability: "cms.read" },
+  { label: "Licensees", href: "/admin/licensees", icon: BadgeCheck, capability: "licensees.read" },
   { label: "Posts", href: "/admin/posts", icon: FileText, capability: "cms.read" },
   { label: "Alerts", href: "/admin/alerts", icon: AlertTriangle, capability: "cms.read" },
   { label: "Board Members", href: "/admin/board", icon: Users, capability: "cms.read" },
