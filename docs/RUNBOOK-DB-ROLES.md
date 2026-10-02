@@ -166,12 +166,22 @@ so verify would fail.
 | Variable | Connects as | Used for | Set now? |
 | --- | --- | --- | --- |
 | `POSTGRES_URL` | `lsbd_app` | CMS, admin, public verify, sync status | Preview only, after 0007 and the login test in §2 |
-| `LSBD_RO_URL` | `lsbd_staff_ro` | Staff read-only views of licensing data | No (Stage 2) |
+| `LSBD_RO_URL` | `lsbd_staff_ro` | Not used. The staff screens read through `POSTGRES_URL` and `SET LOCAL ROLE lsbd_staff_ro` (`src/lib/db/lsbd-ro.ts`), so this role never needs a login | No |
 
-**Before that switch, run `GRANT lsbd_staff_ro TO lsbd_app`.** The staff screens
-run `SET LOCAL ROLE lsbd_staff_ro` on the app connection, and 0006 grants that role
-to `postgres` only. Without the grant every staff page shows its error box. This
-needs a small SQL file applied with `scripts/apply-sql.ts`; it is not yet written.
+**Before that switch, `lsbd_app` must be allowed to become `lsbd_staff_ro`.** The
+staff screens run `SET LOCAL ROLE lsbd_staff_ro` on the app connection, and 0006
+grants that role to `postgres` only. Without the grant every staff page shows its
+error box. The grant must give SET without INHERIT:
+
+```sql
+GRANT lsbd_staff_ro TO lsbd_app WITH INHERIT FALSE, SET TRUE;
+```
+
+A plain `GRANT lsbd_staff_ro TO lsbd_app` would let `lsbd_app` read the staff tables
+all the time (roles inherit by default), which defeats "nothing in schema `lsbd`"
+in §4. This needs a small SQL file applied with `scripts/apply-sql.ts`, plus a
+`verify-rls.ts` check that `lsbd_app` still cannot `SELECT` from `lsbd.license`
+without `SET ROLE`; neither is written yet.
 
 Set `POSTGRES_URL` on **Preview**, redeploy the preview, and exercise: login, an
 admin edit, `/public/verify`, the sync status panel. Keep the old value at hand;
