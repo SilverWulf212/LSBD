@@ -10,6 +10,8 @@
 // Read-only is enforced by the database: SET LOCAL ROLE lsbd_staff_ro inside a
 // transaction on the existing pool. SET LOCAL ends with the transaction, so the
 // connection is the normal role again when it goes back to the pool.
+// A query the callback starts and never awaits is still drained before COMMIT/ROLLBACK,
+// and its rejection is the callback's to handle. Queries are single statements only.
 import { db } from "./index";
 
 export const STAFF_RO_ROLE = "lsbd_staff_ro";
@@ -30,8 +32,8 @@ export async function runStaffRo<T>(
   fn: (q: RoQueryFn) => Promise<T>,
 ): Promise<T> {
   const client = await connect();
-  let ended = false;
-  let released = false;
+  let ended = false; // no new q() calls
+  let aborted = false; // queued q() calls that have not started yet must not start
   // pg deprecates overlapping client.query calls, so each call waits for the last.
   let chain: Promise<unknown> = Promise.resolve();
 
@@ -39,41 +41,48 @@ export async function runStaffRo<T>(
     if (ended) {
       return Promise.reject(new Error("withStaffRo: query after the transaction ended"));
     }
-    const run = async () => (await client.query(text, [...params])).rows;
+    if (text.includes(";")) {
+      return Promise.reject(new Error("staff queries are single statements"));
+    }
+    const run = async () => {
+      if (aborted) throw new Error("withStaffRo: query after the transaction ended");
+      return (await client.query(text, [...params])).rows;
+    };
     const next = chain.then(run, run);
     chain = next.catch(() => undefined);
     return next;
   };
 
+  let outcome: { ok: true; value: T } | { ok: false; error: unknown };
   try {
     await client.query("BEGIN");
     await client.query(`SET LOCAL ROLE ${STAFF_RO_ROLE}`);
-    const result = await fn(q);
-    ended = true;
-    await chain;
-    try {
-      await client.query("COMMIT");
-    } catch (err) {
-      // Unknown transaction state: do not reuse this connection.
-      released = true;
-      client.release(true);
-      throw err;
-    }
-    released = true;
-    client.release();
-    return result;
-  } catch (err) {
-    ended = true;
-    if (!released) {
-      try {
-        await client.query("ROLLBACK");
-        client.release();
-      } catch {
-        client.release(true);
-      }
-    }
-    throw err;
+    outcome = { ok: true, value: await fn(q) };
+  } catch (error) {
+    outcome = { ok: false, error };
+    aborted = true;
   }
+  ended = true;
+  // Drain what the callback started so nothing runs after COMMIT/ROLLBACK/release.
+  await chain;
+
+  // A connection whose COMMIT or ROLLBACK failed may still be inside the transaction.
+  let broken = false;
+  try {
+    await client.query(outcome.ok ? "COMMIT" : "ROLLBACK");
+  } catch (error) {
+    broken = true;
+    if (outcome.ok) outcome = { ok: false, error };
+  }
+  try {
+    // Exactly once on every path.
+    if (broken) client.release(true);
+    else client.release();
+  } catch {
+    // Nothing useful to do; never let it replace the real outcome.
+  }
+  if (outcome.ok) return outcome.value;
+  throw outcome.error;
 }
 
 /** Production binding: runStaffRo(() => db.$client.connect(), fn). */

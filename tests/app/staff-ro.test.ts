@@ -8,7 +8,7 @@ import {
 
 type Call = { text: string; params: unknown[] | undefined };
 
-function harness(opts: { failOn?: Record<string, Error>; hold?: string } = {}) {
+function harness(opts: { failOn?: Record<string, Error>; hold?: string; connectError?: Error } = {}) {
   const calls: Call[] = [];
   const releases: unknown[] = [];
   const events: string[] = [];
@@ -28,7 +28,10 @@ function harness(opts: { failOn?: Record<string, Error>; hold?: string } = {}) {
       releases.push(destroy);
     },
   };
-  const connect = async () => client;
+  const connect = async () => {
+    if (opts.connectError) throw opts.connectError;
+    return client;
+  };
   return {
     calls,
     releases,
@@ -85,6 +88,7 @@ describe("runStaffRo", () => {
     ).rejects.toBe(denied);
     expect(ran).toBe(false);
     expect(h.texts()).toEqual(["BEGIN", SET_ROLE, "ROLLBACK"]);
+    expect(h.releases).toEqual([undefined]);
   });
 
   it("destroys the client when ROLLBACK fails, and rethrows the original error", async () => {
@@ -106,14 +110,83 @@ describe("runStaffRo", () => {
   });
 
   it("rejects without releasing when connect fails", async () => {
-    const h = harness();
     const err = new Error("no connection");
-    await expect(
-      runStaffRo(async () => {
-        throw err;
-      }, async () => "x"),
-    ).rejects.toBe(err);
+    const h = harness({ connectError: err });
+    await expect(runStaffRo(h.connect, async () => "x")).rejects.toBe(err);
     expect(h.releases).toEqual([]);
+    expect(h.calls).toEqual([]);
+  });
+
+  it("rolls back and releases cleanly when BEGIN fails (a failed statement is not a failed ROLLBACK)", async () => {
+    const err = new Error("begin failed");
+    const h = harness({ failOn: { BEGIN: err } });
+    let ran = false;
+    await expect(runStaffRo(h.connect, async () => { ran = true; })).rejects.toBe(err);
+    expect(ran).toBe(false);
+    expect(h.texts()).toEqual(["BEGIN", "ROLLBACK"]);
+    expect(h.releases).toEqual([undefined]);
+  });
+
+  it("runs no queued query after ROLLBACK when the first of three is refused", async () => {
+    const denied = Object.assign(new Error("denied"), { code: "42501" });
+    const h = harness({ failOn: { A: denied } });
+    await expect(
+      runStaffRo(h.connect, async (q) => {
+        await Promise.all([q("A"), q("B"), q("C")]);
+      }),
+    ).rejects.toBe(denied);
+    const t = h.texts();
+    expect(t).not.toContain("C");
+    expect(t.slice(t.indexOf("ROLLBACK") + 1)).toEqual([]);
+    expect(h.releases).toEqual([undefined]);
+    expect(h.events[h.events.length - 1]).toBe("end ROLLBACK");
+  });
+
+  it("runs no queued query after ROLLBACK when the callback throws with queries pending", async () => {
+    const boom = new Error("boom");
+    const h = harness();
+    await expect(
+      runStaffRo(h.connect, async (q) => {
+        void q("A").catch(() => undefined);
+        void q("B").catch(() => undefined);
+        void q("C").catch(() => undefined);
+        throw boom;
+      }),
+    ).rejects.toBe(boom);
+    const t = h.texts();
+    expect(t.slice(t.indexOf("ROLLBACK") + 1)).toEqual([]);
+    expect(t).not.toContain("C");
+    expect(h.releases).toEqual([undefined]);
+  });
+
+  it("drains an unawaited query before COMMIT on success", async () => {
+    const h = harness();
+    await runStaffRo(h.connect, async (q) => {
+      void q("A");
+    });
+    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, "A", "COMMIT"]);
+  });
+
+  it("rejects multi-statement SQL before sending anything", async () => {
+    const h = harness();
+    await runStaffRo(h.connect, async (q) => {
+      await expect(q("SELECT 1; RESET ROLE")).rejects.toThrow("staff queries are single statements");
+      await expect(q("SELECT 1")).resolves.toEqual([]);
+    });
+    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, "SELECT 1", "COMMIT"]);
+  });
+
+  it("releases exactly once and keeps the callback error when release throws", async () => {
+    const boom = new Error("boom");
+    const releases: unknown[] = [];
+    const client: RoClient = {
+      async query() { return { rows: [] }; },
+      release(d) { releases.push(d); throw new Error("release failed"); },
+    };
+    await expect(
+      runStaffRo(async () => client, async () => { throw boom; }),
+    ).rejects.toBe(boom);
+    expect(releases).toEqual([undefined]);
   });
 
   it("serialises concurrent calls on the one client", async () => {
