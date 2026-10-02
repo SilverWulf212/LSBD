@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** Failed-login limits: counted per client IP and per email over a sliding window. */
+/** Sign-in attempt limits: counted per client IP and per email over a sliding window. */
 export const LOGIN_LIMITS = { windowMs: 15 * 60_000, perIp: 10, perEmail: 5 } as const;
 
 export interface AttemptStore {
@@ -50,33 +50,30 @@ export async function verifyCredentials(
   const keys = loginKeys(input.ip, email);
   const { store } = deps;
 
+  // Record first, then count: the attempt is visible to every request that counts
+  // after it, so parallel requests cannot all read "under the limit" before any of
+  // them has written. Attempts over the limit are rejected before the bcrypt compare.
   try {
+    await Promise.all([store.record(keys.ip), store.record(keys.email)]);
     const since = new Date((deps.now?.() ?? new Date()).getTime() - LOGIN_LIMITS.windowMs);
     const [ipCount, emailCount] = await Promise.all([
       store.countSince(keys.ip, since),
       store.countSince(keys.email, since),
     ]);
-    if (ipCount >= LOGIN_LIMITS.perIp || emailCount >= LOGIN_LIMITS.perEmail) return null;
-  } catch {
-    return null; // fail closed
+    if (ipCount > LOGIN_LIMITS.perIp || emailCount > LOGIN_LIMITS.perEmail) return null;
+  } catch (err) {
+    console.error("login limiter unavailable:", err); // fail closed
+    return null;
   }
 
   const user = await deps.findUser(email);
   const ok = await deps.compare(password, user?.passwordHash ?? DUMMY_BCRYPT_HASH);
-
-  if (!ok || !user) {
-    try {
-      await Promise.all([store.record(keys.ip), store.record(keys.email)]);
-    } catch {
-      // a failed write must not turn a rejection into an error
-    }
-    return null;
-  }
+  if (!ok || !user) return null;
 
   try {
     await store.clear(keys.email);
-  } catch {
-    // ignore
+  } catch (err) {
+    console.error("login limiter clear failed:", err);
   }
   return { id: String(user.id), email: user.email, name: user.name, role: user.role };
 }

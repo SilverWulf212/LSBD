@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DUMMY_BCRYPT_HASH,
   LOGIN_LIMITS,
@@ -64,6 +64,8 @@ describe("loginKeys", () => {
   });
 });
 
+afterEach(() => vi.restoreAllMocks());
+
 describe("verifyCredentials", () => {
   it("returns the user on a correct password and clears the email key", async () => {
     const { deps, rows } = setup();
@@ -73,7 +75,14 @@ describe("verifyCredentials", () => {
     expect(rows.has("email:erin@lsbd.org")).toBe(false);
   });
 
-  it("records one failure under both keys on a wrong password", async () => {
+  it("keeps the ip attempt of a successful sign-in counted", async () => {
+    const { deps, rows } = setup();
+    expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), deps)).not.toBeNull();
+    expect(rows.has("email:erin@lsbd.org")).toBe(false);
+    expect(rows.get("ip:1.2.3.4")).toHaveLength(1);
+  });
+
+  it("records the attempt under both keys on a wrong password", async () => {
     const { deps, rows } = setup();
     expect(await verifyCredentials(attempt("erin@lsbd.org", "bad"), deps)).toBeNull();
     expect(rows.get("ip:1.2.3.4")).toHaveLength(1);
@@ -88,27 +97,51 @@ describe("verifyCredentials", () => {
     expect(rows.get("email:nobody@lsbd.org")).toHaveLength(1);
   });
 
-  it("locks an email after the per-email limit without calling compare", async () => {
+  it("evaluates the 5th attempt for an email and blocks the 6th without calling compare", async () => {
     const { deps, compared } = setup();
-    for (let i = 0; i < LOGIN_LIMITS.perEmail; i++) {
+    for (let i = 0; i < LOGIN_LIMITS.perEmail - 1; i++) {
       await verifyCredentials(attempt("erin@lsbd.org", "bad", `9.9.9.${i}`), deps);
     }
-    compared.length = 0;
-    expect(await verifyCredentials(attempt("erin@lsbd.org", "good", "8.8.8.8"), deps)).toBeNull();
-    expect(compared).toHaveLength(0);
+    expect(await verifyCredentials(attempt("erin@lsbd.org", "good", "8.8.8.8"), deps)).not.toBeNull();
+
+    const second = setup();
+    for (let i = 0; i < LOGIN_LIMITS.perEmail; i++) {
+      await verifyCredentials(attempt("erin@lsbd.org", "bad", `9.9.9.${i}`), second.deps);
+    }
+    second.compared.length = 0;
+    expect(await verifyCredentials(attempt("erin@lsbd.org", "good", "8.8.8.8"), second.deps)).toBeNull();
+    expect(second.compared).toHaveLength(0);
+    expect(compared.length).toBe(LOGIN_LIMITS.perEmail);
   });
 
-  it("locks an ip after the per-ip limit across different emails", async () => {
+  it("evaluates the 10th attempt from an ip and blocks the 11th without calling compare", async () => {
     const { deps, compared } = setup();
-    for (let i = 0; i < LOGIN_LIMITS.perIp; i++) {
+    for (let i = 0; i < LOGIN_LIMITS.perIp - 1; i++) {
       await verifyCredentials(attempt(`user${i}@lsbd.org`, "bad"), deps);
     }
     compared.length = 0;
-    expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), deps)).toBeNull();
-    expect(compared).toHaveLength(0);
+    expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), deps)).not.toBeNull();
+    expect(compared).toHaveLength(1);
+
+    const second = setup();
+    for (let i = 0; i < LOGIN_LIMITS.perIp; i++) {
+      await verifyCredentials(attempt(`user${i}@lsbd.org`, "bad"), second.deps);
+    }
+    second.compared.length = 0;
+    expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), second.deps)).toBeNull();
+    expect(second.compared).toHaveLength(0);
   });
 
-  it("ignores failures older than the window", async () => {
+  it("calls compare at most perEmail times for 20 parallel wrong-password attempts", async () => {
+    const { deps, compared } = setup();
+    const results = await Promise.all(
+      Array.from({ length: 20 }, (_, i) => verifyCredentials(attempt("erin@lsbd.org", "bad", `7.7.7.${i}`), deps))
+    );
+    expect(results.every((r) => r === null)).toBe(true);
+    expect(compared.length).toBeLessThanOrEqual(LOGIN_LIMITS.perEmail);
+  });
+
+  it("ignores attempts older than the window", async () => {
     const { deps, clock } = setup();
     for (let i = 0; i < LOGIN_LIMITS.perEmail; i++) {
       await verifyCredentials(attempt("erin@lsbd.org", "bad", `9.9.9.${i}`), deps);
@@ -117,26 +150,44 @@ describe("verifyCredentials", () => {
     expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), deps)).not.toBeNull();
   });
 
+  it("fails closed and logs when record fails, even with the correct password", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { deps, compared } = setup();
+    deps.store = { ...deps.store, record: async () => { throw new Error("db down"); } };
+    expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), deps)).toBeNull();
+    expect(compared).toHaveLength(0);
+    expect(err).toHaveBeenCalledTimes(1);
+    expect(err.mock.calls[0][0]).toBe("login limiter unavailable:");
+    expect(JSON.stringify(err.mock.calls)).not.toMatch(/erin@lsbd\.org|good/);
+  });
+
   it("fails closed when the store cannot count", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const { deps, compared } = setup();
     deps.store = { ...deps.store, countSince: async () => { throw new Error("db down"); } };
     expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), deps)).toBeNull();
     expect(compared).toHaveLength(0);
+    expect(err).toHaveBeenCalledTimes(1);
   });
 
-  it("does not throw when recording a failure fails", async () => {
+  it("still returns the user, and logs, when clearing the email key fails", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const { deps } = setup();
-    deps.store = { ...deps.store, record: async () => { throw new Error("db down"); } };
-    expect(await verifyCredentials(attempt("erin@lsbd.org", "bad"), deps)).toBeNull();
+    deps.store = { ...deps.store, clear: async () => { throw new Error("db down"); } };
+    expect(await verifyCredentials(attempt("erin@lsbd.org", "good"), deps)).not.toBeNull();
+    expect(err).toHaveBeenCalledTimes(1);
+    expect(err.mock.calls[0][0]).toBe("login limiter clear failed:");
+    expect(JSON.stringify(err.mock.calls)).not.toMatch(/erin@lsbd\.org|good/);
   });
 
-  it("rejects malformed input without looking the user up", async () => {
+  it("rejects malformed input without recording or looking the user up", async () => {
     let looked = 0;
-    const { deps } = setup({ async findUser() { looked++; return USER; } });
+    const { deps, rows } = setup({ async findUser() { looked++; return USER; } });
     expect(await verifyCredentials(attempt(42, "good"), deps)).toBeNull();
     expect(await verifyCredentials(attempt(`${"a".repeat(250)}@lsbd.org`, "good"), deps)).toBeNull();
     expect(await verifyCredentials(attempt("erin@lsbd.org", "x".repeat(201)), deps)).toBeNull();
     expect(await verifyCredentials(attempt("erin@lsbd.org", ""), deps)).toBeNull();
     expect(looked).toBe(0);
+    expect(rows.size).toBe(0);
   });
 });

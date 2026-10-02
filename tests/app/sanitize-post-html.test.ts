@@ -71,4 +71,24 @@ describe("sanitizePostHtml", () => {
     const code = '<pre><code class="language-js">x</code></pre><p><code>y</code></p>';
     expect(sanitizePostHtml(code)).toBe(code);
   });
+  it("does not let a literal </textarea/> close smuggle markup through", () => {
+    expect(sanitizePostHtml("<textarea></textarea/><script>alert(1)</script>")).not.toContain("script");
+    const out = sanitizePostHtml('<p>a<textarea/>b</textarea/><img src="https://e.example/a.png" onerror="alert(1)">');
+    expect(out).not.toContain("onerror");
+    expect(out).not.toContain("script");
+  });
+  it("keeps the editor's colwidth and ol start when valid, drops them otherwise", () => {
+    expect(sanitizePostHtml('<table><tbody><tr><td colwidth="120"><p>x</p></td></tr></tbody></table>')).toContain('colwidth="120"');
+    expect(sanitizePostHtml('<table><tbody><tr><td colwidth="1&quot; onload=x"><p>x</p></td></tr></tbody></table>')).not.toContain("colwidth");
+    expect(sanitizePostHtml('<ol start="3"><li><p>x</p></li></ol>')).toContain('start="3"');
+    expect(sanitizePostHtml('<ol start="3 onclick=x"><li><p>x</p></li></ol>')).not.toContain("start");
+  });
+  it("drops targets that only look safe once control characters are stripped", () => {
+    expect(sanitizePostHtml('<a href="/\n\\evil.example">x</a>')).not.toContain("href");
+    expect(sanitizePostHtml('<a href="/&#10;\\evil.example">x</a>')).not.toContain("href");
+    expect(sanitizePostHtml('<a href="/&#9;/evil.example">x</a>')).not.toContain("href");
+    expect(sanitizePostHtml('<a href="/&#13;/evil.example">x</a>')).not.toContain("href");
+    expect(sanitizePostHtml('<a href="java&#9;script:alert(1)">x</a>')).not.toContain("href");
+    expect(sanitizePostHtml('<a href="/resources/fees">x</a>')).toContain('href="/resources/fees"');
+  });
 });

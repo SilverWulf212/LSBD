@@ -81,4 +81,18 @@ describe("refreshSessionToken", () => {
     expect(await refreshSessionToken(token({ id }), lookup, NOW)).toBeNull();
     expect(lookup).not.toHaveBeenCalled();
   });
+
+  it("ends a session more than 8 hours after sign-in even when checked a minute ago", async () => {
+    const lookup = vi.fn();
+    const t = token({ signedInAt: NOW - SESSION_MAX_AGE_SECONDS * 1000 - 1, checkedAt: NOW - min(1) });
+    expect(await refreshSessionToken(t, lookup, NOW)).toBeNull();
+    expect(lookup).not.toHaveBeenCalled();
+  });
+
+  it("keeps a session signed in 7 h 59 min ago and checked a minute ago", async () => {
+    const lookup = vi.fn();
+    const t = token({ signedInAt: NOW - min(7 * 60 + 59), checkedAt: NOW - min(1) });
+    expect(await refreshSessionToken(t, lookup, NOW)).toBe(t);
+    expect(lookup).not.toHaveBeenCalled();
+  });
 });

@@ -6,9 +6,11 @@
 -- Why: the admin sign-in had no brake on failed attempts, so passwords could be
 -- guessed without limit (security audit 2026-10-02, H1).
 --
--- What: one row per failed sign-in, keyed `ip:<ip>` or `email:<email>`. The app counts
--- rows in the last 15 minutes (10 per IP, 5 per email) and prunes rows older than 24
--- hours. RLS is enabled with no policies and anon/authenticated are revoked: only the
+-- What: one row per sign-in attempt, keyed `ip:<ip>` or `email:<email>`, written before
+-- the password is checked. The app counts rows in the last 15 minutes (more than 10 per
+-- IP or more than 5 per email blocks) and deletes an email's rows on a successful
+-- sign-in. Every record also prunes all rows older than 24 hours.
+-- RLS is enabled with no policies and anon/authenticated are revoked: only the
 -- server-side connection touches this table.
 --
 -- Idempotent. No BEGIN/COMMIT: the runner wraps the file in a transaction.

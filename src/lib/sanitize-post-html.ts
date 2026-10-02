@@ -13,9 +13,11 @@ const ALLOWED_TAGS = [
 
 // A link or image target is kept only if it is https, mailto (links), or a
 // site-relative path: one leading "/" and not "//host" or "/\host", which
-// browsers treat as protocol-relative.
+// browsers treat as protocol-relative. Browsers also drop tab, CR and LF anywhere
+// in a URL, so the checks run on a copy with every character <= U+0020 and U+007F
+// removed ("/<LF>/host" would otherwise pass as a path but load as "//host").
 function isSafeTarget(url: string): boolean {
-  const u = url.trim();
+  const u = url.replace(/[\u0000- \u007f]/g, "");
   if (u.startsWith("/")) return !/^\/[/\\]/.test(u);
   return /^https:\/\//i.test(u) || /^mailto:/i.test(u);
 }
@@ -36,8 +38,9 @@ const OPTIONS: sanitizeHtml.IOptions = {
     h4: ["style"],
     table: ["style"],
     col: ["style"],
-    th: ["colspan", "rowspan", "data-colwidth"],
-    td: ["colspan", "rowspan", "data-colwidth"],
+    th: ["colspan", "rowspan", "data-colwidth", "colwidth"],
+    td: ["colspan", "rowspan", "data-colwidth", "colwidth"],
+    ol: ["start"],
   },
   allowedClasses: {
     a: ["text-primary", "underline"],
@@ -71,6 +74,10 @@ const OPTIONS: sanitizeHtml.IOptions = {
       keepIfMatches(attribs, "height", /^\d{1,5}$/);
       return { tagName, attribs };
     },
+    ol: (tagName, attribs) => {
+      keepIfMatches(attribs, "start", /^\d{1,4}$/);
+      return { tagName, attribs };
+    },
     th: (tagName, attribs) => cell(tagName, attribs),
     td: (tagName, attribs) => cell(tagName, attribs),
   },
@@ -80,6 +87,7 @@ function cell(tagName: string, attribs: Record<string, string>) {
   keepIfMatches(attribs, "colspan", /^\d{1,3}$/);
   keepIfMatches(attribs, "rowspan", /^\d{1,3}$/);
   keepIfMatches(attribs, "data-colwidth", /^\d{1,5}(,\d{1,5})*$/);
+  keepIfMatches(attribs, "colwidth", /^\d{1,5}(,\d{1,5})*$/);
   return { tagName, attribs };
 }
 
