@@ -28,6 +28,7 @@ export type PermitRow = {
   id: number;
   kind: PermitKind;
   typeName: string | null;
+  /** Only says whether permit_type_id matched the lookup row. Do not show "not linked" for the type when typeName is present. */
   typeLinked: boolean;
   level: string | null;
   description: string | null;
@@ -45,8 +46,12 @@ export type PermitRow = {
 /** CR1: the firm of an office permit is professional_llc.id = permits.office_id (504 of 552 match). */
 export const PERMIT_FIRM_JOIN = "LEFT JOIN lsbd.professional_llc f ON pm.office_id > 0 AND f.id = pm.office_id";
 
-const SELECT = `SELECT pm.id, pm.permit_type_id, COALESCE(pt.permit_type, pm.permit_type_name) AS type_name,
-       pt.permit_type AS linked_type, pm.permit_level, pm.description, pm.issue_date, pm.dentist_id, pm.office_id,
+// R5: the permit's own name wins; the permit_type lookup labels are stale. Defined once.
+const TYPE_EXPR = "COALESCE(nullif(btrim(pm.permit_type_name), ''), pt.permit_type)";
+const LEVEL_EXPR = "nullif(upper(btrim(pm.permit_level)), '')";
+
+const SELECT = `SELECT pm.id, pm.permit_type_id, ${TYPE_EXPR} AS type_name,
+       pt.id AS linked_type_id, ${LEVEL_EXPR} AS permit_level, pm.description, pm.issue_date, pm.dentist_id, pm.office_id,
        p.legacy_key AS holder_key, p.last_name, p.first_name, p.middle_name, p.suffix,
        l.license_id AS holder_license_id, l.type AS holder_type,
        f.id AS firm_id, f.est_name AS firm_name`;
@@ -55,7 +60,6 @@ LEFT JOIN lsbd.permit_type pt ON pt.id = pm.permit_type_id
 LEFT JOIN lsbd.person p ON p.legacy_key = pm.dentist_id
 LEFT JOIN lsbd.license l ON l.legacy_key = p.legacy_key
 ${PERMIT_FIRM_JOIN}`;
-const TYPE_EXPR = "COALESCE(pt.permit_type, pm.permit_type_name)";
 const LIST_ORDER = "ORDER BY p.last_name NULLS LAST, p.first_name NULLS LAST, pm.id";
 
 function mapPermit(r: Record<string, unknown>): PermitRow {
@@ -65,8 +69,7 @@ function mapPermit(r: Record<string, unknown>): PermitRow {
     id: rowNum(r.id) as number,
     kind: permitKind(officeId),
     typeName: rowStr(r.type_name),
-    // linked_type is NULL when the permit_type row did not match (a dangling or NULL permit_type_id).
-    typeLinked: rowNum(r.permit_type_id) !== null && r.linked_type !== null,
+    typeLinked: rowNum(r.permit_type_id) !== null && r.linked_type_id !== null,
     level: rowStr(r.permit_level),
     description: rowStr(r.description),
     issueDate: rowIso(r.issue_date),
@@ -96,18 +99,21 @@ export function listPermits(q: RoQueryFn, f: PermitFilters): Promise<Paged<Permi
 
   if (f.kind === "office") where.push("pm.office_id > 0");
   else if (f.kind === "personal") where.push("(pm.office_id IS NULL OR pm.office_id <= 0)");
-  if (f.type) where.push(`${TYPE_EXPR} = ${bind(f.type)}`);
-  if (f.level) where.push(`pm.permit_level = ${bind(f.level)}`);
+  if (f.type) where.push(`lower(${TYPE_EXPR}) = lower(${bind(f.type)})`);
+  if (f.level) where.push(`upper(btrim(pm.permit_level)) = upper(${bind(f.level)})`);
 
   const sql = `${SELECT},\n       count(*) OVER() AS total\n${FROM}${where.length ? `\nWHERE ${where.join(" AND ")}` : ""}\n${LIST_ORDER}`;
   return runPaged(q, sql, params, f.page, mapPermit);
 }
 
 export async function permitFilterOptions(q: RoQueryFn): Promise<{ types: string[]; levels: string[] }> {
+  // One option per lower-cased name, shown with its most common spelling.
   const types = await q(
-    `SELECT DISTINCT ${TYPE_EXPR} AS name FROM lsbd.permits pm LEFT JOIN lsbd.permit_type pt ON pt.id = pm.permit_type_id WHERE ${TYPE_EXPR} IS NOT NULL ORDER BY 1`,
+    `SELECT name FROM (SELECT DISTINCT ON (lower(t.name)) t.name, t.n FROM (SELECT ${TYPE_EXPR} AS name, count(*) AS n FROM lsbd.permits pm LEFT JOIN lsbd.permit_type pt ON pt.id = pm.permit_type_id WHERE ${TYPE_EXPR} IS NOT NULL GROUP BY 1) t ORDER BY lower(t.name), t.n DESC, t.name) s ORDER BY lower(name), name LIMIT 200`,
   );
-  const levels = await q("SELECT DISTINCT permit_level FROM lsbd.permits WHERE permit_level IS NOT NULL ORDER BY 1");
+  const levels = await q(
+    "SELECT DISTINCT upper(btrim(permit_level)) AS permit_level FROM lsbd.permits WHERE nullif(btrim(permit_level), '') IS NOT NULL ORDER BY 1 LIMIT 200",
+  );
   return {
     types: types.map((r) => String(r.name)),
     levels: levels.map((r) => String(r.permit_level)),

@@ -47,25 +47,25 @@ describe("staff-permits", () => {
     const f = fake([]);
     await listPermits(f.query, { ...NONE, type: "Nitrous", level: "P" });
     expect(f.calls[0].params).toEqual(["Nitrous", "P", 0]);
-    expect(f.calls[0].text).toContain("COALESCE(pt.permit_type, pm.permit_type_name) = $1");
-    expect(f.calls[0].text).toContain("pm.permit_level = $2");
+    expect(f.calls[0].text).toContain("lower(COALESCE(nullif(btrim(pm.permit_type_name), ''), pt.permit_type)) = lower($1)");
+    expect(f.calls[0].text).toContain("upper(btrim(pm.permit_level)) = upper($2)");
     expect(f.calls[0].text).toMatch(/ORDER BY p\.last_name NULLS LAST, p\.first_name NULLS LAST, pm\.id\n/);
   });
 
   it("falls back to permits.permit_type_name when the type link is NULL", async () => {
-    const f = fake([{ ...ROW, permit_type_id: null, linked_type: null, type_name: "General Anesthesia" }]);
+    const f = fake([{ ...ROW, permit_type_id: null, linked_type_id: null, type_name: "General Anesthesia" }]);
     const r = await listPermits(f.query, NONE);
     expect(r.rows[0]).toMatchObject({ typeName: "General Anesthesia", typeLinked: false });
   });
 
   it("reports a dangling type id as not linked and a matched one as linked", async () => {
-    const f = fake([{ ...ROW, permit_type_id: 99, linked_type: null }, { ...ROW, linked_type: "Nitrous" }]);
+    const f = fake([{ ...ROW, permit_type_id: 99, linked_type_id: null }, { ...ROW, linked_type_id: 2 }]);
     const r = await listPermits(f.query, NONE);
     expect(r.rows.map((x) => x.typeLinked)).toEqual([false, true]);
   });
 
   it("reports a missing type as null, not a guess", async () => {
-    const f = fake([{ ...ROW, permit_type_id: null, linked_type: null, type_name: null }]);
+    const f = fake([{ ...ROW, permit_type_id: null, linked_type_id: null, type_name: null }]);
     const r = await listPermits(f.query, NONE);
     expect(r.rows[0]).toMatchObject({ typeName: null, typeLinked: false });
   });
@@ -125,6 +125,63 @@ describe("staff-permits", () => {
     const f = fake([{ name: "General Anesthesia" }, { name: "Nitrous" }], [{ permit_level: "P" }]);
     expect(await permitFilterOptions(f.query)).toEqual({ types: ["General Anesthesia", "Nitrous"], levels: ["P"] });
     expect(f.calls).toHaveLength(2);
-    expect(f.calls[0].text).toContain("ORDER BY 1");
+    expect(f.calls[0].text).toContain("ORDER BY lower(name), name");
+  });
+});
+
+describe("staff-permits fix round 1 (own name wins)", () => {
+  it("shows the permit's own name when the lookup name differs", async () => {
+    const f = fake([{ ...ROW, type_name: "Moderate", linked_type_id: 2 }]);
+    const r = await listPermits(f.query, NONE);
+    expect(r.rows[0]).toMatchObject({ typeName: "Moderate", typeLinked: true });
+    expect(f.calls[0].text).toContain("COALESCE(nullif(btrim(pm.permit_type_name), ''), pt.permit_type) AS type_name");
+    expect(f.calls[0].text).toContain("pt.id AS linked_type_id");
+  });
+
+  it("falls back to the lookup name when the own name is NULL or blank (SQL and row)", async () => {
+    const f = fake([{ ...ROW, type_name: "Enteral", linked_type_id: 3 }]);
+    const r = await listPermits(f.query, NONE);
+    expect(r.rows[0].typeName).toBe("Enteral");
+    expect(f.calls[0].text).toMatch(/COALESCE\(nullif\(btrim\(pm\.permit_type_name\), ''\), pt\.permit_type\)/);
+  });
+
+  it("computes typeLinked from the lookup row id, not its name", async () => {
+    const f = fake([{ ...ROW, type_name: "Local", linked_type_id: null }, { ...ROW, linked_type_id: 7 }]);
+    const r = await listPermits(f.query, NONE);
+    expect(r.rows.map((x) => x.typeLinked)).toEqual([false, true]);
+  });
+
+  it("returns the level upper-cased and trimmed in SQL", async () => {
+    const f = fake([{ ...ROW, permit_level: "P" }]);
+    const r = await listPermits(f.query, NONE);
+    expect(r.rows[0].level).toBe("P");
+    expect(f.calls[0].text).toContain("upper(btrim(pm.permit_level))");
+  });
+
+  it("binds case-insensitive filters without interpolating", async () => {
+    const f = fake([]);
+    await listPermits(f.query, { ...NONE, type: "nitrous'x", level: "p" });
+    expect(f.calls[0].params).toEqual(["nitrous'x", "p", 0]);
+    expect(f.calls[0].text).not.toContain("nitrous");
+    expect(f.calls[0].text).toContain("= lower($1)");
+    expect(f.calls[0].text).toContain("= upper($2)");
+  });
+
+  it("bounds and dedupes the option queries", async () => {
+    const f = fake([], []);
+    await permitFilterOptions(f.query);
+    expect(f.calls[0].text).toContain("DISTINCT ON (lower(");
+    expect(f.calls[0].text).toMatch(/LIMIT 200$/);
+    expect(f.calls[1].text).toContain("upper(btrim(permit_level))");
+    expect(f.calls[1].text).toMatch(/LIMIT 200$/);
+  });
+
+  it("sends no semicolon in any SQL", async () => {
+    const f = fake([], [], [], [], []);
+    await listPermits(f.query, { kind: "office", type: "a", level: "b", page: 1 });
+    await permitFilterOptions(f.query);
+    await permitsForHolder(f.query, 1);
+    await permitsForFirm(f.query, 1);
+    for (const c of f.calls) expect(c.text).not.toContain(";");
   });
 });
