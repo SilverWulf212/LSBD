@@ -14,6 +14,7 @@ describe("dbPoolConfig", () => {
     expect(dbPoolConfig(TXN)).toEqual({
       connectionString: TXN,
       max: 1,
+      connectionTimeoutMillis: 10_000,
       ssl: { ca: SUPABASE_ROOT_CA_2021, rejectUnauthorized: true },
     });
   });

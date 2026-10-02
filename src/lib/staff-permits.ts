@@ -2,7 +2,7 @@
 import type { RoQueryFn } from "./db/lsbd-ro";
 import { formatPersonName } from "./staff-labels";
 import {
-  cleanText, parsePage, rowIso, rowNum, rowStr, runPaged, type Paged, type RawSearchParams,
+  cleanText, parsePage, rowIso, rowNum, rowStr, runPaged, trimSql, type Paged, type RawSearchParams,
 } from "./staff-query";
 
 export type PermitKind = "personal" | "office";
@@ -60,7 +60,9 @@ LEFT JOIN lsbd.permit_type pt ON pt.id = pm.permit_type_id
 LEFT JOIN lsbd.person p ON p.legacy_key = pm.dentist_id
 LEFT JOIN lsbd.license l ON l.legacy_key = p.legacy_key
 ${PERMIT_FIRM_JOIN}`;
-const LIST_ORDER = "ORDER BY p.last_name NULLS LAST, p.first_name NULLS LAST, pm.id";
+const LIST_ORDER = `ORDER BY ${trimSql("p.last_name")} NULLS LAST, ${trimSql("p.first_name")} NULLS LAST, pm.id`;
+
+const trimmedStr = (v: unknown): string | null => rowStr(v)?.trim() || null;
 
 function mapPermit(r: Record<string, unknown>): PermitRow {
   const holderKey = rowNum(r.holder_key);
@@ -79,10 +81,10 @@ function mapPermit(r: Record<string, unknown>): PermitRow {
       holderKey === null
         ? null
         : formatPersonName({
-            lastName: rowStr(r.last_name),
-            firstName: rowStr(r.first_name),
-            middleName: rowStr(r.middle_name),
-            suffix: rowStr(r.suffix),
+            lastName: trimmedStr(r.last_name),
+            firstName: trimmedStr(r.first_name),
+            middleName: trimmedStr(r.middle_name),
+            suffix: trimmedStr(r.suffix),
           }),
     holderLicenseNumber: rowStr(r.holder_license_id),
     holderType: rowStr(r.holder_type),

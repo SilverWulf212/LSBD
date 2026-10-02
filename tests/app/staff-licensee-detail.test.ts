@@ -202,6 +202,7 @@ describe("relations", () => {
     const r = await loadLicenseeRelations(f.query, withIndividual, ALL);
     const aff = f.calls.filter((c) => c.text.includes("lsbd.individual_affiliation"));
     expect(aff).toHaveLength(2);
+    for (const c of aff) expect(c.text).toContain("ORDER BY btrim(o.last_name, E' \\t\\r\\n') NULLS LAST, ia.id");
     for (const c of aff) expect(c.params).toEqual([12345]);
     expect(r.affiliations.rows).toEqual([
       { direction: "dentist-of", otherKey: 77, otherName: "Jones, Bo", otherLicenseNumber: "55", otherType: "H" },

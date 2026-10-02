@@ -15,6 +15,11 @@
 import { db } from "./index";
 
 export const STAFF_RO_ROLE = "lsbd_staff_ro";
+// The role's own statement_timeout is a login-time setting and does not apply under
+// SET LOCAL ROLE, so the timeouts are set transaction-locally (set_config(..., true)).
+export const STAFF_STATEMENT_TIMEOUT_MS = 15000;
+export const STAFF_IDLE_TX_TIMEOUT_MS = 30000;
+const SET_TIMEOUTS_SQL = `SELECT set_config('statement_timeout', '${STAFF_STATEMENT_TIMEOUT_MS}', true), set_config('idle_in_transaction_session_timeout', '${STAFF_IDLE_TX_TIMEOUT_MS}', true)`;
 
 export type RoQueryFn = (
   text: string,
@@ -57,6 +62,7 @@ export async function runStaffRo<T>(
   try {
     await client.query("BEGIN");
     await client.query(`SET LOCAL ROLE ${STAFF_RO_ROLE}`);
+    await client.query(SET_TIMEOUTS_SQL);
     outcome = { ok: true, value: await fn(q) };
   } catch (error) {
     outcome = { ok: false, error };

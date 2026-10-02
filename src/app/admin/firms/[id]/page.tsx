@@ -166,7 +166,7 @@ export default async function FirmDetailPage({ params }: { params: Promise<{ id:
         {permitList.truncated && (
           <p className="text-xs text-muted-foreground">Showing the first {FIRM_PERMITS_LIMIT}. More exist.</p>
         )}
-        <p className="text-muted-foreground">Linked by office id (unverified link U1).</p>
+        <p className="text-muted-foreground">Office permits are matched to this firm by its office number.</p>
       </Section>
     </div>
   );

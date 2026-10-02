@@ -79,14 +79,17 @@ const DETAIL_COLUMNS = `${LIST_COLUMNS},
        addr_name1, addr_name2, address1, address2, address3, zip, county,
        phone1, ext1, phone2, ext2, fax, email, url, location, office_id`;
 
+// The SQL text carries one backslash between the quotes.
+const ESC = " ESCAPE '\\'";
+
 export function listFirms(q: RoQueryFn, f: FirmFilters): Promise<Paged<FirmListRow>> {
   const where: string[] = [];
   const params: unknown[] = [];
   const bind = (v: unknown) => `$${params.push(v)}`;
 
-  if (f.name) where.push(`est_name ILIKE ${bind(`%${escapeLike(f.name)}%`)}`);
+  if (f.name) where.push(`est_name ILIKE ${bind(`%${escapeLike(f.name)}%`)}${ESC}`);
   if (f.number) where.push(`license_id = ${bind(f.number)}`);
-  if (f.city) where.push(`city ILIKE ${bind(`${escapeLike(f.city)}%`)}`);
+  if (f.city) where.push(`city ILIKE ${bind(`${escapeLike(f.city)}%`)}${ESC}`);
   if (f.status) where.push(`btrim(status) = ${bind(f.status)}`);
 
   const sql = `SELECT ${LIST_COLUMNS}, count(*) OVER() AS total

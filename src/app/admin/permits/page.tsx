@@ -9,6 +9,7 @@ import { parsePermitFilters, type PermitRow } from "@/lib/staff-permits";
 import type { RawSearchParams } from "@/lib/staff-query";
 import { ServerTable, type ServerTableColumn } from "@/components/admin/server-table";
 import { PermitHolder } from "@/components/admin/permit-holder";
+import { PermitFirm } from "@/components/admin/permit-firm";
 import { NotLinked } from "@/components/admin/not-linked";
 import { SELECT_CLASS, trim } from "@/components/admin/staff-ui";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,15 +55,7 @@ export default async function PermitsPage({
       header: "Firm",
       cell: (r) => {
         if (r.kind !== "office") return "—";
-        return r.firmId !== null ? (
-          <Link href={`/admin/firms/${r.firmId}`} className="text-primary hover:underline">
-            {trim(r.firmName) ?? `Firm ${r.firmId}`}
-          </Link>
-        ) : (
-          <>
-            Office #{r.officeId ?? "?"} <NotLinked />
-          </>
-        );
+        return <PermitFirm row={r} />;
       },
     },
   ];
@@ -84,7 +77,7 @@ export default async function PermitsPage({
 
       <Card>
         <CardContent className="pt-6">
-          <form action="/admin/permits" method="get" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <form key={JSON.stringify({ ...f, page: 0 })} action="/admin/permits" method="get" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="kind">Kind</Label>
               <select id="kind" name="kind" defaultValue={f.kind ?? ""} className={SELECT_CLASS}>

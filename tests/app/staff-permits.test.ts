@@ -49,7 +49,15 @@ describe("staff-permits", () => {
     expect(f.calls[0].params).toEqual(["Nitrous", "P", 0]);
     expect(f.calls[0].text).toContain("lower(COALESCE(nullif(btrim(pm.permit_type_name), ''), pt.permit_type)) = lower($1)");
     expect(f.calls[0].text).toContain("upper(btrim(pm.permit_level)) = upper($2)");
-    expect(f.calls[0].text).toMatch(/ORDER BY p\.last_name NULLS LAST, p\.first_name NULLS LAST, pm\.id\n/);
+    expect(f.calls[0].text).toContain(
+      "ORDER BY btrim(p.last_name, E' \\t\\r\\n') NULLS LAST, btrim(p.first_name, E' \\t\\r\\n') NULLS LAST, pm.id",
+    );
+  });
+
+  it("builds the holder name from trimmed parts (a blank part adds nothing)", async () => {
+    const f = fake([{ ...ROW, holder_key: 5, last_name: "\r Smith ", first_name: "  ", middle_name: "\n", suffix: null }]);
+    const r = await listPermits(f.query, NONE);
+    expect(r.rows[0].holderName).toBe("Smith");
   });
 
   it("falls back to permits.permit_type_name when the type link is NULL", async () => {

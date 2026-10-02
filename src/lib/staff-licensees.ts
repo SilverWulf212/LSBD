@@ -3,7 +3,7 @@ import type { RoQueryFn } from "./db/lsbd-ro";
 import { escapeLike } from "./sql-like";
 import { LICENSE_STATUSES, LICENSE_TYPES, type StaffLicenseStatus, type StaffLicenseType } from "./staff-labels";
 import {
-  cleanText, parsePage, rowIso, rowNum, rowStr, runPaged, type Paged, type RawSearchParams,
+  cleanText, parsePage, rowIso, rowNum, rowStr, runPaged, trimSql, type Paged, type RawSearchParams,
 } from "./staff-query";
 
 export type LicenseeFilters = {
@@ -61,8 +61,10 @@ const BASE = `SELECT p.legacy_key, p.last_name, p.first_name, p.middle_name, p.s
 FROM lsbd.person p
 LEFT JOIN lsbd.license l ON l.legacy_key = p.legacy_key`;
 // Some source names start with a carriage return or space; sort on the trimmed value.
-const ORDER =
-  "ORDER BY btrim(p.last_name, E' \\t\\r\\n') NULLS LAST, btrim(p.first_name, E' \\t\\r\\n') NULLS LAST, p.legacy_key";
+const LAST = trimSql("p.last_name");
+const FIRST = trimSql("p.first_name");
+const MARRIED = trimSql("p.married_name");
+const ORDER = `ORDER BY ${LAST} NULLS LAST, ${FIRST} NULLS LAST, p.legacy_key`;
 // The SQL text carries one backslash between the quotes.
 const ESC = " ESCAPE '\\'";
 
@@ -73,9 +75,9 @@ export function searchLicensees(q: RoQueryFn, f: LicenseeFilters): Promise<Paged
 
   if (f.last) {
     const n = bind(`${escapeLike(f.last)}%`);
-    where.push(`(p.last_name ILIKE ${n}${ESC} OR p.married_name ILIKE ${n}${ESC})`);
+    where.push(`(${LAST} ILIKE ${n}${ESC} OR ${MARRIED} ILIKE ${n}${ESC})`);
   }
-  if (f.first) where.push(`p.first_name ILIKE ${bind(`${escapeLike(f.first)}%`)}${ESC}`);
+  if (f.first) where.push(`${FIRST} ILIKE ${bind(`${escapeLike(f.first)}%`)}${ESC}`);
   if (f.number) where.push(`l.license_id = ${bind(f.number)}`);
   if (f.type) where.push(`l.type = ${bind(f.type)}`);
   if (f.status === "none") where.push("l.id IS NOT NULL AND l.status IS NULL");

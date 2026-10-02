@@ -68,7 +68,7 @@ export default async function FirmsPage({
 
       <Card>
         <CardContent className="pt-6">
-          <form action="/admin/firms" method="get" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <form key={JSON.stringify({ ...f, page: 0 })} action="/admin/firms" method="get" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="name">Name contains</Label>
               <Input id="name" name="name" defaultValue={f.name ?? ""} maxLength={100} />

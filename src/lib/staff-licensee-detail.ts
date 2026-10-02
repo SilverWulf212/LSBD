@@ -3,7 +3,7 @@
 import type { RoQueryFn } from "./db/lsbd-ro";
 import { formatPersonName } from "./staff-labels";
 import { permitsForHolder, type PermitRow } from "./staff-permits";
-import { rowBool, rowIso, rowNum, rowStr } from "./staff-query";
+import { rowBool, rowIso, rowNum, rowStr, trimSql } from "./staff-query";
 
 export type DetailCaps = { contact: boolean; discipline: boolean }; // contact = pii.read, discipline = discipline.read
 export type Linked<T> = { linked: true; rows: T[] } | { linked: false; reason: string };
@@ -278,7 +278,7 @@ FROM lsbd.individual_affiliation ia
 LEFT JOIN lsbd.person o ON o.legacy_key = ia.${other}
 LEFT JOIN lsbd.license ol ON ol.legacy_key = o.legacy_key
 WHERE ia.${own} = $1
-ORDER BY o.last_name NULLS LAST, ia.id
+ORDER BY ${trimSql("o.last_name")} NULLS LAST, ia.id
 LIMIT ${AFFILIATION_LIMIT + 1}`;
 }
 const DENTIST_OF_SQL = affiliationSql("dentist_legacy_id", "individual_legacy_id");

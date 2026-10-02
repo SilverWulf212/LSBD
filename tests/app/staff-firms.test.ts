@@ -36,8 +36,8 @@ describe("staff-firms", () => {
     await listFirms(f.query, { ...NONE, name: "100%_dental", city: "Baton" });
     expect(f.calls[0].params).toEqual(["%100\\%\\_dental%", "Baton%", 0]);
     expect(f.calls[0].text).toContain("FROM lsbd.professional_llc");
-    expect(f.calls[0].text).toContain("est_name ILIKE $1");
-    expect(f.calls[0].text).toContain("city ILIKE $2");
+    expect(f.calls[0].text).toContain("est_name ILIKE $1 ESCAPE '\\'");
+    expect(f.calls[0].text).toContain("city ILIKE $2 ESCAPE '\\'");
   });
 
   it("filters number and status exactly", async () => {

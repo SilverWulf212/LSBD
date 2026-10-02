@@ -12,6 +12,7 @@ import {
   AFFILIATION_LIMIT, DISCIPLINE_LIMIT, OFFICE_AFFILIATION_LIMIT,
   type AddressRow, type AffiliationRow, type LicenseePerson,
 } from "@/lib/staff-licensee-detail";
+import { PermitFirm } from "@/components/admin/permit-firm";
 import { NotLinked } from "@/components/admin/not-linked";
 import { OddityBadges } from "@/components/admin/oddity-badges";
 import { PrintButton } from "@/components/admin/print-button";
@@ -243,7 +244,7 @@ export default async function LicenseeDetailPage({ params }: { params: Promise<{
 
       <Section title="Addresses">
         {detail.addresses.length === 0 ? (
-          <p>No addresses on record.</p>
+          <p>{caps.contact ? "No addresses on record." : "No office address on record."}</p>
         ) : (
           <ul className="space-y-1">
             {detail.addresses.map((a) => (
@@ -299,15 +300,7 @@ export default async function LicenseeDetailPage({ params }: { params: Promise<{
                   {p.level ? ` · level ${p.level}` : ""}
                   {` · issued ${formatCentralDate(p.issueDate)}`}
                   {" · "}
-                  {p.firmId !== null && t(p.firmName) ? (
-                    <Link href={`/admin/firms/${p.firmId}`} className="text-primary hover:underline">
-                      {t(p.firmName)}
-                    </Link>
-                  ) : (
-                    <>
-                      Office #{p.officeId ?? "?"} <NotLinked />
-                    </>
-                  )}
+                  <PermitFirm row={p} />
                 </li>
               ))}
             </ul>
@@ -339,9 +332,9 @@ export default async function LicenseeDetailPage({ params }: { params: Promise<{
           <ul className="list-disc space-y-1 pl-5">
             {detail.offices.rows.map((o) => (
               <li key={o.id}>
-                {t(o.officeName) ? (
+                {o.officeId !== null ? (
                   <>
-                    {t(o.officeName)}
+                    {t(o.officeName) ?? `Office ${o.officeId}`}
                     {t(o.officePhone) ? ` · ${t(o.officePhone)}` : ""}
                   </>
                 ) : (

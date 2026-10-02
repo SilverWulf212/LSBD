@@ -37,6 +37,8 @@ export function dbPoolConfig(connectionString: string): PoolConfig {
   return {
     connectionString: stripSslParams(connectionString),
     max: 1,
+    // A request waiting for the single pooled connection fails after 10 s instead of hanging.
+    connectionTimeoutMillis: 10_000,
     ssl: { ...PINNED_SSL },
   };
 }

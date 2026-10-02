@@ -28,7 +28,7 @@ describe("staff-licensees", () => {
     const { text, params } = f.calls[0];
     expect(params).toEqual(["\\%%", "a\\_b%", "50\\%%", 0]);
     expect(text).not.toContain("a_b");
-    expect(text).toContain("p.married_name ILIKE");
+    expect(text).toContain("p.married_name, E' \\t\\r\\n') ILIKE");
     expect(text).toContain("a.address_type = 'office'");
   });
 
@@ -69,6 +69,17 @@ describe("staff-licensees", () => {
     const f = fake([]);
     await searchLicensees(f.query, NONE);
     expect(f.calls[0].text).toMatch(/FROM lsbd\.person p\s+LEFT JOIN lsbd\.license l ON l\.legacy_key = p\.legacy_key/);
+  });
+
+  it("matches the trimmed name columns on the left of each name ILIKE", async () => {
+    const f = fake([]);
+    await searchLicensees(f.query, { ...NONE, last: "a", first: "b" });
+    const text = f.calls[0].text;
+    const T = (c: string) => `btrim(${c}, E' \\t\\r\\n') ILIKE`;
+    expect(text).toContain(T("p.last_name"));
+    expect(text).toContain(T("p.married_name"));
+    expect(text).toContain(T("p.first_name"));
+    expect(text).not.toMatch(/p\.(last_name|married_name|first_name) ILIKE/);
   });
 
   it("names the backslash escape on every ILIKE", async () => {

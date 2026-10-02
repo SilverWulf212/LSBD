@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  STAFF_IDLE_TX_TIMEOUT_MS,
   STAFF_RO_ROLE,
+  STAFF_STATEMENT_TIMEOUT_MS,
   runStaffRo,
   type RoClient,
   type RoQueryFn,
@@ -43,6 +45,8 @@ function harness(opts: { failOn?: Record<string, Error>; hold?: string; connectE
 }
 
 const SET_ROLE = "SET LOCAL ROLE lsbd_staff_ro";
+const SET_TIMEOUTS =
+  "SELECT set_config('statement_timeout', '15000', true), set_config('idle_in_transaction_session_timeout', '30000', true)";
 
 describe("runStaffRo", () => {
   it("runs BEGIN, SET LOCAL ROLE, the queries, COMMIT, then releases", async () => {
@@ -52,8 +56,8 @@ describe("runStaffRo", () => {
       return "done";
     });
     expect(r).toBe("done");
-    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, "SELECT $1::int AS n", "COMMIT"]);
-    expect(h.calls[2].params).toEqual([5]);
+    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, SET_TIMEOUTS, "SELECT $1::int AS n", "COMMIT"]);
+    expect(h.calls[3].params).toEqual([5]);
     expect(h.releases).toEqual([undefined]);
   });
 
@@ -62,7 +66,7 @@ describe("runStaffRo", () => {
     await runStaffRo(h.connect, async (q) => {
       await q("SELECT 1");
     });
-    expect(h.calls[2].params).toEqual([]);
+    expect(h.calls[3].params).toEqual([]);
   });
 
   it("rolls back and rethrows when the callback throws", async () => {
@@ -73,7 +77,7 @@ describe("runStaffRo", () => {
         throw boom;
       }),
     ).rejects.toBe(boom);
-    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, "ROLLBACK"]);
+    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, SET_TIMEOUTS, "ROLLBACK"]);
     expect(h.releases).toEqual([undefined]);
   });
 
@@ -164,7 +168,7 @@ describe("runStaffRo", () => {
     await runStaffRo(h.connect, async (q) => {
       void q("A");
     });
-    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, "A", "COMMIT"]);
+    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, SET_TIMEOUTS, "A", "COMMIT"]);
   });
 
   it("rejects multi-statement SQL before sending anything", async () => {
@@ -173,7 +177,7 @@ describe("runStaffRo", () => {
       await expect(q("SELECT 1; RESET ROLE")).rejects.toThrow("staff queries are single statements");
       await expect(q("SELECT 1")).resolves.toEqual([]);
     });
-    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, "SELECT 1", "COMMIT"]);
+    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, SET_TIMEOUTS, "SELECT 1", "COMMIT"]);
   });
 
   it("releases exactly once and keeps the callback error when release throws", async () => {
@@ -210,6 +214,31 @@ describe("runStaffRo", () => {
     });
     await expect(leaked("SELECT 1")).rejects.toThrow("withStaffRo: query after the transaction ended");
     expect(h.texts()).not.toContain("SELECT 1");
+  });
+
+  it("sends the transaction-local timeouts third, built from the exported constants", async () => {
+    expect(STAFF_STATEMENT_TIMEOUT_MS).toBe(15000);
+    expect(STAFF_IDLE_TX_TIMEOUT_MS).toBe(30000);
+    const h = harness();
+    await runStaffRo(h.connect, async (q) => {
+      await q("SELECT 1");
+    });
+    expect(h.texts().slice(0, 3)).toEqual(["BEGIN", SET_ROLE, SET_TIMEOUTS]);
+    expect(SET_TIMEOUTS).not.toContain(";");
+  });
+
+  it("never runs the callback when the timeout statement fails", async () => {
+    const err = new Error("set_config failed");
+    const h = harness({ failOn: { [SET_TIMEOUTS]: err } });
+    let ran = false;
+    await expect(
+      runStaffRo(h.connect, async () => {
+        ran = true;
+      }),
+    ).rejects.toBe(err);
+    expect(ran).toBe(false);
+    expect(h.texts()).toEqual(["BEGIN", SET_ROLE, SET_TIMEOUTS, "ROLLBACK"]);
+    expect(h.releases).toEqual([undefined]);
   });
 
   it("exports the role name used in SET LOCAL ROLE", () => {

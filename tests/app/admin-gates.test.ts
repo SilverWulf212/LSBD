@@ -201,4 +201,34 @@ describe("staff data gates", () => {
       expect(src, d).not.toContain("const trim =");
     }
   });
+
+  it("permit firm cell is one shared component used by the permits and licensee pages (F3)", () => {
+    const comp = read("src/components/admin/permit-firm.tsx");
+    expect(comp).toContain("row.firmId === null");
+    expect(comp).toContain("`Firm ${row.firmId}`");
+    for (const f of ["src/app/admin/permits/page.tsx", "src/app/admin/licensees/[key]/page.tsx"]) {
+      expect(read(f), f).toContain("<PermitFirm");
+    }
+    expect(read("src/app/admin/licensees/[key]/page.tsx")).not.toContain("p.firmId !== null && t(p.firmName)");
+  });
+
+  it("licensee detail empty states are truthful (F6)", () => {
+    const src = read("src/app/admin/licensees/[key]/page.tsx");
+    expect(src).toContain("No office address on record.");
+    expect(src).toContain("No addresses on record.");
+    expect(src).toContain("o.officeId !== null");
+    expect(src).toContain("`Office ${o.officeId}`");
+  });
+
+  it("filter forms are keyed by the parsed filters so Clear resets them (F7)", () => {
+    for (const d of ["licensees", "permits", "firms"]) {
+      expect(read(`src/app/admin/${d}/page.tsx`), d).toMatch(/<form key=\{JSON\.stringify\(/);
+    }
+  });
+
+  it("the firm page has no internal jargon (F8)", () => {
+    const src = read("src/app/admin/firms/[id]/page.tsx");
+    expect(src).not.toContain("U1");
+    expect(src).toContain("Office permits are matched to this firm by its office number.");
+  });
 });

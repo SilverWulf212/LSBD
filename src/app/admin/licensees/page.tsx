@@ -94,7 +94,7 @@ export default async function LicenseesPage({
 
       <Card>
         <CardContent className="pt-6">
-          <form action="/admin/licensees" method="get" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <form key={JSON.stringify({ ...f, page: 0 })} action="/admin/licensees" method="get" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="last">Last or married name</Label>
               <Input id="last" name="last" defaultValue={f.last ?? ""} maxLength={100} />

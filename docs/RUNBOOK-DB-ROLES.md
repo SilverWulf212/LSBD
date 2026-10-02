@@ -168,6 +168,11 @@ so verify would fail.
 | `POSTGRES_URL` | `lsbd_app` | CMS, admin, public verify, sync status | Preview only, after 0007 and the login test in §2 |
 | `LSBD_RO_URL` | `lsbd_staff_ro` | Staff read-only views of licensing data | No (Stage 2) |
 
+**Before that switch, run `GRANT lsbd_staff_ro TO lsbd_app`.** The staff screens
+run `SET LOCAL ROLE lsbd_staff_ro` on the app connection, and 0006 grants that role
+to `postgres` only. Without the grant every staff page shows its error box. This
+needs a small SQL file applied with `scripts/apply-sql.ts`; it is not yet written.
+
 Set `POSTGRES_URL` on **Preview**, redeploy the preview, and exercise: login, an
 admin edit, `/public/verify`, the sync status panel. Keep the old value at hand;
 putting it back and redeploying the preview is the rollback.

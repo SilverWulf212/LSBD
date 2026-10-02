@@ -83,6 +83,10 @@ export async function runPaged<T>(
   };
 }
 
+/** SQL expression: the column without the leading/trailing space, tab, CR and LF some source names carry. */
+export function trimSql(column: string): string {
+  return `btrim(${column}, E' \\t\\r\\n')`;
+}
 export function rowStr(v: unknown): string | null {
   return v === null || v === undefined ? null : String(v);
 }
