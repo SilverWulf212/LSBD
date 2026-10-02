@@ -23,6 +23,7 @@ import {
   readJsonl, batchInsert, streamLoad, resetSequence,
   strOrNull, intOrNull, boolOrNull, tsOrNull, decOrNull, floatOrNull, lcOrNull,
 } from "./lib/etl-helpers";
+import { scriptPgConfig } from "./lib/pg";
 
 const DATA_DIR = process.env.LSBD_DATA_DIR ?? "D:/extracted/data";
 
@@ -33,8 +34,7 @@ async function main() {
   }
 
   const client = new Client({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: { rejectUnauthorized: false },
+    ...scriptPgConfig(process.env.POSTGRES_URL),
     statement_timeout: 600_000,
   });
   await client.connect();

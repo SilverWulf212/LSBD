@@ -19,6 +19,7 @@ import * as readline from "node:readline";
 import * as path from "node:path";
 import { Client } from "pg";
 import { normalizeSsn, hmacSsn } from "./lib/pii";
+import { scriptPgConfig } from "./lib/pg";
 
 const DATA_DIR = process.env.LSBD_DATA_DIR ?? "D:/extracted/data";
 const SECRETS_FILE = process.env.LSBD_SECRETS_FILE ?? "C:/Users/Administrator/.lsbd-secrets.env";
@@ -119,8 +120,7 @@ async function main() {
   console.log("HMAC determinism self-test ok.");
 
   const client = new Client({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: { rejectUnauthorized: false },
+    ...scriptPgConfig(process.env.POSTGRES_URL),
     statement_timeout: 600_000,
   });
   await client.connect();

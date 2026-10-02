@@ -12,6 +12,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { Client } from "pg";
+import { scriptPgConfig } from "./lib/pg";
 
 async function main() {
   const file = process.argv[2];
@@ -31,8 +32,7 @@ async function main() {
     .filter((s) => s.length > 0);
 
   const client = new Client({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: { rejectUnauthorized: false },
+    ...scriptPgConfig(process.env.POSTGRES_URL),
     statement_timeout: 120_000,
   });
   await client.connect();

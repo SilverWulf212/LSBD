@@ -13,6 +13,7 @@
 import * as fs from "node:fs";
 import * as readline from "node:readline";
 import { Client } from "pg";
+import { scriptPgConfig } from "./lib/pg";
 
 const DATA_DIR = process.env.LSBD_DATA_DIR ?? "D:/extracted/data";
 const BATCH_SIZE = 500;
@@ -82,8 +83,7 @@ async function main() {
   }
 
   const client = new Client({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: { rejectUnauthorized: false },
+    ...scriptPgConfig(process.env.POSTGRES_URL),
     statement_timeout: 300_000,
   });
   await client.connect();

@@ -12,6 +12,7 @@
 
 import { hash } from "bcryptjs";
 import { Client } from "pg";
+import { scriptPgConfig } from "./lib/pg";
 
 async function main() {
   const email = process.env.ADMIN_EMAIL;
@@ -33,10 +34,7 @@ async function main() {
 
   const passwordHash = await hash(password, 10);
 
-  const client = new Client({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: { rejectUnauthorized: false },
-  });
+  const client = new Client(scriptPgConfig(process.env.POSTGRES_URL));
   await client.connect();
 
   const result = await client.query(

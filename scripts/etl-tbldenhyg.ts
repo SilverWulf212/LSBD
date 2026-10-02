@@ -16,6 +16,7 @@
 import * as fs from "node:fs";
 import * as readline from "node:readline";
 import { Client } from "pg";
+import { scriptPgConfig } from "./lib/pg";
 
 const JSONL_PATH = process.env.LSBD_JSONL ?? "D:/extracted/data/tblDenHyg.jsonl";
 const WIPE = process.env.LSBD_WIPE !== "false"; // default true on first load
@@ -65,8 +66,7 @@ async function main() {
   }
 
   const client = new Client({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: { rejectUnauthorized: false },
+    ...scriptPgConfig(process.env.POSTGRES_URL),
     statement_timeout: 120_000,
   });
   await client.connect();

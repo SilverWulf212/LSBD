@@ -1,5 +1,7 @@
 import { hash } from "bcryptjs";
+import { count } from "drizzle-orm";
 import { db } from "../src/lib/db";
+import { assertSeedAllowed } from "./lib/seed-guard";
 import {
   users, boardMembers, fees, staffMembers, pageSections,
   alerts, posts, meetings, meetingDocuments, downloadableForms, publications,
@@ -8,6 +10,14 @@ import {
 
 async function seed() {
   console.log("Seeding database...");
+
+  // Refuse before deleting anything: needs a strong password, and --wipe if users exist.
+  const [{ n: existingUsers }] = await db.select({ n: count() }).from(users);
+  const password = assertSeedAllowed({
+    password: process.env.INITIAL_ADMIN_PASSWORD,
+    existingUsers,
+    argv: process.argv.slice(2),
+  });
 
   // Delete existing data in correct order (respect foreign keys)
   console.log("Clearing existing data...");
@@ -26,7 +36,6 @@ async function seed() {
   console.log("✓ Existing data cleared");
 
   // 1. Admin user
-  const password = process.env.INITIAL_ADMIN_PASSWORD || "changeme123";
   const passwordHash = await hash(password, 10);
   const [adminUser] = await db.insert(users).values({
     email: "erin@lsbd.org",

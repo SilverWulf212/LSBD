@@ -19,6 +19,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { Client } from "pg";
 import { loadSecrets } from "./lib/secrets";
+import { scriptPgConfig } from "./lib/pg";
 
 const MIGRATION = path.resolve(__dirname, "../drizzle/0003_legacy_keys.sql");
 
@@ -51,7 +52,7 @@ async function main() {
 
   const url = process.env.POSTGRES_URL ?? loadSecrets()["SUPABASE_DB_URL_SESSION"];
   if (!url) throw new Error("SUPABASE_DB_URL_SESSION not found in secrets file");
-  const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const client = new Client(scriptPgConfig(url));
   await client.connect();
 
   try {

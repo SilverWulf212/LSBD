@@ -11,6 +11,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { Client } from "pg";
+import { scriptPgConfig } from "./lib/pg";
 
 async function main() {
   const label = process.argv[2];
@@ -29,8 +30,7 @@ async function main() {
   fs.mkdirSync(outDir, { recursive: true });
 
   const client = new Client({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: { rejectUnauthorized: false },
+    ...scriptPgConfig(process.env.POSTGRES_URL),
     statement_timeout: 600_000,
   });
   await client.connect();

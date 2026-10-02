@@ -1,11 +1,11 @@
 // Quick sanity check on the loaded data.
 import { Client } from "pg";
+import { scriptPgConfig } from "./lib/pg";
 
 async function main() {
-  const client = new Client({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: { rejectUnauthorized: false },
-  });
+  const url = process.env.POSTGRES_URL;
+  if (!url) throw new Error("POSTGRES_URL is not set");
+  const client = new Client(scriptPgConfig(url));
   await client.connect();
 
   const q = async (sql: string) => (await client.query(sql)).rows;
