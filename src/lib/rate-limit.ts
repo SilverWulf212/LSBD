@@ -15,6 +15,17 @@ export interface RateLimitResult {
   resetAt: number; // ms epoch
 }
 
+// Number of keys currently held (exposed for tests).
+export function rateLimitKeyCount(): number {
+  return windows.size;
+}
+
+const SWEEP_PER_CALL = 50;
+
+function isExpired(w: Window, cutoff: number): boolean {
+  return w.timestamps.every((t) => t < cutoff);
+}
+
 export function rateLimit(
   key: string,
   limit: number,
@@ -22,7 +33,18 @@ export function rateLimit(
   now: number = Date.now()
 ): RateLimitResult {
   const cutoff = now - windowMs;
+  // Evict keys whose timestamps are all outside the window so the map cannot
+  // grow without bound: this key now, and a bounded sweep of the others.
   let w = windows.get(key);
+  if (w && isExpired(w, cutoff)) {
+    windows.delete(key);
+    w = undefined;
+  }
+  let swept = 0;
+  for (const [k, other] of windows) {
+    if (swept++ >= SWEEP_PER_CALL) break;
+    if (k !== key && isExpired(other, cutoff)) windows.delete(k);
+  }
   if (!w) {
     w = { timestamps: [] };
     windows.set(key, w);

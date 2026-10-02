@@ -2,9 +2,14 @@ import { db } from "@/lib/db";
 import { posts, pageSections, meetings } from "@/lib/db/schema";
 import { or, ilike, eq, and } from "drizzle-orm";
 import { escapeLike } from "@/lib/sql-like";
+import { rateLimit } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/client-ip";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
+  if (!rateLimit(`search:${clientIp(req.headers)}`, 30, 60_000).ok) {
+    return NextResponse.json({ results: [] }, { status: 429 });
+  }
   const query = req.nextUrl.searchParams.get("q");
   if (!query || query.length < 2) {
     return NextResponse.json({ results: [] });
