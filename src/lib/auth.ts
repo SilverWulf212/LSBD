@@ -51,6 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id!;
         token.role = user.role;
         token.checkedAt = Date.now();
+        token.signedInAt = Date.now();
         return token;
       }
       // Later requests: re-check the user every few minutes; null ends the session.

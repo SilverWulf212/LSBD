@@ -9,6 +9,7 @@ export interface SessionToken {
   role?: string;
   iat?: number;
   checkedAt?: number;
+  signedInAt?: number;
   [k: string]: unknown;
 }
 
@@ -16,8 +17,10 @@ export type UserLookup = (id: number) => Promise<{ role: string; updatedAt: Date
 
 /**
  * Returns the token to keep (role refreshed), or null to end the session:
- * the user is gone, or their row changed after this token was issued
- * (password reset, role change). A failed lookup keeps the current token,
+ * the user is gone, or their row changed after sign-in (password reset, role
+ * change): users.updatedAt is compared with signedInAt (ms epoch, set once at
+ * sign-in), never iat, which Auth.js moves forward on every session read. A
+ * token with no signedInAt predates this check and is ended when due. A failed lookup keeps the current token,
  * so a database blip does not sign everyone out; it is retried next request.
  */
 export async function refreshSessionToken<T extends SessionToken>(
@@ -35,6 +38,7 @@ export async function refreshSessionToken<T extends SessionToken>(
     return token;
   }
   if (!user) return null;
-  if (typeof token.iat === "number" && user.updatedAt.getTime() > token.iat * 1000) return null;
+  if (typeof token.signedInAt !== "number" || !Number.isFinite(token.signedInAt)) return null;
+  if (user.updatedAt.getTime() > token.signedInAt) return null;
   return { ...token, role: user.role, checkedAt: now };
 }
