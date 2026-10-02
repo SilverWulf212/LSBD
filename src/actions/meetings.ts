@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { meetingSchema } from "@/lib/validators";
 import { deleteFile } from "@/lib/blob";
+import { isAllowedBlobUrl } from "@/lib/blob-rules";
 import type { MeetingWithDocuments } from "@/types";
 
 export async function getMeetings(): Promise<MeetingWithDocuments[]> {
@@ -166,6 +167,7 @@ export async function addMeetingDocument(
   fileData: { url: string; pathname: string; size: number; title: string }
 ) {
   const session = await requireCapability("cms.write");
+  if (!isAllowedBlobUrl(fileData.url)) throw new Error("Invalid file");
 
   // Remove existing document of same type if present
   const existing = await db
