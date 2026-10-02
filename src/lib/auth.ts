@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { clientIp } from "@/lib/client-ip";
 import { verifyCredentials } from "@/lib/login-limiter";
 import { pgAttemptStore } from "@/lib/login-attempts-store";
@@ -31,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                   passwordHash: users.passwordHash,
                 })
                 .from(users)
-                .where(eq(users.email, email))
+                .where(sql`lower(${users.email}) = ${email}`)
                 .limit(1);
               return user;
             },
