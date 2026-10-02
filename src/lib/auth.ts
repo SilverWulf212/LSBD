@@ -1,9 +1,12 @@
-import NextAuth from "next-auth";
+import NextAuth, { type User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { clientIp } from "@/lib/client-ip";
+import { verifyCredentials } from "@/lib/login-limiter";
+import { pgAttemptStore } from "@/lib/login-attempts-store";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -12,25 +15,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-        const [user] = await db
-          .select()
-          .from(users)
-          .where(eq(users.email, credentials.email as string))
-          .limit(1);
-        if (!user) return null;
-        const isValid = await compare(
-          credentials.password as string,
-          user.passwordHash
+      async authorize(credentials, request) {
+        const result = await verifyCredentials(
+          { email: credentials?.email, password: credentials?.password, ip: clientIp(request.headers) },
+          {
+            store: pgAttemptStore,
+            compare,
+            async findUser(email) {
+              const [user] = await db
+                .select({
+                  id: users.id,
+                  email: users.email,
+                  name: users.name,
+                  role: users.role,
+                  passwordHash: users.passwordHash,
+                })
+                .from(users)
+                .where(eq(users.email, email))
+                .limit(1);
+              return user;
+            },
+          }
         );
-        if (!isValid) return null;
-        return {
-          id: String(user.id),
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
+        // role comes from users.role (a typed enum column); the limiter treats it as a string
+        return result as User | null;
       },
     }),
   ],
