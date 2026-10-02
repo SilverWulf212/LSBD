@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { PdfLink } from "@/components/shared/pdf-link";
+import { SITE_DOCUMENTS } from "@/lib/lsbd-org-documents";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accessibility, Globe, Lock, FileText } from "lucide-react";
@@ -33,6 +35,15 @@ export default function PoliciesPage() {
               <li>Visible focus indicators on all interactive elements</li>
             </ul>
             <p><strong>Feedback:</strong> If you encounter accessibility barriers on this website, please contact us at <a href="mailto:admin@lsbd.org" className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded">admin@lsbd.org</a> or <a href="tel:2252197330" className="text-[#005f8f] underline underline-offset-2 hover:text-[#003f5f] focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none rounded">225-219-7330</a>. We welcome your feedback.</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2"><FileText className="h-5 w-5 text-[#0077B6]" aria-hidden="true" /><CardTitle className="font-[family-name:var(--font-oswald)] text-xl text-[#005f8f] uppercase tracking-wide">Board Policies</CardTitle></div>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-2 text-sm text-[#495057]">
+            <p><PdfLink href={SITE_DOCUMENTS.ada_policy.href} fileSize={SITE_DOCUMENTS.ada_policy.bytes} className="font-medium">Louisiana State Board of Dentistry ADA Policy</PdfLink></p>
+            <p><PdfLink href={SITE_DOCUMENTS.sexual_harassment_policy.href} fileSize={SITE_DOCUMENTS.sexual_harassment_policy.bytes} className="font-medium">Louisiana State Board of Dentistry Sexual Harassment Policy</PdfLink></p>
           </CardContent>
         </Card>
         <Card id="privacy">

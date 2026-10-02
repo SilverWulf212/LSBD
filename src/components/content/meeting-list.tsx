@@ -18,6 +18,7 @@ interface Meeting {
   meetingDate: string | Date;
   description?: string | null;
   meetingType: string;
+  dateIsMonthOnly?: boolean;
   documents?: MeetingDocument[];
 }
 
@@ -65,7 +66,7 @@ export function MeetingList({ meetings }: { meetings: Meeting[] }) {
                     </CardTitle>
                     <p className="text-sm text-[#495057]">
                       <time dateTime={date.toISOString()}>
-                        {format(date, "EEEE, MMMM d, yyyy")}
+                        {format(date, meeting.dateIsMonthOnly ? "MMMM yyyy" : "EEEE, MMMM d, yyyy")}
                       </time>
                     </p>
                   </div>

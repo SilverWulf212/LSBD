@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SITE_DOCUMENTS } from "@/lib/lsbd-org-documents";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink } from "@/components/shared/external-link";
@@ -24,6 +25,7 @@ export default function LawsAndRulesPage() {
             <p>The Dental Practice Act (Louisiana Revised Statutes Title 37, Chapter 8) is the primary law governing the practice of dentistry and dental hygiene in Louisiana. It establishes the Board, defines the scope of practice, licensure requirements, and enforcement authority.</p>
             <p>The full text of the Dental Practice Act is available through the Louisiana Legislature website:</p>
             <ExternalLink href="https://www.legis.la.gov/legis/Law.aspx?d=92616" className="font-medium">Louisiana Dental Practice Act (RS 37:751-800)</ExternalLink>
+            <p><PdfLink href={SITE_DOCUMENTS.dental_practice_act.href} fileSize={SITE_DOCUMENTS.dental_practice_act.bytes} className="font-medium">Dental Practice Act (PDF)</PdfLink></p>
           </CardContent>
         </Card>
         <Card>
@@ -45,6 +47,7 @@ export default function LawsAndRulesPage() {
               </ul>
             </div>
             <ExternalLink href="https://www.doa.la.gov/doa/osr/louisiana-administrative-code/" className="font-medium">Louisiana Administrative Code</ExternalLink>
+            <p><PdfLink href={SITE_DOCUMENTS.board_rules.href} fileSize={SITE_DOCUMENTS.board_rules.bytes} className="font-medium">Board Rules, LAC 46:XXXIII (PDF)</PdfLink></p>
           </CardContent>
         </Card>
         <div className="bg-[#CAF0F8]/30 rounded-xl p-6 text-sm text-[#495057]">

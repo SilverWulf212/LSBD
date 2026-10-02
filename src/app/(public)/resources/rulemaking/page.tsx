@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { PdfLink } from "@/components/shared/pdf-link";
+import { RULEMAKING_HISTORY, RULEMAKING_YEARLY_REPORTS } from "@/lib/lsbd-org-documents";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileEdit, Clock, CheckCircle2 } from "lucide-react";
@@ -38,20 +40,33 @@ export default function RulemakingPage() {
         </Card>
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden="true" /><CardTitle className="font-[family-name:var(--font-oswald)] text-xl text-[#005f8f] uppercase tracking-wide">Recently Adopted Rules</CardTitle></div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden="true" /><CardTitle className="font-[family-name:var(--font-oswald)] text-xl text-[#005f8f] uppercase tracking-wide">Rulemaking History</CardTitle></div>
           </CardHeader>
           <CardContent className="pt-0 text-sm text-[#495057]">
-            <ul className="space-y-3">
-              <li className="border-b border-gray-100 pb-3">
-                <p className="font-medium text-[#005f8f]">Opioid Management CE Requirements Update</p>
-                <p className="text-xs text-gray-500">Effective January 1, 2026</p>
-                <p className="mt-1">Established a one-time mandatory three (3) hour opioid management CE requirement for dentists.</p>
-              </li>
-              <li className="border-b border-gray-100 pb-3">
-                <p className="font-medium text-[#005f8f]">Revised Anesthesia Permit Standards</p>
-                <p className="text-xs text-gray-500">Effective July 1, 2025</p>
-                <p className="mt-1">Updated facility inspection requirements and emergency equipment standards for anesthesia permit holders.</p>
-              </li>
+            <ul className="space-y-4">
+              {RULEMAKING_HISTORY.map((r) => (
+                <li key={r.date + r.title} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                  <p className="font-medium text-[#005f8f]">{r.title}</p>
+                  <p className="mt-1">{r.description}</p>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                    {r.documents.map((d) => (
+                      <PdfLink key={d.href} href={d.href} fileSize={d.bytes}>{d.label}</PdfLink>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2"><FileEdit className="h-5 w-5 text-[#0077B6]" aria-hidden="true" /><CardTitle className="font-[family-name:var(--font-oswald)] text-xl text-[#005f8f] uppercase tracking-wide">Yearly Reports</CardTitle></div>
+          </CardHeader>
+          <CardContent className="pt-0 text-sm text-[#495057]">
+            <ul className="space-y-2">
+              {RULEMAKING_YEARLY_REPORTS.map((r) => (
+                <li key={r.year}><PdfLink href={r.href} fileSize={r.bytes}>{r.title}</PdfLink></li>
+              ))}
             </ul>
           </CardContent>
         </Card>

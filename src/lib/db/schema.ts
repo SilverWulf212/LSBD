@@ -98,6 +98,8 @@ export const meetings = pgTable("meetings", {
   description: text("description"),
   meetingType: varchar("meeting_type", { length: 100 }).default("board").notNull(),
   isPublished: boolean("is_published").default(true).notNull(),
+  // Older minutes are recorded by month only; meetingDate then holds the 1st.
+  dateIsMonthOnly: boolean("date_is_month_only").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SITE_DOCUMENTS } from "@/lib/lsbd-org-documents";
 import { PdfLink } from "@/components/shared/pdf-link";
 import { AlertTriangle, Shield, FileText, Phone, ArrowRight } from "lucide-react";
 import { CONTACT } from "@/lib/constants";
@@ -56,7 +57,7 @@ export default function ComplaintsPage() {
               </CardHeader>
               <CardContent className="pt-0 space-y-3">
                 <p className="text-sm text-[#495057]">Download the official complaint form to begin the process.</p>
-                <PdfLink href="#" fileSize={156000} className="font-medium">Complaint Form (PDF)</PdfLink>
+                <PdfLink href={SITE_DOCUMENTS.complaint_form.href} fileSize={SITE_DOCUMENTS.complaint_form.bytes} className="font-medium">Complaint Form (PDF)</PdfLink>
               </CardContent>
             </Card>
             <Card>

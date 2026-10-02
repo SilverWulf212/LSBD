@@ -1,0 +1,938 @@
+{
+  "bulletins": [
+    {
+      "year": 2004,
+      "title": "The Bulletin - 2004",
+      "description": null,
+      "url": "https://www.lsbd.org/Bulletins/Bulletin2004.pdf"
+    },
+    {
+      "year": 2005,
+      "title": "The Bulletin - 2005",
+      "description": null,
+      "url": "https://www.lsbd.org/Bulletins/Bulletin2005.pdf"
+    },
+    {
+      "year": 2006,
+      "title": "The Bulletin - 2006",
+      "description": null,
+      "url": "https://www.lsbd.org/Bulletins/Bulletin2006.pdf"
+    },
+    {
+      "year": 2007,
+      "title": "The Bulletin - 2007",
+      "description": null,
+      "url": "https://www.lsbd.org/Bulletins/Bulletin2007.pdf"
+    },
+    {
+      "year": 2008,
+      "title": "The Bulletin - 2008",
+      "description": null,
+      "url": "https://www.lsbd.org/Bulletins/Bulletin2008.pdf"
+    },
+    {
+      "year": 2009,
+      "title": "The Bulletin - 2009",
+      "description": null,
+      "url": "https://www.lsbd.org/Bulletins/Bulletin2009.pdf"
+    },
+    {
+      "year": 2010,
+      "title": "The Bulletin - 2010",
+      "description": null,
+      "url": "https://www.lsbd.org/Bulletins/Bulletin2010.pdf"
+    },
+    {
+      "year": 2011,
+      "title": "The Bulletin - 2011",
+      "description": null,
+      "url": "https://www.lsbd.org/bulletins/bulletin2011.pdf"
+    },
+    {
+      "year": 2012,
+      "title": "The Bulletin - 2012",
+      "description": null,
+      "url": "https://www.lsbd.org/bulletins/bulletin2012.pdf"
+    },
+    {
+      "year": 2013,
+      "title": "The Bulletin - 2013",
+      "description": null,
+      "url": "https://www.lsbd.org/bulletins/bulletin2013.pdf"
+    },
+    {
+      "year": 2014,
+      "title": "The Bulletin - 2014",
+      "description": null,
+      "url": "https://www.lsbd.org/bulletins/bulletin2014.pdf"
+    },
+    {
+      "year": 2015,
+      "title": "The Bulletin - 2015",
+      "description": null,
+      "url": "https://www.lsbd.org/bulletins/bulletin2015.pdf"
+    },
+    {
+      "year": 2016,
+      "title": "The Bulletin - 2016",
+      "description": null,
+      "url": "https://www.lsbd.org/bulletins/bulletin2016.pdf"
+    },
+    {
+      "year": 2017,
+      "title": "The Bulletin - 2017",
+      "description": null,
+      "url": "https://www.lsbd.org/bulletins/bulletin2017.pdf"
+    },
+    {
+      "year": 2018,
+      "title": "The Bulletin - 2018",
+      "description": null,
+      "url": "https://www.lsbd.org/bulletins/bulletin2018.pdf"
+    }
+  ],
+  "forms": [
+    {
+      "name": "Change of Mailing or Home Address",
+      "description": "All dentists and hygienists are required to notify the board within 30 days of their change of mailing address.",
+      "category": "change_of_info",
+      "url": "https://www.lsbd.org/applications/MailingHomeAddress.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "Change of Practice Location (dentists only)",
+      "description": "All Louisiana dentists are required to notify the board of any changes of practice location within 30 days of the date of the change. If you add a new practice location, it will NOT automatically remove another location. You must submit one form to add a new practice location and a separate form to remove the former practice location. Notifying the board of your change of practice location will NOT change your official mailing address on file with the board.",
+      "category": "change_of_info",
+      "url": "https://www.lsbd.org/applications/PracticeLocation.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 20
+    },
+    {
+      "name": "Change of Employer (hygienists only)",
+      "description": "All Louisiana hygienists are required to notify the board of any changes in their employing dentist within 30 days of the date of the change. If you add a new employer to your record, it will NOT automatically remove another employer. You must submit one form to add a new employer and a separate form to remove the former employer. Notifying the board of your change of employer and practice location will NOT change your official mailing address on file with the board.",
+      "category": "change_of_info",
+      "url": "https://www.lsbd.org/applications/EmployerChange.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 30
+    },
+    {
+      "name": "Nitrous Oxide Personal Permit Application",
+      "description": "The Board no longer issues office nitrous permits. A personal nitrous permit is all that is required to administer nitrous oxide.",
+      "category": "dental_anesthesia",
+      "url": "https://www.lsbd.org/applications/Nitrous%20Oxide%20Application.pdf",
+      "sourcePages": [
+        "forms.htm",
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "Moderate Sedation Personal and Office Permit Application",
+      "description": null,
+      "category": "dental_anesthesia",
+      "url": "https://www.lsbd.org/applications/ModerateApplication.pdf",
+      "sourcePages": [
+        "forms.htm",
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 20
+    },
+    {
+      "name": "General Anesthesia Personal and Office Permit Application",
+      "description": null,
+      "category": "dental_anesthesia",
+      "url": "https://www.lsbd.org/applications/GeneralAnesthesiaApplication.pdf",
+      "sourcePages": [
+        "forms.htm",
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 30
+    },
+    {
+      "name": "Anesthesia Inspection Sheet",
+      "description": "Office permits for any level of anesthesia other than nitrous oxide require an office inspection. Please use the following inspection sheet as a checklist to ensure you have the appropriate equipment and information available for the inspector.",
+      "category": "dental_anesthesia",
+      "url": "https://www.lsbd.org/forms/AnesthesiaInspection.pdf",
+      "sourcePages": [
+        "forms.htm",
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 40
+    },
+    {
+      "name": "Dental Hygiene Nitrous Oxide Permit Application",
+      "description": null,
+      "category": "hygiene_anesthesia",
+      "url": "https://www.lsbd.org/applications/hygienenitrousoxideapplication.pdf",
+      "sourcePages": [
+        "forms.htm",
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "Dental Hygiene Local Anesthesia Permit Application",
+      "description": null,
+      "category": "hygiene_anesthesia",
+      "url": "https://www.lsbd.org/applications/Hygiene%20Anesthesia%20Application.pdf",
+      "sourcePages": [
+        "forms.htm",
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 20
+    },
+    {
+      "name": "Local Anesthesia Affidavit",
+      "description": "If you have been licensed and permitted in another state to administer local anesthesia in your practice of dental hygiene, and you wish to apply for a permit to administer local anesthesia in Louisiana, please also fill out the affidavit and submit it with your local anesthesia permit application.",
+      "category": "hygiene_anesthesia",
+      "url": "https://www.lsbd.org/applications/Local%20Anesthesia%20Affidavit.pdf",
+      "sourcePages": [
+        "forms.htm",
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 30
+    },
+    {
+      "name": "Mobile Dental Office Permit Application",
+      "description": "A mobile office is a self-contained movable facility such as an RV. A mobile dental office permit will only be issued to a Louisiana licensed dentist.",
+      "category": "mobile_portable",
+      "url": "https://www.lsbd.org/forms/mobilepermit.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "Portable Dental Office Permit Application",
+      "description": "A portable office consists of portable dental equipment which is set up on site. A portable dental office permit will only be issued to a Louisiana licensed dentist.",
+      "category": "mobile_portable",
+      "url": "https://www.lsbd.org/forms/portablepermit.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 20
+    },
+    {
+      "name": "Affidavit for Opioid Management CE Exemption (dentists only)",
+      "description": "Dentists who do not prescribe, dispense, or administer any controlled substances are not required to complete the 3 hours of opioid management continuing education. Complete this affidavit in the presence of a notary and mail it to the board office. We will then verify you have not prescribed, dispensed, or administered any controlled substances with the Prescription Monitoring Program. Should you prescribe, dispense, or administer controlled substances in the future, you will be required to obtain the opioid management CE.",
+      "category": "opioid",
+      "url": "https://www.lsbd.org/forms/AffidavitNoCDS.pdf",
+      "sourcePages": [
+        "forms.htm",
+        "conted.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "Sample Inspection Notice",
+      "description": "This is an example of the notice a dentist should receive approximately one week prior to the scheduled CDC inspection.",
+      "category": "cdc_inspection",
+      "url": "https://www.lsbd.org/forms/InspectionNotice.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "Inspection Form",
+      "description": "The inspector will use this form when inspecting the dentist's office. Please use the inspection sheet as a checklist so that the appropriate equipment and documentation is available for the inspector.",
+      "category": "cdc_inspection",
+      "url": "https://www.lsbd.org/forms/CDCInspection.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 20
+    },
+    {
+      "name": "HBV Vaccine Declination",
+      "description": "Dentists are required to offer certain personnel the Hepatitis B vaccine at no charge. The dentist should maintain information regarding the staff's HBV vaccinations. If any employee refuses the HBV vaccine, a declination statement should be maintained in the dentist's office. The declination form is an example of this statement.",
+      "category": "cdc_inspection",
+      "url": "https://www.lsbd.org/forms/HBVDeclination.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 30
+    },
+    {
+      "name": "Sample Controlled Substances Log Form",
+      "description": "All dentists are required to maintain an accurate running total of controlled substances in their possession. Please see the sample file for your convenience. This form should be maintained by the dentist. Do not submit this form to the board.",
+      "category": "controlled_substances",
+      "url": "https://www.lsbd.org/forms/ControlledSubstancesLog.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "EDDA Application",
+      "description": "Expanded Duty Dental Assistants. You may apply for the EDDA certificate confirmation by submitting the EDDA application, a copy of your proof of completion of the EDDA course, BLS course, and radiology course along with the application fee of $100 to the Board office. DO NOT SEND CASH.",
+      "category": "additional",
+      "url": "https://www.lsbd.org/applications/EDDA-Application.pdf",
+      "sourcePages": [
+        "forms.htm",
+        "dentalassist.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "Expungement Application",
+      "description": "Application for Expungement of First Time Advertising Violations",
+      "category": "additional",
+      "url": "https://www.lsbd.org/applications/ExpungementApplication.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 20
+    },
+    {
+      "name": "Dental Information Sheet",
+      "description": "Newly licensed dentists only",
+      "category": "miscellaneous",
+      "url": "https://www.lsbd.org/forms/Dentalinfo.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "Hygiene Information Sheet",
+      "description": "Newly licensed hygienists only",
+      "category": "miscellaneous",
+      "url": "https://www.lsbd.org/forms/Hygieneinfo.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 20
+    },
+    {
+      "name": "HIV/HBV/HCV Reporting Form",
+      "description": null,
+      "category": "miscellaneous",
+      "url": "https://www.lsbd.org/applications/HIV-HBV-HCVForm.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 30
+    },
+    {
+      "name": "Approved Radiology Course List",
+      "description": null,
+      "category": "miscellaneous",
+      "url": "https://www.lsbd.org/applications/ApprovedRadiology.pdf",
+      "sourcePages": [
+        "forms.htm"
+      ],
+      "sortOrder": 40
+    },
+    {
+      "name": "Complaint Form",
+      "description": "To lodge a complaint against a licensee, please download the form, fill it out, and then return it to our office. You may email, fax, or mail it.",
+      "category": "miscellaneous",
+      "url": "https://www.lsbd.org/forms/ComplaintForm.pdf",
+      "sourcePages": [
+        "complaints.htm"
+      ],
+      "sortOrder": 50
+    },
+    {
+      "name": "Dental License by Examination (LBE) Application",
+      "description": "You may qualify for a dental license by examination if you completed the ADEX examination within FIVE years of applying for a Louisiana license.",
+      "category": "license_applications",
+      "url": "https://www.lsbd.org/applications/LBEApplicationDental.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "Dental Hygiene License by Examination (LBE) Application",
+      "description": "You may qualify for a dental hygiene license by examination if you completed the ADEX examination within THREE years of applying for a Louisiana license.",
+      "category": "license_applications",
+      "url": "https://www.lsbd.org/applications/LBEApplicationHygiene.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 20
+    },
+    {
+      "name": "Dental License by Credentials (LBC) Application",
+      "description": "You may qualify for a regular dental license by credentials if you currently hold a license in another state and have practiced at least 1000 hours each year for the immediately preceding three years.",
+      "category": "license_applications",
+      "url": "https://www.lsbd.org/forms/dentallbc.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 30
+    },
+    {
+      "name": "Dental Hygiene License by Credentials (LBC) Application",
+      "description": "You may qualify for a regular dental hygiene license by credentials if you currently hold a license in another state and have practiced at least 1000 hours for the immediately preceding year.",
+      "category": "license_applications",
+      "url": "https://www.lsbd.org/forms/hygienelbc.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 40
+    },
+    {
+      "name": "Dental License by Credentials (LBC) Application - Louisiana Residents",
+      "description": "You must currently reside in Louisiana and hold a license in another state to use this application.",
+      "category": "license_applications",
+      "url": "https://www.lsbd.org/forms/DentalLBC%20LA%20resident.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 50
+    },
+    {
+      "name": "Dental Hygiene License by Credentials (LBC) Application - Louisiana Residents",
+      "description": "You must reside in Louisiana and currently hold a license in another state to use this application.",
+      "category": "license_applications",
+      "url": "https://www.lsbd.org/forms/HygieneLBC%20LA%20resident.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 60
+    },
+    {
+      "name": "Restricted License Application",
+      "description": "Restricted licenses are for dentists participating in postgraduate programs in Louisiana or instructors in Louisiana dental education.",
+      "category": "license_applications",
+      "url": "https://www.lsbd.org/forms/restrictedapplication.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 70
+    },
+    {
+      "name": "2023 dental licenses issued",
+      "description": "Licenses issued, by parish. 2023 new dental licenses denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2023newdental.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 10
+    },
+    {
+      "name": "2023 dental licenses renewed",
+      "description": "Licenses renewed, by parish. 2023 dental license renewals denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2023reneweddental.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 20
+    },
+    {
+      "name": "2023 dental hygiene licenses issued",
+      "description": "Licenses issued, by parish. 2023 new dental hygiene licenses denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2023newhygiene.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 30
+    },
+    {
+      "name": "2023 dental hygiene licenses renewed",
+      "description": "Licenses renewed, by parish. 2023 dental hygiene license renewals denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2023renewedhygiene.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 40
+    },
+    {
+      "name": "2024 dental licenses issued",
+      "description": "Licenses issued, by parish. 2024 new dental licenses denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2024newdental.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 50
+    },
+    {
+      "name": "2024 dental licenses renewed",
+      "description": "Licenses renewed, by parish. 2024 dental license renewals denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2024reneweddental.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 60
+    },
+    {
+      "name": "2024 dental hygiene licenses issued",
+      "description": "Licenses issued, by parish. 2024 new dental hygiene licenses denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2024newhygiene.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 70
+    },
+    {
+      "name": "2024 dental hygiene licenses renewed",
+      "description": "Licenses renewed, by parish. 2024 dental hygiene license renewals denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2024renewedhygiene.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 80
+    },
+    {
+      "name": "2025 dental licenses issued",
+      "description": "Licenses issued, by parish. 2025 new dental licenses denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2025newdental.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 90
+    },
+    {
+      "name": "2025 dental licenses renewed",
+      "description": "Licenses renewed, by parish. 2025 dental license renewals denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2025reneweddental.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 100
+    },
+    {
+      "name": "2025 dental hygiene licenses issued",
+      "description": "Licenses issued, by parish. 2025 new dental hygiene licenses denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2025newhygiene.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 110
+    },
+    {
+      "name": "2025 dental hygiene licenses renewed",
+      "description": "Licenses renewed, by parish. 2025 dental hygiene license renewals denied--0",
+      "category": "license_statistics",
+      "url": "https://www.lsbd.org/forms/2025renewedhygiene.pdf",
+      "sourcePages": [
+        "licenseinfo.htm"
+      ],
+      "sortOrder": 120
+    }
+  ],
+  "rulemaking": [
+    {
+      "date": "2017-07-11",
+      "title": "Rules 122, 128, 301, 411, 1511",
+      "description": "§122 Scopes of Practice; §128 Provisional Licensure for Dental Healthcare Workers Providing Gratuitous Services; §301 Advertising and Soliciting by Dentists; §411 Miscellaneous Fees and Costs; §1511 Required facilities, Personnel and Equipment for Sedation Procedures. Summary report sent: July 11, 2017. Legislative Oversight Committee report: N/A. Effective September 20, 2017.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI122,128,301,411,1511.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR170711.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2017-11-09",
+      "title": "Rules 134, 306, 706, 1505, 1607, 1611, 1613, 1709, 1711",
+      "description": "§134 Prescription Monitoring Program; §306 Requirements of Applicants for Dental Licensure by Credentials; §706 Requirements of Applicants for Licensure by Credentials (Hygienists); §1505 Personal Permit Renewals; §1607 Exemptions; §1611 Continuing Education Requirements for Relicensure of Dentists; §1613 Continuing Education Requirements for Relicensure of Dentists; §1709 Examination of Dentists; §1711 Examination of Hygienists. Summary report sent: November 9, 2017. Legislative Oversight Committee report: N/A. Effective January 20, 2018.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI134,306,706,1505,1607,1611,1613,1709,1711.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR171109.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2018-05-08",
+      "title": "Rule 1511",
+      "description": "§1511 Required Facilities, Personnel and Equipment for Sedation Procedures. Summary report sent: May 8, 2018. Legislative Oversight Committee report: N/A. Effective June 20, 2018.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI1511.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR180508.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2018-09-10",
+      "title": "Rule 701",
+      "description": "§701 Authorized Duties. Summary report sent: September 10, 2018. Legislative Oversight Committee report: N/A. Effective November 20, 2018.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI701.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR180910.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2019-10-14",
+      "title": "Rules 1503, 1607, 1615",
+      "description": "§1503 Personal Permits for Sedation/Anesthesia; §1607 Exemptions; §1615 Approved Courses. Summary report sent: October 14, 2019. Legislative Oversight Committee report: N/A. Effective December 20, 2019.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI1503,1607,1615.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR191014.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2020-06-08",
+      "title": "Rule 105",
+      "description": "§105 Restricted Licensees. Summary report sent: June 8, 2020. Legislative Oversight Committee report: N/A. Effective July 20, 2020.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI105.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR200608.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2020-10-12",
+      "title": "Rules 322, 1502",
+      "description": "§322 Expungement of Disciplinary Actions; §1502 Types of Permits. Summary report sent: October 12, 2020. Legislative Oversight Committee report: N/A. Effective January 20, 2021.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI322,1502.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR201012.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2020-12-14",
+      "title": "Rules 203, 701",
+      "description": "§203 Teledentistry; §701 Authorized Duties. Summary report sent: December 14, 2020. Legislative Oversight Committee report: N/A. Effective February 20, 2021.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI203,701.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR201214.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2021-08-11",
+      "title": "Rule 1615",
+      "description": "§1615 Approved Courses. Summary report sent: August 11, 2021. Legislative Oversight Committee report: N/A. Effective October 20, 2021.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI1615.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR210811.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2021-12-20",
+      "title": "Rules 120, 306, 419",
+      "description": "§120 Temporary Licenses and Permits Pending Normal Licenses; §306 Requirements of Applicants for Dental Licensure by Credentials; §419 Licenses, Permits and Examinations (Dental Hygienists). Summary report sent: December 20, 2021. Legislative Oversight Committee report: N/A. Effective February 20, 2022.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI120,306,419.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR211220.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2022-08-10",
+      "title": "Rules 322, 1607",
+      "description": "§322 Expungement of Disciplinary Actions; §1607 Exemptions. Summary report sent: August 10, 2022. Legislative Oversight Committee report: N/A. Effective September 20, 2022.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI322,1607.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR220810.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2022-08-10",
+      "title": "Rule 702",
+      "description": "§702 General Supervision in Nursing Homes. Summary report sent: August 10, 2022. Legislative Oversight Committee report: N/A. Effective October 20, 2022.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI702.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR220810B.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2022-11-10",
+      "title": "Rules 103, 306, 706, 710",
+      "description": "§103 Evidence of Graduation; §306 Requirements of Applicants for Dental Licensure by Credentials; §706 Requirements of Applicants for Licensure by Credentials (Hygienists); §710 Administration of Local Anesthesia for Dental Purposes. Summary report sent: November 10, 2022. Legislative Oversight Committee report: N/A. Effective January 20, 2023.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI103,306,706,710.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR221110.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2023-06-12",
+      "title": "Rules 122, 301",
+      "description": "§122 Scopes of Practice; §301 Advertising and Soliciting by Dentists. Summary report sent: June 12, 2023. Legislative Oversight Committee report: N/A. Effective August 20, 2023.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI122,301.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR230612.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2023-12-12",
+      "title": "Rule 1611",
+      "description": "§1611 Continuing Education Requirements for Relicensure of Dentists. Summary report sent: December 12, 2023. Legislative Oversight Committee report: N/A. Effective February 20, 2024.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI1611.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR231212.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2024-03-13",
+      "title": "Rule 313",
+      "description": "§313 Portable and Mobile Dentistry. Summary report sent: March 13, 2024. Legislative Oversight Committee report: N/A. Effective May 20, 2024.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI313.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR240313.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2025-02-10",
+      "title": "Rules 128, 1611, 1613, 1709, 1711",
+      "description": "§128. Provisional Licensure for Dental Healthcare Workers Providing Gratuitous Services; §1611. Continuing Education Requirements for Relicensure of Dentists; §1613. Continuing Education Requirements for Relicensure of Dental Hygienists; §1709. Examination of Dentists; §1711. Examination of Dental Hygienists. Summary report sent: February 10, 2025. Legislative Oversight Committee report: N/A. Effective June 20, 2025.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI128,1611,1613,1709,1711.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR250210.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2025-06-20",
+      "title": "Rule 136",
+      "description": "§136. Dental Records. Summary report sent: June 20, 2025. Legislative Oversight Committee report: N/A. Effective August 20, 2025.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI136.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR250610.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2025-10-10",
+      "title": "Rules 1709, 1711, 1713",
+      "description": "§1709. Examination of Dentists; §1711. Examination of Dental Hygienists; §1713. Board Approved Regionla or National Independent Third Party Clinical Examinations. Summary report sent: October 10, 2025. Legislative Oversight Committee report: N/A. Effective December 20, 2025.",
+      "documents": [
+        {
+          "label": "Notice of Intent",
+          "url": "https://www.lsbd.org/Rulemaking/NOI1709,1711,1713.pdf"
+        },
+        {
+          "label": "Summary Report",
+          "url": "https://www.lsbd.org/Rulemaking/SR251010.pdf"
+        }
+      ]
+    }
+  ],
+  "rulemakingReports": [
+    {
+      "year": 2020,
+      "title": "2020 Yearly Report",
+      "url": "https://www.lsbd.org/Rulemaking/2020Report.pdf"
+    },
+    {
+      "year": 2021,
+      "title": "2021 Yearly Report",
+      "url": "https://www.lsbd.org/Rulemaking/2021Report.pdf"
+    },
+    {
+      "year": 2022,
+      "title": "2022 Yearly Report",
+      "url": "https://www.lsbd.org/Rulemaking/2022Report.pdf"
+    },
+    {
+      "year": 2023,
+      "title": "2023 Yearly Report",
+      "url": "https://www.lsbd.org/Rulemaking/2023Report.pdf"
+    },
+    {
+      "year": 2024,
+      "title": "2024 Yearly Report",
+      "url": "https://www.lsbd.org/Rulemaking/2024Report.pdf"
+    }
+  ],
+  "pageLinks": [
+    {
+      "purpose": "complaint_form",
+      "label": "Complaint Form",
+      "url": "https://www.lsbd.org/forms/ComplaintForm.pdf",
+      "sourcePages": [
+        "complaints.htm"
+      ]
+    },
+    {
+      "purpose": "dental_practice_act",
+      "label": "Dental Practice Act",
+      "url": "https://www.lsbd.org/applications/DentalPracticeAct.pdf",
+      "sourcePages": [
+        "dentalact.htm"
+      ]
+    },
+    {
+      "purpose": "board_rules",
+      "label": "Board Rules: Title 46 Professional and Occupational Standards, Part XXXIII - Dental Health Professions",
+      "url": "https://www.lsbd.org/applications/46v33.pdf",
+      "sourcePages": [
+        "dentalact.htm",
+        "fees.htm",
+        "conted.htm",
+        "dentalassist.htm"
+      ]
+    },
+    {
+      "purpose": "sexual_harassment_policy",
+      "label": "Louisiana State Board of Dentistry Sexual Harassment Policy",
+      "url": "https://www.lsbd.org/forms/sexualharassmentpolicy.pdf",
+      "sourcePages": [
+        "index.htm",
+        "contactus.htm"
+      ]
+    },
+    {
+      "purpose": "ada_policy",
+      "label": "Louisiana State Board of Dentistry ADA Policy",
+      "url": "https://www.lsbd.org/forms/ADApolicy.pdf",
+      "sourcePages": [
+        "index.htm"
+      ]
+    },
+    {
+      "purpose": "ce_broker_common_problems",
+      "label": "Most common reasons your CE Broker transcript may not be correct",
+      "url": "https://www.lsbd.org/forms/CEBCommonProblems.pdf",
+      "sourcePages": [
+        "conted.htm"
+      ]
+    },
+    {
+      "purpose": "opioid_ce_exemption_affidavit",
+      "label": "Affidavit for Opioid Management CE Exemption (dentists only)",
+      "url": "https://www.lsbd.org/forms/AffidavitNoCDS.pdf",
+      "sourcePages": [
+        "conted.htm"
+      ]
+    },
+    {
+      "purpose": "edda_application",
+      "label": "EDDA Application",
+      "url": "https://www.lsbd.org/applications/EDDA-Application.pdf",
+      "sourcePages": [
+        "dentalassist.htm"
+      ]
+    }
+  ],
+  "unplaced": [],
+  "notes": [
+    "Scope: index.htm, contactus.htm, forms.htm, licenseinfo.htm, rulemaking.htm, pubs.htm, complaints.htm, conted.htm, fees.htm, dentalassist.htm, dentalact.htm. minutes.htm and pastminutes.htm are excluded (handled separately). boardinfo.htm, renewals.htm and search.htm link no documents.",
+    "New form category 'license_applications' (label: License Applications): the seven applications for a license by examination, by credentials, by credentials for Louisiana residents, and the restricted license, from licenseinfo.htm in that page's order. None of the nine existing keys covers applying for a license itself.",
+    "New form category 'license_statistics' (label: Licenses Issued and Renewed by Parish): the twelve yearly lists (2023-2025, dental and dental hygiene, issued and renewed) that licenseinfo.htm introduces with 'Please see below for information regarding licenses issued, renewed, and denied by parish.' The link text is only 'issued' / 'renewed'; names are built from the sentence around each link ('2023 dental licenses issued and renewed'). The page states the denied counts as text (all 0) with no file; they are carried in each entry's description.",
+    "Form names: where forms.htm and licenseinfo.htm name the same file differently the more specific name is used (e.g. 'Nitrous Oxide Personal Permit Application' rather than 'Nitrous Oxide Application'). 'Dental Hygiene Local Anesthesia Permit Application' merges forms.htm 'Local Anesthesia Permit Application' and licenseinfo.htm 'Dental Hygiene Local Anesthesia Application'. The opioid affidavit link text is just 'Affidavit' / 'this affidavit'; its name comes from the forms.htm section heading. License application names expand the page's 'LBE' / 'LBC' link text using the sub-heading above each link. The complaint form link text is 'File a complaint'; it is named 'Complaint Form'.",
+    "Category mapping follows the forms.htm section headings. Its two single-item sections 'Expanded Duty Dental Assistants' (EDDA Application) and 'Application for Expungement of First Time Advertising Violations' are placed in 'additional'. The complaint form (complaints.htm only) is placed last in 'miscellaneous' and is also a pageLink.",
+    "Form descriptions are the page's own wording near the link (lightly trimmed; the misspellings 'susbtances' and 'documenation' are corrected). The licenseinfo.htm contact-person sentences (staff names and emails) are not copied into descriptions.",
+    "forms.htm also has a section 'DEA 224 New Application or DEA - 106 Theft or Loss Report' linking to an external page (http://www.deadiversion.usdoj.gov/online_forms.htm, 'DEA Forms'). It is not a document on lsbd.org and is not in any list.",
+    "dentalact.htm links two external CDC PDFs under 'Infection Control in Dental Offices': 'CDC Guidelines for Infection Control in Dental Health-Care Settings (2003)' (https://www.cdc.gov/mmwr/PDF/rr/rr5217.pdf) and 'CDC Summary of Recommendations' (https://www.cdc.gov/oralhealth/infectioncontrol/pdf/recommendations-excerpt.pdf). They were not downloaded (not on lsbd.org, not in files.jsonl) and are not in any list.",
+    "dentalact.htm describes the Dental Practice Act as '(amended through the 2024 session)' and the Board rules as '(updated January 2026)'.",
+    "pageLinks purposes beyond the ones given: 'opioid_ce_exemption_affidavit' (conted.htm links the opioid affidavit inside its 'Exception to opioid management CE requirement' section) and 'edda_application' (dentalassist.htm links the EDDA application). Both files are also in forms.",
+    "board_rules (46v33.pdf) is linked from dentalact.htm ('Part XXXIII - Dental Health Professions'), fees.htm ('here', Chapter 4 fee schedule), conted.htm ('Board Rules', 'Rule 1611 G(1)', 'Rule 1611 G(2)') and dentalassist.htm ('here', Chapter 5).",
+    "Rulemaking: every proceeding's date is the 'Summary report sent' date stated on rulemaking.htm; none was derived from a file name. For 18 of the 19 the stated date equals the date in the summary report file name. The exception is §136 Dental Records: the page says 'sent: June 20, 2025' but the file is SR250610.pdf (2025-06-10). The page's date (2025-06-20) is used; the PDF is a scan and could not be read to settle it.",
+    "Rulemaking titles are the rule numbers the page lists for each proceeding; descriptions are the page's rule headings plus its 'sent', 'Legislative Oversight Committee report' and 'Effective' lines. Page wording is kept as is, including '§1613 Continuing Education Requirements for Relicensure of Dentists' in the November 2017 proceeding and the misspelling 'Regionla' in §1713. Two proceedings share 2022-08-10 (SR220810 and SR220810B).",
+    "rulemaking.htm repeats the NOI1511.pdf link with empty text, and pubs.htm repeats the 2005 and 2010 bulletin links with empty text; licenseinfo.htm repeats the Anesthesia Inspection Sheet link with empty text. All are treated as duplicates.",
+    "Bulletins: pubs.htm gives only the year for each (2004-2018), no issue name or volume, so description is null. The page says: 'The Bulletin is published annually in the fall and contains valuable information for our licensees including the most recent rule changes and news over the past year.'",
+    "Yearly rulemaking reports exist on the page for 2020-2024 only."
+  ]
+}

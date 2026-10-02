@@ -84,6 +84,7 @@ export const NAV_ITEMS = [
 ] as const;
 
 export const FORM_CATEGORIES = [
+  { key: "license_applications", label: "License Applications" },
   { key: "change_of_info", label: "Licensee Change of Information" },
   { key: "dental_anesthesia", label: "Dental Anesthesia Permit Applications" },
   { key: "hygiene_anesthesia", label: "Dental Hygiene Anesthesia Permits" },
@@ -93,6 +94,7 @@ export const FORM_CATEGORIES = [
   { key: "controlled_substances", label: "Controlled Substances" },
   { key: "additional", label: "Additional Applications" },
   { key: "miscellaneous", label: "Miscellaneous Publications and Forms" },
+  { key: "license_statistics", label: "Licenses Issued and Renewed by Parish" },
 ] as const;
 
 export const MEETING_TYPES = [

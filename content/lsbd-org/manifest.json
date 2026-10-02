@@ -1,0 +1,1157 @@
+{
+ "https://www.lsbd.org/Bulletins/Bulletin2004.pdf": {
+  "path": "/documents/bulletins/bulletin2004.pdf",
+  "bytes": 1801038,
+  "sha256": "5ac5238ee7ecbdb400bf5c6e7b1b5d7242a5c1a7a30d32a77224f41fa612509f"
+ },
+ "https://www.lsbd.org/Bulletins/Bulletin2005.pdf": {
+  "path": "/documents/bulletins/bulletin2005.pdf",
+  "bytes": 1482655,
+  "sha256": "c97139fcc9fe10a6ecfd8d72523c7c12d973ff0b59bb6f0cb7e4401f679ed58c"
+ },
+ "https://www.lsbd.org/Bulletins/Bulletin2006.pdf": {
+  "path": "/documents/bulletins/bulletin2006.pdf",
+  "bytes": 1826001,
+  "sha256": "90963e3e5f7ea544915444ff53653a2e5c0acebaa5303e87fa0c416b2cde9a44"
+ },
+ "https://www.lsbd.org/Bulletins/Bulletin2007.pdf": {
+  "path": "/documents/bulletins/bulletin2007.pdf",
+  "bytes": 1892295,
+  "sha256": "3d22f1114696b9f0231fe8f09456ca0db56d13a71a815dd5c025a03d29ffcb2e"
+ },
+ "https://www.lsbd.org/Bulletins/Bulletin2008.pdf": {
+  "path": "/documents/bulletins/bulletin2008.pdf",
+  "bytes": 338357,
+  "sha256": "1d7f2198e27aa272dc5b6acf8e7e713975f0889d857d3bc35b0d068040827b72"
+ },
+ "https://www.lsbd.org/Bulletins/Bulletin2009.pdf": {
+  "path": "/documents/bulletins/bulletin2009.pdf",
+  "bytes": 780146,
+  "sha256": "6f9f8646682bec921af046e0ef010f02fe8b3546c51c974cafeedede9e34224e"
+ },
+ "https://www.lsbd.org/Bulletins/Bulletin2010.pdf": {
+  "path": "/documents/bulletins/bulletin2010.pdf",
+  "bytes": 1017748,
+  "sha256": "d46d81d85029481ae9fc5e1e8d2df374d4272448bc50bf645ea0bc8abb2cb2c4"
+ },
+ "https://www.lsbd.org/MeetingMinutes/12217minutes.pdf": {
+  "path": "/documents/meetings/12217minutes.pdf",
+  "bytes": 392637,
+  "sha256": "b52dec92642a47aca55cab79097e8502926221a221aad2e20fbd0bd63d65e817"
+ },
+ "https://www.lsbd.org/MeetingMinutes/18.10.5Minutes.pdf": {
+  "path": "/documents/meetings/18.10.5minutes.pdf",
+  "bytes": 186536,
+  "sha256": "37fa7cd6bc453deb0da2fc5894ff363004fdd04c45b453bdcfcdfa2e91e0ec8f"
+ },
+ "https://www.lsbd.org/MeetingMinutes/18.12.1Minutes.pdf": {
+  "path": "/documents/meetings/18.12.1minutes.pdf",
+  "bytes": 394236,
+  "sha256": "04e7b2ce6e7c47298a693970acae4fbf6696390e6e63e50b1581f82d67dc6e83"
+ },
+ "https://www.lsbd.org/MeetingMinutes/18.2.23Minutes.pdf": {
+  "path": "/documents/meetings/18.2.23minutes.pdf",
+  "bytes": 385658,
+  "sha256": "54a545e35d26acbafc59f67df210cd3dda95945ae8b01f3de3c9d1f750a4f886"
+ },
+ "https://www.lsbd.org/MeetingMinutes/18.5.11Minutes.pdf": {
+  "path": "/documents/meetings/18.5.11minutes.pdf",
+  "bytes": 413094,
+  "sha256": "9faa05e5f760d96f4353089b148479d0cbcdec4b1c396dd88342adb16ac703a3"
+ },
+ "https://www.lsbd.org/MeetingMinutes/18.8.17Minutes.pdf": {
+  "path": "/documents/meetings/18.8.17minutes.pdf",
+  "bytes": 231842,
+  "sha256": "d291511bfb1a912244c64267ceada2bd7fc200869da4f7cab9413842cc6951cd"
+ },
+ "https://www.lsbd.org/MeetingMinutes/19.12.6Minutes.pdf": {
+  "path": "/documents/meetings/19.12.6minutes.pdf",
+  "bytes": 232742,
+  "sha256": "889a4ad8fa42766a3d80ff9684b3796c57fef813ebccef501aab31fda7294f3f"
+ },
+ "https://www.lsbd.org/MeetingMinutes/19.3.15Minutes.pdf": {
+  "path": "/documents/meetings/19.3.15minutes.pdf",
+  "bytes": 241042,
+  "sha256": "489d2dbc5a82bca48f29df8fc15e5c82ce677eaf091b86595f341a0f5d068cd8"
+ },
+ "https://www.lsbd.org/MeetingMinutes/19.5.17Minutes.pdf": {
+  "path": "/documents/meetings/19.5.17minutes.pdf",
+  "bytes": 248376,
+  "sha256": "be8d4cacccaa9b5963c71c77b48eb0dd46403987c1f5dcfa113b8fe5fb7b4fd8"
+ },
+ "https://www.lsbd.org/MeetingMinutes/19.8.16Minutes.pdf": {
+  "path": "/documents/meetings/19.8.16minutes.pdf",
+  "bytes": 227782,
+  "sha256": "2f53e5fbcdde3462d7bcc2e971b5262e97971e477a76aa6394794bdda361086f"
+ },
+ "https://www.lsbd.org/MeetingMinutes/20.12.5Minutes.pdf": {
+  "path": "/documents/meetings/20.12.5minutes.pdf",
+  "bytes": 212237,
+  "sha256": "41dbc739eda4c6043c489d710f020016a0e1c89940967fefa7ce7c6996014112"
+ },
+ "https://www.lsbd.org/MeetingMinutes/20.3.6Minutes.pdf": {
+  "path": "/documents/meetings/20.3.6minutes.pdf",
+  "bytes": 250615,
+  "sha256": "c05c1852be72f5485a54a4320ccfc586288b5ec5ff86217d6492e20a19201ac0"
+ },
+ "https://www.lsbd.org/MeetingMinutes/20.5.15Minutes.pdf": {
+  "path": "/documents/meetings/20.5.15minutes.pdf",
+  "bytes": 192826,
+  "sha256": "37ad8c328e61daffd23649b72ed3796fd134e7b00e97d687e50183bcbaa7bff1"
+ },
+ "https://www.lsbd.org/MeetingMinutes/20.5.22Minutes.pdf": {
+  "path": "/documents/meetings/20.5.22minutes.pdf",
+  "bytes": 185942,
+  "sha256": "73a75ec6434503028390cb0c4924cef921a0714a1a5829deb904c43d8fc22c8d"
+ },
+ "https://www.lsbd.org/MeetingMinutes/20.7.10Minutes.pdf": {
+  "path": "/documents/meetings/20.7.10minutes.pdf",
+  "bytes": 207022,
+  "sha256": "dd56c71bc715d9af8e74cc611fcb9fde584c063c671a963fd7d27052b6461221"
+ },
+ "https://www.lsbd.org/MeetingMinutes/20.8.14Minutes.pdf": {
+  "path": "/documents/meetings/20.8.14minutes.pdf",
+  "bytes": 220992,
+  "sha256": "7d8d74090485b8fb31396b7afd3b91c0c19a051109db05f87a4d84a1949d0a52"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.12.10RulemakingAgenda.pdf": {
+  "path": "/documents/meetings/21.12.10rulemakingagenda.pdf",
+  "bytes": 139270,
+  "sha256": "9e39a962b842fcf6d61ce1743dc4a5c5d94634d33a09d40443b39c21af417bf6"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.12.11Agenda.pdf": {
+  "path": "/documents/meetings/21.12.11agenda.pdf",
+  "bytes": 169208,
+  "sha256": "30ce4e6fc9a85067058909b9f6cd387528564e0781a519347693dece642b34b7"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.12.11Minutes.pdf": {
+  "path": "/documents/meetings/21.12.11minutes.pdf",
+  "bytes": 237313,
+  "sha256": "8acc23bd9d15596e9f0341d38bc81c00880d7cb0d2f741259e3796e7c79b97d6"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.12.11Notice.pdf": {
+  "path": "/documents/meetings/21.12.11notice.pdf",
+  "bytes": 190304,
+  "sha256": "d4a685202dd39945618619439e1eee9005c9a0e9dadfac6d23e5dcdb206059a2"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.3.5Agenda.pdf": {
+  "path": "/documents/meetings/21.3.5agenda.pdf",
+  "bytes": 172352,
+  "sha256": "96c9a500bc7d393933155a33a929e749fe9cf3d7aadcf886885d84f5ac707166"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.3.5AnesthesiaNotice.pdf": {
+  "path": "/documents/meetings/21.3.5anesthesianotice.pdf",
+  "bytes": 171509,
+  "sha256": "fa6b2592d53da94e7c01c7d10bbe0f281f9dd7ab575742eb49f6e0d6e3649bf9"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.3.5Minutes.pdf": {
+  "path": "/documents/meetings/21.3.5minutes.pdf",
+  "bytes": 218495,
+  "sha256": "15ecfc01361933a787e8e10e59fb0b4fccc803f6d473deea397efc6659ea4171"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.3.5Notice.pdf": {
+  "path": "/documents/meetings/21.3.5notice.pdf",
+  "bytes": 170039,
+  "sha256": "f3d0217c21ed930d2844e1318e3c578982d98c65cd366473c6f11070a3c7fa9f"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.5.14Agenda.pdf": {
+  "path": "/documents/meetings/21.5.14agenda.pdf",
+  "bytes": 43473,
+  "sha256": "0fc1a7234ff3380d32564fd0d2e76172b0b3fb84789626eb0995bd70ed9c38a2"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.5.14Minutes.pdf": {
+  "path": "/documents/meetings/21.5.14minutes.pdf",
+  "bytes": 218707,
+  "sha256": "80afe81601b485b70f327b915c307729e581c855131ee0133f67ac804abb821b"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.5.14Notice.pdf": {
+  "path": "/documents/meetings/21.5.14notice.pdf",
+  "bytes": 169969,
+  "sha256": "4069a8a0d4d70da071cb2a0d742c5e8dbeab4938b9e0aa759b49dd9614d0c206"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.8.20Agenda.pdf": {
+  "path": "/documents/meetings/21.8.20agenda.pdf",
+  "bytes": 531547,
+  "sha256": "cdd0a062133862aa338d1c6b8ff2907b65bada5461505f669a291f2239863fe1"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.8.20InformalsAgenda.pdf": {
+  "path": "/documents/meetings/21.8.20informalsagenda.pdf",
+  "bytes": 728921,
+  "sha256": "ff4a16366b2d79c913cb89ce201965ad5da4779aae57711200052e3d39e52eff"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.8.20InformalsNotice.pdf": {
+  "path": "/documents/meetings/21.8.20informalsnotice.pdf",
+  "bytes": 715245,
+  "sha256": "dbd26eb2612f42d03895abb7cc66c56f88633af8a2b80a505e29016d5eb4640b"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.8.20Notice.pdf": {
+  "path": "/documents/meetings/21.8.20notice.pdf",
+  "bytes": 645106,
+  "sha256": "c81fc979abbfa6712ec968f67f30d3fcde99cea116d5c6a131b8093ebe35758d"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.9.28Agenda.pdf": {
+  "path": "/documents/meetings/21.9.28agenda.pdf",
+  "bytes": 198352,
+  "sha256": "b17ac97d36f68be41c9b8f9420f3aab8488ee21266579e970015e1e33f66a5f5"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.9.28Minutes.pdf": {
+  "path": "/documents/meetings/21.9.28minutes.pdf",
+  "bytes": 173721,
+  "sha256": "ddc5587cff1bf3a6fbfa5ed003d410d1435cc95327e662774e72322e355d2324"
+ },
+ "https://www.lsbd.org/MeetingMinutes/21.9.28Notice.pdf": {
+  "path": "/documents/meetings/21.9.28notice.pdf",
+  "bytes": 189609,
+  "sha256": "8a6a99f82290f216fdc24749b1a07e91d17f9227f7fec78fbf8fec4dd494aaf6"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.12.2Agenda.pdf": {
+  "path": "/documents/meetings/22.12.2agenda.pdf",
+  "bytes": 164989,
+  "sha256": "5d90efa3be2086c2a0a4c6fa271edac9ead4339e2a6f054959f4eeff526714cd"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.12.2Minutes.pdf": {
+  "path": "/documents/meetings/22.12.2minutes.pdf",
+  "bytes": 222987,
+  "sha256": "fa4f3ebf4ca785b2643e841e9da2836386888ce99a22a92a5e7d594568cca334"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.12.2Notice.pdf": {
+  "path": "/documents/meetings/22.12.2notice.pdf",
+  "bytes": 187348,
+  "sha256": "13a18d49d2485fe080c125bab1edf86b8278ebdf7921d79b74fcfcacaa9b8fde"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.3.11Agenda.pdf": {
+  "path": "/documents/meetings/22.3.11agenda.pdf",
+  "bytes": 211288,
+  "sha256": "d29015a514c53b3f83cf2fecddc1209d6fc71bc5efef8caefa9318166a32d818"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.3.11Minutes.pdf": {
+  "path": "/documents/meetings/22.3.11minutes.pdf",
+  "bytes": 208062,
+  "sha256": "70b080854e1cfa63e37f15dd0cfce6e09377567412d9bfbc36436d43f53ecf78"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.3.11Notice.pdf": {
+  "path": "/documents/meetings/22.3.11notice.pdf",
+  "bytes": 191451,
+  "sha256": "38fa8454c70b540a8a160769970bbc32ca897c83a9bbb4e3c20791d8bffbc07d"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.5.6Agenda.pdf": {
+  "path": "/documents/meetings/22.5.6agenda.pdf",
+  "bytes": 795666,
+  "sha256": "9ad6b01743b9bf4564c1f2ec9b3eed8580b323668b1c5df950d8d27a05de0aeb"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.5.6Minutes.pdf": {
+  "path": "/documents/meetings/22.5.6minutes.pdf",
+  "bytes": 209048,
+  "sha256": "83ff5546fb458ab080fcef0903e67a2173d4a5a39b7b29e4f7e7ecb1de4918f8"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.5.6Notice.pdf": {
+  "path": "/documents/meetings/22.5.6notice.pdf",
+  "bytes": 651390,
+  "sha256": "c63deed2ac7c0d81ef82685fc1b97036efddde2f14819edb903d4206e08f05dc"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.8.19Agenda.pdf": {
+  "path": "/documents/meetings/22.8.19agenda.pdf",
+  "bytes": 168020,
+  "sha256": "8742dac4676af14c12157bc832963ee28840da3d2438674725212ef837180977"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.8.19Minutes.pdf": {
+  "path": "/documents/meetings/22.8.19minutes.pdf",
+  "bytes": 219786,
+  "sha256": "15ac343f98f95be39d847b8b01c34136769f0717a8350dc6d6b9c43fc3cad4eb"
+ },
+ "https://www.lsbd.org/MeetingMinutes/22.8.19Notice.pdf": {
+  "path": "/documents/meetings/22.8.19notice.pdf",
+  "bytes": 187081,
+  "sha256": "7316fdc493b1c2407ae1182f7169e2fa8f47e8c8d380680af89cc4c3d7770be7"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.12.8Agenda.pdf": {
+  "path": "/documents/meetings/23.12.8agenda.pdf",
+  "bytes": 106198,
+  "sha256": "efcf2a4193f55c905aabaf7a3fa12ce290a20860ef76115067a310d885c22aa4"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.12.8Minutes.pdf": {
+  "path": "/documents/meetings/23.12.8minutes.pdf",
+  "bytes": 215723,
+  "sha256": "7d82a6707f9cfd3481b8665ec99215e7d6408774ce4a211e237c8eaa0f9b6de7"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.12.8Notice.pdf": {
+  "path": "/documents/meetings/23.12.8notice.pdf",
+  "bytes": 150620,
+  "sha256": "69ca55a24b304991e206ceb9fe9639f1dbe6063b1cbeef427c5635a92ff0ac95"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.3.10Agenda.pdf": {
+  "path": "/documents/meetings/23.3.10agenda.pdf",
+  "bytes": 205911,
+  "sha256": "2cd3f9141c43e04057aff844bc960b72da17ca6fff2dc3e4e59102678623d38e"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.3.10Minutes.pdf": {
+  "path": "/documents/meetings/23.3.10minutes.pdf",
+  "bytes": 212518,
+  "sha256": "bae01af4fe901f8666ba6f86044d8428667c641717ce9bd0b1cac92bba39e3f9"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.3.10Notice.pdf": {
+  "path": "/documents/meetings/23.3.10notice.pdf",
+  "bytes": 186796,
+  "sha256": "a19975d20a1ca08d6e79cb688451b5e6f5a8dd6d42331d74abc8e0e598ffa1c2"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.5.12Agenda.pdf": {
+  "path": "/documents/meetings/23.5.12agenda.pdf",
+  "bytes": 174536,
+  "sha256": "382cb2f37786c1343346c9e299004eb5f799e9ce124560b0b8e186750c575b8d"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.5.12Minutes.pdf": {
+  "path": "/documents/meetings/23.5.12minutes.pdf",
+  "bytes": 202569,
+  "sha256": "29d9e660b736fe9198ae7f7eb1503ab50c1abcbcd3db7a209e9e1f3c9239b148"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.5.12Notice.pdf": {
+  "path": "/documents/meetings/23.5.12notice.pdf",
+  "bytes": 205183,
+  "sha256": "f8bc604530d6a2b63d4df33c9e067c7a819b9cacf87907a2307c5219ebba95f7"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.8.18Agenda.pdf": {
+  "path": "/documents/meetings/23.8.18agenda.pdf",
+  "bytes": 106150,
+  "sha256": "e94b436341a370addfca436533f88d4e291c273d8a83a1f740b0ccb8bea35694"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.8.18Minutes.pdf": {
+  "path": "/documents/meetings/23.8.18minutes.pdf",
+  "bytes": 218202,
+  "sha256": "9af41ec884241c1d4ef19728ef1f1f655f2cf06cc242a607f806659b9848584f"
+ },
+ "https://www.lsbd.org/MeetingMinutes/23.8.18Notice.pdf": {
+  "path": "/documents/meetings/23.8.18notice.pdf",
+  "bytes": 150830,
+  "sha256": "6b433dd1feb774d278b48e390e7519f5f0fbd8de576affa97202e86526184436"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.12.6Agenda.pdf": {
+  "path": "/documents/meetings/24.12.6agenda.pdf",
+  "bytes": 111040,
+  "sha256": "5bbeb91a1910e6195f36598698d0e2f64b9f39e90785868f72a797c9085cfdd1"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.12.6Minutes.pdf": {
+  "path": "/documents/meetings/24.12.6minutes.pdf",
+  "bytes": 847842,
+  "sha256": "6a0c092d80b9af18658d1168c464226a4f66dbcef7fce1426be7c82517e627b9"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.12.6Notice.pdf": {
+  "path": "/documents/meetings/24.12.6notice.pdf",
+  "bytes": 155017,
+  "sha256": "dde38cc58f490c4e18e3666f11b1995da2a8b11c9fc3c298a64ac3913f7b92c8"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.3.8Agenda.pdf": {
+  "path": "/documents/meetings/24.3.8agenda.pdf",
+  "bytes": 151001,
+  "sha256": "2b18d4a2c5cecde8470773c365c992c1283801ab2d0bbc7c268b1b59b1f41e4e"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.3.8Minutes.pdf": {
+  "path": "/documents/meetings/24.3.8minutes.pdf",
+  "bytes": 215739,
+  "sha256": "dcf56c957395f83f271c6a2dfef922552b747d1c975eb00604284f6f22d8d4ba"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.3.8Notice.pdf": {
+  "path": "/documents/meetings/24.3.8notice.pdf",
+  "bytes": 254256,
+  "sha256": "305640a8e6483bbec8549efdc06fad07792d804176fc127cdc77dbb91fb72483"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.5.10Agenda.pdf": {
+  "path": "/documents/meetings/24.5.10agenda.pdf",
+  "bytes": 151407,
+  "sha256": "dd688e1f15a3ad10dfc789815e5189a000c9ed1dd066b37411c6a3aa964e4997"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.5.10Minutes.pdf": {
+  "path": "/documents/meetings/24.5.10minutes.pdf",
+  "bytes": 208332,
+  "sha256": "d94542801372cdc22dfaa3bb124ca41910870afd44bdbe2ca49f0e70cd54b358"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.5.10Notice.pdf": {
+  "path": "/documents/meetings/24.5.10notice.pdf",
+  "bytes": 662208,
+  "sha256": "bf0a7543c3cf5ac7ed9bfadc462987def2157697a9499e7acf7e75b4430f86bf"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.8.16Agenda.pdf": {
+  "path": "/documents/meetings/24.8.16agenda.pdf",
+  "bytes": 109198,
+  "sha256": "9eb538e87c6a624c15df7708b42eb67d05397adee4ceed4ca8ce28fb4617f34b"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.8.16Minutes.pdf": {
+  "path": "/documents/meetings/24.8.16minutes.pdf",
+  "bytes": 211163,
+  "sha256": "81caf2b22656dd4d858abbfb64a718e36ffaa7d900ad59266953f2feafacd7a2"
+ },
+ "https://www.lsbd.org/MeetingMinutes/24.8.16Notice.pdf": {
+  "path": "/documents/meetings/24.8.16notice.pdf",
+  "bytes": 251393,
+  "sha256": "451a42957010ae19eaf31fd35141438c13eee0224570477379a77bf34d88e6e8"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.12.5Agenda.pdf": {
+  "path": "/documents/meetings/25.12.5agenda.pdf",
+  "bytes": 641408,
+  "sha256": "baee374e721472e67d855fa3e5e00e11e67bbb907678c79a2dffc1d123d15b52"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.12.5Minutes.pdf": {
+  "path": "/documents/meetings/25.12.5minutes.pdf",
+  "bytes": 345230,
+  "sha256": "52f6dd5f8757f35b8e42530d6857ddce3207b1198353cf3eed7a860d3a481acf"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.12.5Notice.pdf": {
+  "path": "/documents/meetings/25.12.5notice.pdf",
+  "bytes": 646539,
+  "sha256": "8584da1fb32ccb710f499cfe319b9cb9bd1a9fa17857026fcbff83fb5b0fb815"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.3.21Agenda.pdf": {
+  "path": "/documents/meetings/25.3.21agenda.pdf",
+  "bytes": 172142,
+  "sha256": "74218543d4e1ce3cf1f3e0db3b855ee6fa469388d6aa9d4af3ba3ce4ffc1d4ba"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.3.21Minutes.pdf": {
+  "path": "/documents/meetings/25.3.21minutes.pdf",
+  "bytes": 211079,
+  "sha256": "4ec390d11f8da82962329a1e8648f79271b193e02a5ba35096989998b7c3c926"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.3.21Notice.pdf": {
+  "path": "/documents/meetings/25.3.21notice.pdf",
+  "bytes": 665044,
+  "sha256": "9d7ac45e9a8e6887f8fd026bdef0c07d6b5f2881fbf665a37e604d9f5740dd60"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.5.9Agenda.pdf": {
+  "path": "/documents/meetings/25.5.9agenda.pdf",
+  "bytes": 803303,
+  "sha256": "5613d9a315c3385a2cf19e633da63e77e06fd73e1d61d52b33ee3f3b557a361b"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.5.9Minutes.pdf": {
+  "path": "/documents/meetings/25.5.9minutes.pdf",
+  "bytes": 212345,
+  "sha256": "c32dec801dd59ba3c0618461fd38d25ea7d5bf69b841c27852d9b616c5709eb6"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.5.9Notice.pdf": {
+  "path": "/documents/meetings/25.5.9notice.pdf",
+  "bytes": 665022,
+  "sha256": "40e278212ee5ad79f43780825cc87130f55e165fde8ecb5851912e35aa19b0c5"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.8.15Agenda.pdf": {
+  "path": "/documents/meetings/25.8.15agenda.pdf",
+  "bytes": 646737,
+  "sha256": "c714fe06d412784c844ac8b25a30e4810aefcbfacb264cb97f72fcd99f0a9666"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.8.15Minutes.pdf": {
+  "path": "/documents/meetings/25.8.15minutes.pdf",
+  "bytes": 328074,
+  "sha256": "327ab96fbfdccaca0d8ca15c932bb73abec84dc98e436393357a99850e38210b"
+ },
+ "https://www.lsbd.org/MeetingMinutes/25.8.15Notice.pdf": {
+  "path": "/documents/meetings/25.8.15notice.pdf",
+  "bytes": 665625,
+  "sha256": "ee2b6202433eec973b7b80840899412a3c7ff648abdcbb5a1de1c00652387475"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.3.20Agenda.pdf": {
+  "path": "/documents/meetings/26.3.20agenda.pdf",
+  "bytes": 757913,
+  "sha256": "604fe8fead94dead357b27d41c7da2aac4e357a65555c8eb382408556aeab56f"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.3.20Minutes.pdf": {
+  "path": "/documents/meetings/26.3.20minutes.pdf",
+  "bytes": 315871,
+  "sha256": "b79067e5e9ba0bc52c0515d5be5ecd9031510e7962785710c509b8ea2af6fc4d"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.3.20Notice.pdf": {
+  "path": "/documents/meetings/26.3.20notice.pdf",
+  "bytes": 629174,
+  "sha256": "e18ceb5bf2eb1c2db9fc31a9e7cdc6aa651b34680e0dae76c4ec1c8827821f2e"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.5.8Agenda.pdf": {
+  "path": "/documents/meetings/26.5.8agenda.pdf",
+  "bytes": 759843,
+  "sha256": "fd4d567f4304e2323f53c83fd3853df463672e0b05be3162b6f27e4c4edb90cf"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.5.8Minutes.pdf": {
+  "path": "/documents/meetings/26.5.8minutes.pdf",
+  "bytes": 314380,
+  "sha256": "0ebfec9f14fc9882b67dabd8e6b25110e5181ec48a3350b1e2757fc594f855be"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.5.8Notice.pdf": {
+  "path": "/documents/meetings/26.5.8notice.pdf",
+  "bytes": 629214,
+  "sha256": "3b5cc6ee8ff7c71f09b9630891d18d58411964898e14b20417a738462a298826"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.8.14Agenda.pdf": {
+  "path": "/documents/meetings/26.8.14agenda.pdf",
+  "bytes": 606742,
+  "sha256": "4d93b8e4bee18bd49529d665e78355358783bad9b99f48b79a00669851bcfe5e"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.8.14InformalsAgenda.pdf": {
+  "path": "/documents/meetings/26.8.14informalsagenda.pdf",
+  "bytes": 708695,
+  "sha256": "f749e0ae1f846e0154fa911b11344acaa27ca69fbe7b9ceda1f201feffb063a9"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.8.14InformalsNotice.pdf": {
+  "path": "/documents/meetings/26.8.14informalsnotice.pdf",
+  "bytes": 707283,
+  "sha256": "65d0afc9726baa0511cf5d4f961716fb0c8ef06ce5e46f9eb442a58edf1c1075"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.8.14Notice.pdf": {
+  "path": "/documents/meetings/26.8.14notice.pdf",
+  "bytes": 640601,
+  "sha256": "dd24d23a76a481a621adbda60ebfed0da7935a1a6e6a7e31b4ce390869a8deca"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.8.14OMAgenda.pdf": {
+  "path": "/documents/meetings/26.8.14omagenda.pdf",
+  "bytes": 505086,
+  "sha256": "aa602cd1e5bd845a5a14a7508304e9d8e5ca1e1176b12698392d81b0ce391803"
+ },
+ "https://www.lsbd.org/MeetingMinutes/26.8.14OMNotice.pdf": {
+  "path": "/documents/meetings/26.8.14omnotice.pdf",
+  "bytes": 640285,
+  "sha256": "611ec1d14b59a8125fea9079891ee1ba12471efb52bdb53d968c5a2d917256b9"
+ },
+ "https://www.lsbd.org/MeetingMinutes/51217minutes.pdf": {
+  "path": "/documents/meetings/51217minutes.pdf",
+  "bytes": 401885,
+  "sha256": "d4e4c523d70e603e6db2ff7aa3ee93b60ea5ba9441691abe76cc1240d8eb1ed2"
+ },
+ "https://www.lsbd.org/MeetingMinutes/81817minutes.pdf": {
+  "path": "/documents/meetings/81817minutes.pdf",
+  "bytes": 411533,
+  "sha256": "642c13e8ac4c7e6ff56279deadf54d3439383ec87516fcafd7f3ceba6515672e"
+ },
+ "https://www.lsbd.org/MeetingMinutes/Minutes31017.pdf": {
+  "path": "/documents/meetings/minutes31017.pdf",
+  "bytes": 412799,
+  "sha256": "d84ce0716616ff945af50476e8692c321094f51c37fdf6114f5bb8fa9fc2f2b6"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesAug2010.pdf": {
+  "path": "/documents/meetings/minutesaug2010.pdf",
+  "bytes": 112999,
+  "sha256": "884cb4a0bd501f348e0ed54f1c23c89b4e0c1aba6b9ce793417fc19f410c808b"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesAug2012.pdf": {
+  "path": "/documents/meetings/minutesaug2012.pdf",
+  "bytes": 81651,
+  "sha256": "f883b4909be35d03505653a619df465ede1e23372631bd22b7cdd602243d47a4"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesAug2013.pdf": {
+  "path": "/documents/meetings/minutesaug2013.pdf",
+  "bytes": 207181,
+  "sha256": "205a9fb565aed9927f52addc7c92f7eb83d7db34ee435a28ab857d4b0eb3a54b"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesAug2014.pdf": {
+  "path": "/documents/meetings/minutesaug2014.pdf",
+  "bytes": 141065,
+  "sha256": "4ac45b32446f1e36b9821c8784c686ab810f3f00951d05e9a2d67291ecffdf29"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesAug2015.pdf": {
+  "path": "/documents/meetings/minutesaug2015.pdf",
+  "bytes": 157256,
+  "sha256": "b54aed23f098b5071dab8fa0d87747f28a51dfa599365af1b9f52e90cc817acc"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesAug2016.pdf": {
+  "path": "/documents/meetings/minutesaug2016.pdf",
+  "bytes": 400851,
+  "sha256": "b8f4e23bec234fbe799c1c8bfa6a44bef141f4914fad148ac5f2d76d28904d35"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesDec2010.pdf": {
+  "path": "/documents/meetings/minutesdec2010.pdf",
+  "bytes": 272705,
+  "sha256": "f614329691f402f5b001fa057d2a14df8f3b4f6cf484be4f5ec3a95d6ee7c2f8"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesDec2012.pdf": {
+  "path": "/documents/meetings/minutesdec2012.pdf",
+  "bytes": 98817,
+  "sha256": "658095b8531fc7bbf679d48bcc07d5d80b39dc8fbaffcbd1ed00a29f638b4ba0"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesDec2013.pdf": {
+  "path": "/documents/meetings/minutesdec2013.pdf",
+  "bytes": 199278,
+  "sha256": "21e1e3f1eebb7a829b3062f452a7565583f84592171092ab010975a141ed7815"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesDec2014.pdf": {
+  "path": "/documents/meetings/minutesdec2014.pdf",
+  "bytes": 242592,
+  "sha256": "6e047be244fb080e16b3e27f240d3cb4db265505540fa50ed07b783f1928276b"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesDec2015.pdf": {
+  "path": "/documents/meetings/minutesdec2015.pdf",
+  "bytes": 338427,
+  "sha256": "ec9bb432e8c0647962adcc1e18a060216b8cd5a93377fbf3a5964e466102e94e"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesDec2016.pdf": {
+  "path": "/documents/meetings/minutesdec2016.pdf",
+  "bytes": 408286,
+  "sha256": "55c5c89ba6d6e12e0dd5b4d5e388723d1cc7849bc1f2e3f4a2eb81ff6a44ae1e"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesFeb2011.pdf": {
+  "path": "/documents/meetings/minutesfeb2011.pdf",
+  "bytes": 66183,
+  "sha256": "5ec2ec3cdd17189aa45fae276442649071e612857b52bc872305486f5cf2d75e"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesFeb2015.pdf": {
+  "path": "/documents/meetings/minutesfeb2015.pdf",
+  "bytes": 392548,
+  "sha256": "5034f7dad6cac9df0f8d9442a1f6e9e4e2a1585ae242682e94cf5b3a71317846"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesFeb2016.pdf": {
+  "path": "/documents/meetings/minutesfeb2016.pdf",
+  "bytes": 311372,
+  "sha256": "6025c310a32444b46181a22b0df97ff261b512263ec05bae21418a4e98edae14"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesMarch2010.pdf": {
+  "path": "/documents/meetings/minutesmarch2010.pdf",
+  "bytes": 52665,
+  "sha256": "e17451ec8802d6f2c35812d59e66306ab89f64999c68dfb8f29fae9b042eacfd"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesMarch2012.pdf": {
+  "path": "/documents/meetings/minutesmarch2012.pdf",
+  "bytes": 72368,
+  "sha256": "9ff6b01d4cdb956b1306f0953c5cc8dac9ef579922f19c4ae7ace55e4b037571"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesMarch2013.pdf": {
+  "path": "/documents/meetings/minutesmarch2013.pdf",
+  "bytes": 302854,
+  "sha256": "a9eac176076887ca01d66ce72c79060af4607a9912e13a58914ae447d5ef02d6"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesMarch2014.pdf": {
+  "path": "/documents/meetings/minutesmarch2014.pdf",
+  "bytes": 235447,
+  "sha256": "e949b925b1156177bdc3b19d9a4c22cb5ad8e62204bc311aab1927e8bd2bbc7a"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesMay2010.pdf": {
+  "path": "/documents/meetings/minutesmay2010.pdf",
+  "bytes": 52599,
+  "sha256": "2a267b7e695d7ba72eb94ad307c9405adf0258db8cf5da24a9c302c9c6649342"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesMay2012.pdf": {
+  "path": "/documents/meetings/minutesmay2012.pdf",
+  "bytes": 393396,
+  "sha256": "ca66bd1d7d291bb284fc1c02f750c67181d75a545441e9155adb389b07acf390"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesMay2013.pdf": {
+  "path": "/documents/meetings/minutesmay2013.pdf",
+  "bytes": 239728,
+  "sha256": "7c85476a9a7ec1bbf2ffeb898730c017139f561ecedeaf87b381ea51eefb042f"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesMay2014.pdf": {
+  "path": "/documents/meetings/minutesmay2014.pdf",
+  "bytes": 126399,
+  "sha256": "643f2cabf9dfe380b69702704679094fdeffa3cd1bc9eeb7b8fb4a6d10e2f75d"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesMay2015.pdf": {
+  "path": "/documents/meetings/minutesmay2015.pdf",
+  "bytes": 246509,
+  "sha256": "83e7e50311ac93f53c65eda2726dd77253347610d05ea20d03c650235430a3e3"
+ },
+ "https://www.lsbd.org/MeetingMinutes/MinutesMay2016.pdf": {
+  "path": "/documents/meetings/minutesmay2016.pdf",
+  "bytes": 403022,
+  "sha256": "3753719df04327ccdd1597c06e7ce3e7f6e7e6147a33eacf7c49821a721439cc"
+ },
+ "https://www.lsbd.org/Rulemaking/2020Report.pdf": {
+  "path": "/documents/rulemaking/2020report.pdf",
+  "bytes": 109319,
+  "sha256": "1b35cf31b15446ee5d8b63c06484386f8814ed3d7a7dd79d33e95fd124a928c1"
+ },
+ "https://www.lsbd.org/Rulemaking/2021Report.pdf": {
+  "path": "/documents/rulemaking/2021report.pdf",
+  "bytes": 447335,
+  "sha256": "017da034e46a88c4ae6bd0fd86f5f65fa5d80c949fb6e0b396f4d1c72081e44b"
+ },
+ "https://www.lsbd.org/Rulemaking/2022Report.pdf": {
+  "path": "/documents/rulemaking/2022report.pdf",
+  "bytes": 439611,
+  "sha256": "da0fbad29d615119d69db96f062fd5a1bb582b589151f679145b2a685ebc9d67"
+ },
+ "https://www.lsbd.org/Rulemaking/2023Report.pdf": {
+  "path": "/documents/rulemaking/2023report.pdf",
+  "bytes": 543940,
+  "sha256": "24f022e82b4e0023d45a250ea71fa1dc9fd30f79d1992851b362eb518deebc4a"
+ },
+ "https://www.lsbd.org/Rulemaking/2024Report.pdf": {
+  "path": "/documents/rulemaking/2024report.pdf",
+  "bytes": 433674,
+  "sha256": "d6cbfeb6364041b58f6658968ba2bb8f1e4aedfa41c6e83d61ba6be000f8c57d"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI103,306,706,710.pdf": {
+  "path": "/documents/rulemaking/noi103-306-706-710.pdf",
+  "bytes": 541426,
+  "sha256": "2aa87dd673a2465e26dab69a5d41acf7cb5f243c12dd52ae1b0ed4a33b11afe2"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI105.pdf": {
+  "path": "/documents/rulemaking/noi105.pdf",
+  "bytes": 116628,
+  "sha256": "cf7a036c183fc18f6ca8a576ae0f4110bc610315b29f681af71217855af00378"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI120,306,419.pdf": {
+  "path": "/documents/rulemaking/noi120-306-419.pdf",
+  "bytes": 629466,
+  "sha256": "8662dec8ea933ffd3651c2ecb620e55c79e6b26ad7ed7197aeb0066b1b86e021"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI122,128,301,411,1511.pdf": {
+  "path": "/documents/rulemaking/noi122-128-301-411-1511.pdf",
+  "bytes": 114031,
+  "sha256": "cfd3bf47518accafa05e4ac0e16eaf458a5ab5cf450c72ad652963937e1374d8"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI122,301.pdf": {
+  "path": "/documents/rulemaking/noi122-301.pdf",
+  "bytes": 533052,
+  "sha256": "ee83dd40995e217c61f9b60423ff8da8e30692e8dae6bd9dd8f104476a6889a4"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI128,1611,1613,1709,1711.pdf": {
+  "path": "/documents/rulemaking/noi128-1611-1613-1709-1711.pdf",
+  "bytes": 673594,
+  "sha256": "f9e698957068ca6267a769abf611eb8f69fa0765fdfeee033badeaeb7df0829d"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI134,306,706,1505,1607,1611,1613,1709,1711.pdf": {
+  "path": "/documents/rulemaking/noi134-306-706-1505-1607-1611-1613-1709-1711.pdf",
+  "bytes": 156196,
+  "sha256": "c1a722af16746226837aca921f755c898918e4f549cf550dd448df149e221728"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI136.pdf": {
+  "path": "/documents/rulemaking/noi136.pdf",
+  "bytes": 674519,
+  "sha256": "8cb8883c698484c0b80ff82f4a2b622024d149758273507dd3fcbbbc9b6182c8"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI1503,1607,1615.pdf": {
+  "path": "/documents/rulemaking/noi1503-1607-1615.pdf",
+  "bytes": 215826,
+  "sha256": "ed834412d97c613744b52e73eb5fdac98653bd738e92a58472f072ad3dcd0fd2"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI1511.pdf": {
+  "path": "/documents/rulemaking/noi1511.pdf",
+  "bytes": 95771,
+  "sha256": "0da7128adb5898c277beb68985e7eca18e14c9e509e99011499d013c59896edc"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI1611.pdf": {
+  "path": "/documents/rulemaking/noi1611.pdf",
+  "bytes": 539551,
+  "sha256": "3113efebb21b89e535b5abf63c950bdd6bc208e05acb29c8facf61c54899ce11"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI1615.pdf": {
+  "path": "/documents/rulemaking/noi1615.pdf",
+  "bytes": 597909,
+  "sha256": "d5d8ed16169c033577ec14bd8c8025c5ad11071246703bef0d0590327a379a15"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI1709,1711,1713.pdf": {
+  "path": "/documents/rulemaking/noi1709-1711-1713.pdf",
+  "bytes": 654009,
+  "sha256": "4dc22feb02d48e75715f474cf792393f653696a7f9688dde6aa962f4083f6b04"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI203,701.pdf": {
+  "path": "/documents/rulemaking/noi203-701.pdf",
+  "bytes": 170614,
+  "sha256": "30743b15e661527d44292d44c0052e5ee1f0fe264274213bce2ef07aed59d675"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI313.pdf": {
+  "path": "/documents/rulemaking/noi313.pdf",
+  "bytes": 567827,
+  "sha256": "5844a7543f69840edc5836224fc33280ca945b35ed15697b8d13b09e2ca86dcb"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI322,1502.pdf": {
+  "path": "/documents/rulemaking/noi322-1502.pdf",
+  "bytes": 141370,
+  "sha256": "81efa3f35264a2c677504b255f5eb14d6f651f1b2dfee3f7b0ef69a67130abe9"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI322,1607.pdf": {
+  "path": "/documents/rulemaking/noi322-1607.pdf",
+  "bytes": 611308,
+  "sha256": "f1323ede168c410bbae1492f43f7ef93063fb3d20936bbd514023f94dae6f4b5"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI701.pdf": {
+  "path": "/documents/rulemaking/noi701.pdf",
+  "bytes": 101644,
+  "sha256": "aae4c5dd3c6643b1a5ead9e03c2ef0be4d87cebc53b9201c2bef076eb32269ed"
+ },
+ "https://www.lsbd.org/Rulemaking/NOI702.pdf": {
+  "path": "/documents/rulemaking/noi702.pdf",
+  "bytes": 712778,
+  "sha256": "1dc9f42e7b3e0ad81bb0fd3ec6b0943f20cdec75707d06d3088cb1adccacbf3a"
+ },
+ "https://www.lsbd.org/Rulemaking/SR170711.pdf": {
+  "path": "/documents/rulemaking/sr170711.pdf",
+  "bytes": 122984,
+  "sha256": "a0021c06912e1c2997ab8d145a11b3571b985293cd0047e36eba01d0c53d3bea"
+ },
+ "https://www.lsbd.org/Rulemaking/SR171109.pdf": {
+  "path": "/documents/rulemaking/sr171109.pdf",
+  "bytes": 220349,
+  "sha256": "0b04419849f9e0359cb41dd7b5986651974bca6c5cf51017fe1a607a1c62c77a"
+ },
+ "https://www.lsbd.org/Rulemaking/SR180508.pdf": {
+  "path": "/documents/rulemaking/sr180508.pdf",
+  "bytes": 135412,
+  "sha256": "870fe4fa6b797a8bf5695ee878ff7d76ade936fbb2645e70481e478193671d30"
+ },
+ "https://www.lsbd.org/Rulemaking/SR180910.pdf": {
+  "path": "/documents/rulemaking/sr180910.pdf",
+  "bytes": 163165,
+  "sha256": "8b3b9e1c34473c999872213d85f7c511bd44b2d2ad5d8414fedbdca4a2c35ba4"
+ },
+ "https://www.lsbd.org/Rulemaking/SR191014.pdf": {
+  "path": "/documents/rulemaking/sr191014.pdf",
+  "bytes": 381753,
+  "sha256": "e2b99f42f44c81c3b935cee90734605d6abbda056278e4b0a99b3cac425d68aa"
+ },
+ "https://www.lsbd.org/Rulemaking/SR200608.pdf": {
+  "path": "/documents/rulemaking/sr200608.pdf",
+  "bytes": 358688,
+  "sha256": "0f5650bf68fbbb92eac5886a98557a4e33f8867c6b608fe00677fef5fb21735a"
+ },
+ "https://www.lsbd.org/Rulemaking/SR201012.pdf": {
+  "path": "/documents/rulemaking/sr201012.pdf",
+  "bytes": 227367,
+  "sha256": "36eb77a250a7e14e23d3e281df5f1f575531b2c0c9709a8d85ff8f392cb95ba3"
+ },
+ "https://www.lsbd.org/Rulemaking/SR201214.pdf": {
+  "path": "/documents/rulemaking/sr201214.pdf",
+  "bytes": 222210,
+  "sha256": "cb45c0d5dd88d64a3533bbf987beda2f3addd66f928bf8dc45cc8cee8f876767"
+ },
+ "https://www.lsbd.org/Rulemaking/SR210811.pdf": {
+  "path": "/documents/rulemaking/sr210811.pdf",
+  "bytes": 284604,
+  "sha256": "f63a7a5d7d74821322ea6cab94a33b547920688f339d208b2980650315e95cb2"
+ },
+ "https://www.lsbd.org/Rulemaking/SR211220.pdf": {
+  "path": "/documents/rulemaking/sr211220.pdf",
+  "bytes": 335855,
+  "sha256": "a63cb093fb95f959f8622a9fec09a58887812503e44ca8b0a640ff618e560b91"
+ },
+ "https://www.lsbd.org/Rulemaking/SR220810.pdf": {
+  "path": "/documents/rulemaking/sr220810.pdf",
+  "bytes": 287381,
+  "sha256": "8857c16057da904d8ffddbd4bf0103023cffb9a204f85ff74a5eee35bb9d68b2"
+ },
+ "https://www.lsbd.org/Rulemaking/SR220810B.pdf": {
+  "path": "/documents/rulemaking/sr220810b.pdf",
+  "bytes": 279444,
+  "sha256": "0460c8946530bcc0329aeae1203f8096222dbb5f09d09f992588cc37967e6974"
+ },
+ "https://www.lsbd.org/Rulemaking/SR221110.pdf": {
+  "path": "/documents/rulemaking/sr221110.pdf",
+  "bytes": 287240,
+  "sha256": "a2cbb11f073ddeeff5810a6a4ee091bc18c8cfaaea07da4294cf91d67cb03f8c"
+ },
+ "https://www.lsbd.org/Rulemaking/SR230612.pdf": {
+  "path": "/documents/rulemaking/sr230612.pdf",
+  "bytes": 210230,
+  "sha256": "95170c1c0076ce743f454c79b16edb79100241d4418d76189f260504bbd02483"
+ },
+ "https://www.lsbd.org/Rulemaking/SR231212.pdf": {
+  "path": "/documents/rulemaking/sr231212.pdf",
+  "bytes": 198583,
+  "sha256": "da564cc227798b201dcd023aed0a8d49604b789cdd10f7310d590e2639e6d81c"
+ },
+ "https://www.lsbd.org/Rulemaking/SR240313.pdf": {
+  "path": "/documents/rulemaking/sr240313.pdf",
+  "bytes": 196938,
+  "sha256": "3001718294416fe29466254cb368bef55db03e386b0a6c4d9942e415aa861f2e"
+ },
+ "https://www.lsbd.org/Rulemaking/SR250210.pdf": {
+  "path": "/documents/rulemaking/sr250210.pdf",
+  "bytes": 5816998,
+  "sha256": "7f33b1dfdf15596ca3c0c21f4d2511247e527145b69a9c34305ea4b7b8eef651"
+ },
+ "https://www.lsbd.org/Rulemaking/SR250610.pdf": {
+  "path": "/documents/rulemaking/sr250610.pdf",
+  "bytes": 5809701,
+  "sha256": "869d36c9b330f6bff8df789e57b62e433681f99359893a66b045153c641fae40"
+ },
+ "https://www.lsbd.org/Rulemaking/SR251010.pdf": {
+  "path": "/documents/rulemaking/sr251010.pdf",
+  "bytes": 5810208,
+  "sha256": "76c23170c155524e12b2364a09f4cb8598bf7d2979ca8fc3de02928aac18ce80"
+ },
+ "https://www.lsbd.org/applications/46v33.pdf": {
+  "path": "/documents/applications/46v33.pdf",
+  "bytes": 823655,
+  "sha256": "182053d9fdfc9ed7b78a8ed3473d25d6133af7df742adf876440eb385e26e199"
+ },
+ "https://www.lsbd.org/applications/ApprovedRadiology.pdf": {
+  "path": "/documents/applications/approvedradiology.pdf",
+  "bytes": 80559,
+  "sha256": "811e8392558dc82ed51e2c0aa17aca30e021ebda299ee284634698e4cf6ee80a"
+ },
+ "https://www.lsbd.org/applications/DentalPracticeAct.pdf": {
+  "path": "/documents/applications/dentalpracticeact.pdf",
+  "bytes": 414846,
+  "sha256": "a0433d12101398b4ed1ae164d35d635243329dd556132ee0f85ded75cfee9d90"
+ },
+ "https://www.lsbd.org/applications/EDDA-Application.pdf": {
+  "path": "/documents/applications/edda-application.pdf",
+  "bytes": 160875,
+  "sha256": "c15508d86240e8bbbddd40b9a31398123bd662bac5d9b566c355e32084ab52b0"
+ },
+ "https://www.lsbd.org/applications/EmployerChange.pdf": {
+  "path": "/documents/applications/employerchange.pdf",
+  "bytes": 271958,
+  "sha256": "49afe746f0bcbfc9a13dc27c205ab707a319258e650ed5c8fb66a9eb62ef5a9b"
+ },
+ "https://www.lsbd.org/applications/ExpungementApplication.pdf": {
+  "path": "/documents/applications/expungementapplication.pdf",
+  "bytes": 63281,
+  "sha256": "85385a4e25950ebc7675e043cc4a4372ef3d2e8b68e23d7fb111e03a92987b87"
+ },
+ "https://www.lsbd.org/applications/GeneralAnesthesiaApplication.pdf": {
+  "path": "/documents/applications/generalanesthesiaapplication.pdf",
+  "bytes": 420508,
+  "sha256": "4e16b77c2aed6ba4025673c20b1a5fe3e1fe919681170d3111db722cd35673a7"
+ },
+ "https://www.lsbd.org/applications/HIV-HBV-HCVForm.pdf": {
+  "path": "/documents/applications/hiv-hbv-hcvform.pdf",
+  "bytes": 195924,
+  "sha256": "ede479d09cce7f03b24d584e4b9e6f3861690023fa0d77673e40c4a3288ceef1"
+ },
+ "https://www.lsbd.org/applications/Hygiene%20Anesthesia%20Application.pdf": {
+  "path": "/documents/applications/hygiene-anesthesia-application.pdf",
+  "bytes": 385947,
+  "sha256": "96d83f965946833c4988462be7c259edf57dab096bbd8df17e4af27353be5ac4"
+ },
+ "https://www.lsbd.org/applications/LBEApplicationDental.pdf": {
+  "path": "/documents/applications/lbeapplicationdental.pdf",
+  "bytes": 1453304,
+  "sha256": "fb486713790e335495434e3c9b37d4f5a735f74e3960cdc2c6d4c8a75eb58f4b"
+ },
+ "https://www.lsbd.org/applications/LBEApplicationHygiene.pdf": {
+  "path": "/documents/applications/lbeapplicationhygiene.pdf",
+  "bytes": 1448400,
+  "sha256": "1963fb648cf04b9fad4a5465513070bed10ad49b4d7fb4d42389fd0c01800721"
+ },
+ "https://www.lsbd.org/applications/Local%20Anesthesia%20Affidavit.pdf": {
+  "path": "/documents/applications/local-anesthesia-affidavit.pdf",
+  "bytes": 186292,
+  "sha256": "2b3fa323a90ad49333fc0f1cf82904dcdaa95f1b7e3c7a55861fdefacbc14523"
+ },
+ "https://www.lsbd.org/applications/MailingHomeAddress.pdf": {
+  "path": "/documents/applications/mailinghomeaddress.pdf",
+  "bytes": 314401,
+  "sha256": "c8799cc9a206477e97214d00d12bc0d9cc05f1de367976383468e5b000246fd8"
+ },
+ "https://www.lsbd.org/applications/ModerateApplication.pdf": {
+  "path": "/documents/applications/moderateapplication.pdf",
+  "bytes": 419851,
+  "sha256": "85f2f8fd6840caa9d01c2b9724ff0b611b982f8bd422908b6f26d585f39fe773"
+ },
+ "https://www.lsbd.org/applications/Nitrous%20Oxide%20Application.pdf": {
+  "path": "/documents/applications/nitrous-oxide-application.pdf",
+  "bytes": 231967,
+  "sha256": "725ccf9c6e1a797df78af409fa1f9677c8b554675374bc64a009e7fe0405f794"
+ },
+ "https://www.lsbd.org/applications/PracticeLocation.pdf": {
+  "path": "/documents/applications/practicelocation.pdf",
+  "bytes": 273076,
+  "sha256": "acc8b2a23fdc002940f8ffab933a9909cb50f5d90cfde6464492a7af9e227c55"
+ },
+ "https://www.lsbd.org/applications/hygienenitrousoxideapplication.pdf": {
+  "path": "/documents/applications/hygienenitrousoxideapplication.pdf",
+  "bytes": 249467,
+  "sha256": "fb912c332ec1a14be36c814b5bd871094890228ff0fa8027bc884b5ab1b5e8f7"
+ },
+ "https://www.lsbd.org/bulletins/bulletin2011.pdf": {
+  "path": "/documents/bulletins/bulletin2011.pdf",
+  "bytes": 1026269,
+  "sha256": "cb070bdc53c93d0196a6c1f778e57780260aa633bb1b08dcc0024caa349e383d"
+ },
+ "https://www.lsbd.org/bulletins/bulletin2012.pdf": {
+  "path": "/documents/bulletins/bulletin2012.pdf",
+  "bytes": 1105442,
+  "sha256": "356c67369ce44135a5abcf7c4d60ba9e8758053e3b58c5b72bc2d6a369b345b2"
+ },
+ "https://www.lsbd.org/bulletins/bulletin2013.pdf": {
+  "path": "/documents/bulletins/bulletin2013.pdf",
+  "bytes": 1187804,
+  "sha256": "a6597890d8cb7a01e74008e457c589d48db1d085b4e49a1c6d98af37b2cf2917"
+ },
+ "https://www.lsbd.org/bulletins/bulletin2014.pdf": {
+  "path": "/documents/bulletins/bulletin2014.pdf",
+  "bytes": 762097,
+  "sha256": "975664fa8de5cae7f7dfe3e6860248e2fc7bf48c168f814e5e4b8468ea10c589"
+ },
+ "https://www.lsbd.org/bulletins/bulletin2015.pdf": {
+  "path": "/documents/bulletins/bulletin2015.pdf",
+  "bytes": 659847,
+  "sha256": "e6cd9f097c6a53cf1ce23d499201f38b3844227814742216b8b9c5ddca868b0b"
+ },
+ "https://www.lsbd.org/bulletins/bulletin2016.pdf": {
+  "path": "/documents/bulletins/bulletin2016.pdf",
+  "bytes": 681990,
+  "sha256": "fa9fd4385bfd24aeb1b00cd66e295580f8caab0972618dda8b01e9d3908c45bf"
+ },
+ "https://www.lsbd.org/bulletins/bulletin2017.pdf": {
+  "path": "/documents/bulletins/bulletin2017.pdf",
+  "bytes": 409225,
+  "sha256": "57ecfef457c9aebc1a6cc094b3a8ec3f9c4364d6bfc5422d8fd32821338e08d7"
+ },
+ "https://www.lsbd.org/bulletins/bulletin2018.pdf": {
+  "path": "/documents/bulletins/bulletin2018.pdf",
+  "bytes": 540430,
+  "sha256": "4acbc47138f1bc5adf757784826cc53a89c45ffcee467f2d105ab01ea5788fff"
+ },
+ "https://www.lsbd.org/forms/2023newdental.pdf": {
+  "path": "/documents/forms/2023newdental.pdf",
+  "bytes": 99489,
+  "sha256": "598d60b089aaf62c2d21b5120053b43be9bb0f76a31864334a1aaa0ecf0f4f8a"
+ },
+ "https://www.lsbd.org/forms/2023newhygiene.pdf": {
+  "path": "/documents/forms/2023newhygiene.pdf",
+  "bytes": 98109,
+  "sha256": "4dd6ce39084a8ba7f48e731e2a1b37fcf18ece14d40920309cbd944c4f1cc81b"
+ },
+ "https://www.lsbd.org/forms/2023reneweddental.pdf": {
+  "path": "/documents/forms/2023reneweddental.pdf",
+  "bytes": 115692,
+  "sha256": "12cdce24199a4e9659d6845671d3a7b6b4d510af0a978f88c7d793c627f7feeb"
+ },
+ "https://www.lsbd.org/forms/2023renewedhygiene.pdf": {
+  "path": "/documents/forms/2023renewedhygiene.pdf",
+  "bytes": 108107,
+  "sha256": "b3dd5b8a41a09f3d6a4fa89730ca0135fc58318bdeb918552c9e313562752d24"
+ },
+ "https://www.lsbd.org/forms/2024newdental.pdf": {
+  "path": "/documents/forms/2024newdental.pdf",
+  "bytes": 98333,
+  "sha256": "dcaef9d94fa6fc4a12db6258e4082a7decf1e86aaecd1c306ab3519950ef7215"
+ },
+ "https://www.lsbd.org/forms/2024newhygiene.pdf": {
+  "path": "/documents/forms/2024newhygiene.pdf",
+  "bytes": 103063,
+  "sha256": "75a0a0fca5a0dfbe8876ed148733062009add886d3bcefad05b4f71c5af51769"
+ },
+ "https://www.lsbd.org/forms/2024reneweddental.pdf": {
+  "path": "/documents/forms/2024reneweddental.pdf",
+  "bytes": 112965,
+  "sha256": "1fec635ee49cb81d0e62b4de2a4c5a6160cc422d199001546fd335a103de37d3"
+ },
+ "https://www.lsbd.org/forms/2024renewedhygiene.pdf": {
+  "path": "/documents/forms/2024renewedhygiene.pdf",
+  "bytes": 107270,
+  "sha256": "653cfe67c9a5d8e9f9590615bce223495fa56eb1a65cf6068fad99c60bce9313"
+ },
+ "https://www.lsbd.org/forms/2025newdental.pdf": {
+  "path": "/documents/forms/2025newdental.pdf",
+  "bytes": 186963,
+  "sha256": "fa7a28eb2a9bf6ecf95ba2eee1c6b125c4e91fe82514a9181231b19e4f11d5cf"
+ },
+ "https://www.lsbd.org/forms/2025newhygiene.pdf": {
+  "path": "/documents/forms/2025newhygiene.pdf",
+  "bytes": 195458,
+  "sha256": "9aeac3e1eb9f5070bedd00d5ccd39ff3a6309e70c339e6268e89eb81f1b155fa"
+ },
+ "https://www.lsbd.org/forms/2025reneweddental.pdf": {
+  "path": "/documents/forms/2025reneweddental.pdf",
+  "bytes": 205071,
+  "sha256": "91baae39eaa95e00876cc1c68d746b2dff1dfb7b59f5655683bd9a12418ac837"
+ },
+ "https://www.lsbd.org/forms/2025renewedhygiene.pdf": {
+  "path": "/documents/forms/2025renewedhygiene.pdf",
+  "bytes": 208593,
+  "sha256": "bf2815a466e066c53bbc4bd9bd3e2e948be1e6485701187f244cea019cdd7e73"
+ },
+ "https://www.lsbd.org/forms/ADApolicy.pdf": {
+  "path": "/documents/forms/adapolicy.pdf",
+  "bytes": 204213,
+  "sha256": "029260766ca603250ac58a74c98e03212823b543cb03f721ea5ff7b881aadbbd"
+ },
+ "https://www.lsbd.org/forms/AffidavitNoCDS.pdf": {
+  "path": "/documents/forms/affidavitnocds.pdf",
+  "bytes": 111369,
+  "sha256": "e00585ce1287e0ac7f0b1ebc0f21fea6a560b2d38907cc4eec1e85e75826a05f"
+ },
+ "https://www.lsbd.org/forms/AnesthesiaInspection.pdf": {
+  "path": "/documents/forms/anesthesiainspection.pdf",
+  "bytes": 127550,
+  "sha256": "babd3f302594d8e2ac86d7eab320899387d55ba70a238498133df13f63df0f4f"
+ },
+ "https://www.lsbd.org/forms/CDCInspection.pdf": {
+  "path": "/documents/forms/cdcinspection.pdf",
+  "bytes": 215214,
+  "sha256": "0bc7dabd8d3dbfc3c7684cc75cfc33b65426c6b8e79e18107d577a33fd525892"
+ },
+ "https://www.lsbd.org/forms/CEBCommonProblems.pdf": {
+  "path": "/documents/forms/cebcommonproblems.pdf",
+  "bytes": 371696,
+  "sha256": "666b882e3a225fecfaa1d79140332b29c5a7fe369de1df7a0625ae717a7f627b"
+ },
+ "https://www.lsbd.org/forms/ComplaintForm.pdf": {
+  "path": "/documents/forms/complaintform.pdf",
+  "bytes": 172538,
+  "sha256": "594d1c884f62a5bb8edade7bd8b1ab46b411288b48601e8f0ecdbf3152c24142"
+ },
+ "https://www.lsbd.org/forms/ControlledSubstancesLog.pdf": {
+  "path": "/documents/forms/controlledsubstanceslog.pdf",
+  "bytes": 74536,
+  "sha256": "7dc4f271f46c1838cd49af9213d9a7b9a65399b346e33396b029a4ad537b4ca0"
+ },
+ "https://www.lsbd.org/forms/DentalLBC%20LA%20resident.pdf": {
+  "path": "/documents/forms/dentallbc-la-resident.pdf",
+  "bytes": 1477627,
+  "sha256": "d45cd946e2e6f84cd36529ba4b378d9353c6ab77436cf0bbc0be66f3ac2421e9"
+ },
+ "https://www.lsbd.org/forms/Dentalinfo.pdf": {
+  "path": "/documents/forms/dentalinfo.pdf",
+  "bytes": 265000,
+  "sha256": "24dca1e38fba496ce3aa270d81d80611bdd8fcf8e218828913b6070b7c9ef25e"
+ },
+ "https://www.lsbd.org/forms/HBVDeclination.pdf": {
+  "path": "/documents/forms/hbvdeclination.pdf",
+  "bytes": 180225,
+  "sha256": "907aa7715783992f5a69d46c016caedf47eec89d4a77a0fd86bcac63a2cf5010"
+ },
+ "https://www.lsbd.org/forms/HygieneLBC%20LA%20resident.pdf": {
+  "path": "/documents/forms/hygienelbc-la-resident.pdf",
+  "bytes": 1445412,
+  "sha256": "93cc1aa31737465c9545bc6df79b2c04f64dd994c8ad81f0ffe229ea7981d5d0"
+ },
+ "https://www.lsbd.org/forms/Hygieneinfo.pdf": {
+  "path": "/documents/forms/hygieneinfo.pdf",
+  "bytes": 220194,
+  "sha256": "82f5fa9b3ca5aa1cb6cd84ef5c6ff4d4bf21c7e4d5768167d438e6486d121b42"
+ },
+ "https://www.lsbd.org/forms/InspectionNotice.pdf": {
+  "path": "/documents/forms/inspectionnotice.pdf",
+  "bytes": 294061,
+  "sha256": "c922288aa5422a3da2c9dc2a60d83ef44742c25366c9b9867a7c8858437daf93"
+ },
+ "https://www.lsbd.org/forms/dentallbc.pdf": {
+  "path": "/documents/forms/dentallbc.pdf",
+  "bytes": 1757042,
+  "sha256": "29b0d991a45932dc430c305818dcd761bde9d4ee9eff0ccb1376c5bb12758d51"
+ },
+ "https://www.lsbd.org/forms/hygienelbc.pdf": {
+  "path": "/documents/forms/hygienelbc.pdf",
+  "bytes": 1641335,
+  "sha256": "c4c867b16f040d104846ea8e9d9fbf9cb62bb3c20d261f31e53a133ef38e24e9"
+ },
+ "https://www.lsbd.org/forms/mobilepermit.pdf": {
+  "path": "/documents/forms/mobilepermit.pdf",
+  "bytes": 286688,
+  "sha256": "eb28b898e72cec5cc6411ce12692f5e6d803cb3450aae0dd0b4c37d49afa23da"
+ },
+ "https://www.lsbd.org/forms/portablepermit.pdf": {
+  "path": "/documents/forms/portablepermit.pdf",
+  "bytes": 285458,
+  "sha256": "c957b5190164ca78b3d6525a45d6b287291dff2af75d60981305425b83406e4e"
+ },
+ "https://www.lsbd.org/forms/restrictedapplication.pdf": {
+  "path": "/documents/forms/restrictedapplication.pdf",
+  "bytes": 369015,
+  "sha256": "0c5f9ba023e056ae6075656beb25982360f68a98b6d695b2c19af3e703e64da3"
+ },
+ "https://www.lsbd.org/forms/sexualharassmentpolicy.pdf": {
+  "path": "/documents/forms/sexualharassmentpolicy.pdf",
+  "bytes": 129105,
+  "sha256": "8508f401f41d7a88c891a0de90016f65a2af09a87ab85abc44cce14d9df15d37"
+ },
+ "https://www.lsbd.org/meetingminutes/minutesaug2011.pdf": {
+  "path": "/documents/meetings/minutesaug2011.pdf",
+  "bytes": 110632,
+  "sha256": "313b1a63e4292de2b49dea94f244534762115d02471599ca12e72345f40aaa92"
+ },
+ "https://www.lsbd.org/meetingminutes/minutesdec2011.pdf": {
+  "path": "/documents/meetings/minutesdec2011.pdf",
+  "bytes": 188094,
+  "sha256": "1e44c2b5f46993eee3c4c96878e919fd9da52f25f279f5c28bffbf1c1bc60f40"
+ },
+ "https://www.lsbd.org/meetingminutes/minutesmay2011.pdf": {
+  "path": "/documents/meetings/minutesmay2011.pdf",
+  "bytes": 96774,
+  "sha256": "08f288a526f6030116924f56986576f8c477286b794cc7cf23a45114f92cbbd8"
+ }
+}

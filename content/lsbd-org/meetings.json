@@ -1,0 +1,1455 @@
+{
+  "meetings": [
+    {
+      "date": "2026-08-14",
+      "datePrecision": "day",
+      "time": null,
+      "type": "disciplinary",
+      "title": "Disciplinary Oversight Committee Informal Conferences",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.8.14InformalsNotice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.8.14InformalsAgenda.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "datePrecision": "day",
+      "time": null,
+      "type": "office_management",
+      "title": "Office Management Committee Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.8.14OMNotice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.8.14OMAgenda.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.8.14Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.8.14Agenda.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-08",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.5.8Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.5.8Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.5.8Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2026-03-20",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.3.20Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.3.20Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/26.3.20Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2025-12-05",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.12.5Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.12.5Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.12.5Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2025-08-15",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.8.15Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.8.15Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.8.15Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2025-05-09",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.5.9Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.5.9Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.5.9Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2025-03-21",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.3.21Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.3.21Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/25.3.21Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2024-12-06",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.12.6Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.12.6Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.12.6Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2024-08-16",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.8.16Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.8.16Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.8.16Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2024-05-10",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.5.10Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.5.10Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.5.10Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2024-03-08",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.3.8Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.3.8Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/24.3.8Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2023-12-08",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.12.8Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.12.8Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.12.8Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2023-08-18",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.8.18Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.8.18Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.8.18Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2023-05-12",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.5.12Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.5.12Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.5.12Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2023-03-10",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.3.10Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.3.10Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/23.3.10Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2022-12-02",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": "Page lists this meeting under the date range \"December 2-3, 2022\".",
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.12.2Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.12.2Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.12.2Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2022-08-19",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.8.19Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.8.19Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.8.19Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2022-05-06",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.5.6Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.5.6Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.5.6Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2022-03-11",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.3.11Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.3.11Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/22.3.11Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2021-12-10",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": "Page lists this meeting under the date range \"December 10-11, 2021\".",
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.12.11Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.12.11Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.12.11Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2021-09-28",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.9.28Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.9.28Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.9.28Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2021-08-20",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.8.20Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.8.20Agenda.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2021-05-14",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.5.14Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.5.14Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.5.14Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2021-03-05",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "minutes.htm",
+      "documents": [
+        {
+          "docType": "notice",
+          "title": "Public Notice",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.3.5Notice.pdf"
+        },
+        {
+          "docType": "agenda",
+          "title": "Agenda",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.3.5Agenda.pdf"
+        },
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/21.3.5Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2020-12-05",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/20.12.5Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2020-08-14",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/20.8.14Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2020-07-10",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/20.7.10Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2020-05-22",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/20.5.22Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2020-05-15",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/20.5.15Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2020-03-06",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/20.3.6Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2019-12-06",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/19.12.6Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2019-08-16",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/19.8.16Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2019-05-17",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/19.5.17Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2019-03-15",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/19.3.15Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2018-12-01",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/18.12.1Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2018-10-05",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/18.10.5Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2018-08-17",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/18.8.17Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2018-05-11",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/18.5.11Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2018-02-23",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/18.2.23Minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2017-12-02",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/12217minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2017-08-18",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/81817minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2017-05-12",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/51217minutes.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2017-03-10",
+      "datePrecision": "day",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/Minutes31017.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2016-12-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesDec2016.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2016-08-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesAug2016.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2016-05-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesMay2016.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2016-02-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesFeb2016.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2015-12-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesDec2015.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2015-08-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesAug2015.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2015-05-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesMay2015.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2015-02-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesFeb2015.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2014-12-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesDec2014.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2014-08-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesAug2014.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2014-05-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesMay2014.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2014-03-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesMarch2014.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2013-12-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesDec2013.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2013-08-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesAug2013.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2013-05-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesMay2013.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2013-03-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesMarch2013.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2012-12-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesDec2012.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2012-08-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesAug2012.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2012-05-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesMay2012.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2012-03-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesMarch2012.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2011-12-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/meetingminutes/minutesdec2011.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2011-08-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/meetingminutes/minutesaug2011.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2011-05-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/meetingminutes/minutesmay2011.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2011-02-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesFeb2011.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2010-12-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesDec2010.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2010-08-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesAug2010.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2010-05-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesMay2010.pdf"
+        }
+      ]
+    },
+    {
+      "date": "2010-03-01",
+      "datePrecision": "month",
+      "time": null,
+      "type": "board",
+      "title": "Board Meeting",
+      "description": null,
+      "sourcePage": "pastminutes.htm",
+      "documents": [
+        {
+          "docType": "minutes",
+          "title": "Minutes",
+          "url": "https://www.lsbd.org/MeetingMinutes/MinutesMarch2010.pdf"
+        }
+      ]
+    }
+  ],
+  "unplaced": [
+    {
+      "url": "https://www.lsbd.org/MeetingMinutes/21.12.10RulemakingAgenda.pdf",
+      "page": "minutes.htm",
+      "text": "Minutes",
+      "reason": "Shown as the 'Minutes' link of the August 20, 2021 board meeting, but the file is a different document (file name: a rulemaking agenda dated 2021-12-10). The page lists no rulemaking meeting to attach it to, so it is not placed. The real minutes of the August 20, 2021 meeting are not linked from the page."
+    },
+    {
+      "url": "https://www.lsbd.org/MeetingMinutes/21.3.5AnesthesiaNotice.pdf",
+      "page": "minutes.htm",
+      "text": "",
+      "reason": "Only ever linked with empty link text (invisible on the page), 16 time(s), in the rows for: March 10, 2023; May 12, 2023; August 18, 2023; December 8, 2023; March 8, 2024; May 10, 2024; August 16, 2024; December 6, 2024; March 21, 2025; August 15, 2025; December 5, 2025; March 20, 2026; May 8, 2026; August 14, 2026. Treated as a leftover anchor from page editing; the page shows no meeting of this kind on the file-name date (2021-03-05)."
+    },
+    {
+      "url": "https://www.lsbd.org/MeetingMinutes/21.8.20InformalsAgenda.pdf",
+      "page": "minutes.htm",
+      "text": "",
+      "reason": "Only ever linked with empty link text (invisible on the page), 1 time(s), in the rows for: September 28, 2021. Treated as a leftover anchor from page editing; the page shows no meeting of this kind on the file-name date (2021-08-20)."
+    },
+    {
+      "url": "https://www.lsbd.org/MeetingMinutes/21.8.20InformalsNotice.pdf",
+      "page": "minutes.htm",
+      "text": "",
+      "reason": "Only ever linked with empty link text (invisible on the page), 2 time(s), in the rows for: August 20, 2021; September 28, 2021. Treated as a leftover anchor from page editing; the page shows no meeting of this kind on the file-name date (2021-08-20)."
+    }
+  ],
+  "notes": [
+    "minutes.htm lists the date \"December 4, 2026\" with no meeting name and no documents under it; no entry was created because the page does not say what kind of meeting it is.",
+    "Extra field datePrecision ('day' or 'month') was added to every meeting. pastminutes.htm gives only a year heading and a month name (plus a day for 'May 15' / 'May 22' 2020). Where datePrecision is 'month' (2010-2016, 28 meetings) the file name has no day either, so the day in 'date' is a placeholder 01, NOT the real meeting day.",
+    "pastminutes.htm, 2018-2020: the day comes from the YY.M.D file name; the page states only the month (it agrees with the page's month/year in every case, and with the day for 'May 15' and 'May 22' 2020).",
+    "pastminutes.htm, 2017: file names are read as MDDYY (Minutes31017 = 2017-03-10, 51217minutes = 2017-05-12, 81817minutes = 2017-08-18, 12217minutes = 2017-12-02); the page states only the month, which agrees.",
+    "pastminutes.htm does not say what kind of meeting each month's minutes are for (page heading is 'Past Minutes'). All 47 are recorded as type 'board' / title 'Board Meeting' on the assumption that they are board meeting minutes; off-cycle ones (October 2018; May 15, May 22 and July 2020) may have been special meetings but the page does not say.",
+    "Titles are the page's wording in title case: page text 'Board meeting' -> 'Board Meeting'; 'Disciplinary Oversight Committee informal conferences' -> 'Disciplinary Oversight Committee Informal Conferences'; 'Office Management Committee meeting' -> 'Office Management Committee Meeting'.",
+    "Document titles are generated ('Public Notice', 'Agenda', 'Minutes'). On minutes.htm the notice is the link on the meeting's name (column 2), the agenda and minutes are the links labelled 'Agenda' and 'Minutes' (columns 3 and 4).",
+    "No meeting time, location, cancellation or special-meeting text appears on either page, so time is null everywhere and description is null except for the two date ranges below.",
+    "Date vs file name disagreement: the board meeting under the heading 'December 10-11, 2021' is dated 2021-12-10 (first day of the range the HTML states), but its three files are named 21.12.11*.pdf (Dec 11).",
+    "The heading 'December 2-3, 2022' is dated 2022-12-02 (first day of the stated range); its files are named 22.12.2*.pdf, which agrees.",
+    "August 20, 2021 board meeting has no minutes document: its 'Minutes' link points at MeetingMinutes/21.12.10RulemakingAgenda.pdf (see unplaced).",
+    "MeetingMinutes/21.3.5AnesthesiaNotice.pdf is attached by the HTML, with empty link text, to 16 rows under 14 dates from March 2023 to August 2026 (never to the March 5, 2021 row); 21.8.20InformalsNotice.pdf to the Aug 20 and Sep 28, 2021 rows and 21.8.20InformalsAgenda.pdf to the Sep 28, 2021 row, also with empty text. None is placed in a meeting; all three are in unplaced. If wanted, the two Informals files would by file name form a 'disciplinary' meeting on 2021-08-20 and the anesthesia notice an anesthesia-committee meeting on 2021-03-05, but the page shows neither meeting.",
+    "pastminutes.htm repeats four links with whitespace-only text next to the following bullet (MinutesMay2013, MinutesAug2015, 18.8.17Minutes, 20.5.22Minutes); each URL is placed once, in its own month.",
+    "No custom type keys were needed: every meeting placed is 'board', 'disciplinary' or 'office_management'. 'nominating' and 'act454' do not occur on these pages.",
+    "August 14, 2026 has three separate entries (board, disciplinary, office_management); none has minutes linked."
+  ]
+}
