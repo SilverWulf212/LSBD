@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run tests/sync tests/app",
     "test:it": "vitest run tests/it --passWithNoTests --no-file-parallelism",
+    "test:e2e": "playwright test",
     "sync:bootstrap": "tsx scripts/sync/bootstrap-raw.ts",
     "sync": "tsx scripts/sync/run.ts",
     "sync:full": "tsx scripts/sync/run.ts --mode full",
@@ -59,6 +60,7 @@
     "esbuild": ">=0.25.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
