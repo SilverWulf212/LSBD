@@ -326,8 +326,7 @@ export async function loadLicenseeRelations(
   caps: DetailCaps,
 ): Promise<LicenseeRelations> {
   const key = core.person.key;
-  // permitsForHolder has its own fixed LIMIT (200) and the live maximum is 13, so it is never reported as cut.
-  const permits: Section<PermitRow> = { rows: await permitsForHolder(q, key), truncated: false };
+  const permits: Section<PermitRow> = await permitsForHolder(q, key);
 
   const dentistOf = cut((await q(DENTIST_OF_SQL, [key])).map((r) => mapAffiliation("dentist-of", r)), AFFILIATION_LIMIT);
   const affiliatedTo = cut((await q(AFFILIATED_TO_SQL, [key])).map((r) => mapAffiliation("affiliated-to", r)), AFFILIATION_LIMIT);

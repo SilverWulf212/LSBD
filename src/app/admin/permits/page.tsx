@@ -7,6 +7,7 @@ import { formatCentralDate } from "@/lib/central-time";
 import type { PermitRow } from "@/lib/staff-permits";
 import type { RawSearchParams } from "@/lib/staff-query";
 import { ServerTable, type ServerTableColumn } from "@/components/admin/server-table";
+import { PermitHolder } from "@/components/admin/permit-holder";
 import { NotLinked } from "@/components/admin/not-linked";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -44,23 +45,7 @@ export default async function PermitsPage({
   const columns: ServerTableColumn<PermitRow>[] = [
     {
       header: "Holder",
-      cell: (r) => {
-        if (r.holderKey === null) {
-          return (
-            <>
-              {r.dentistId !== null ? `Dentist id ${r.dentistId}` : "no holder recorded"} <NotLinked />
-            </>
-          );
-        }
-        const name = trim(r.holderName) ?? `Key ${r.holderKey}`;
-        return canOpenLicensee ? (
-          <Link href={`/admin/licensees/${r.holderKey}`} className="font-medium text-primary hover:underline">
-            {name}
-          </Link>
-        ) : (
-          name
-        );
-      },
+      cell: (r) => <PermitHolder row={r} canOpenLicensee={canOpenLicensee} />,
     },
     { header: "Licence no.", cell: (r) => trim(r.holderLicenseNumber) ?? "—" },
     { header: "Kind", cell: (r) => (r.kind === "office" ? "Office" : "Personal") },
@@ -71,9 +56,9 @@ export default async function PermitsPage({
       header: "Firm",
       cell: (r) => {
         if (r.kind !== "office") return "—";
-        return r.firmId !== null && trim(r.firmName) ? (
+        return r.firmId !== null ? (
           <Link href={`/admin/firms/${r.firmId}`} className="text-primary hover:underline">
-            {trim(r.firmName)}
+            {trim(r.firmName) ?? `Firm ${r.firmId}`}
           </Link>
         ) : (
           <>
@@ -85,6 +70,8 @@ export default async function PermitsPage({
   ];
 
   const f = data?.filters;
+  // A hand-edited ?type=nitrous still selects the "Nitrous" option.
+  const selectedType = data?.options.types.find((t) => t.toLowerCase() === f?.type.toLowerCase()) ?? f?.type ?? "";
 
   return (
     <div className="space-y-6">
@@ -109,7 +96,7 @@ export default async function PermitsPage({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="type">Type</Label>
-              <select id="type" name="type" defaultValue={f?.type ?? ""} className={SELECT_CLASS}>
+              <select id="type" name="type" defaultValue={selectedType} className={SELECT_CLASS}>
                 <option value="">All</option>
                 {data?.options.types.map((t) => (
                   <option key={t} value={t}>{t}</option>

@@ -99,6 +99,19 @@ describe("staff data gates", () => {
     }
   });
 
+  it("each binding gates on the capability its screen needs", () => {
+    const need: Record<string, string> = {
+      getLicenseeList: "licensees.read", getLicenseeDetail: "licensees.read",
+      getPermitList: "permits.read", getFirmList: "permits.read", getFirmDetail: "permits.read",
+    };
+    const parts = dataParts();
+    for (const [name, cap] of Object.entries(need)) {
+      const part = parts.find((p) => p.startsWith(name + "("));
+      expect(part, name).toBeDefined();
+      expect(part, name).toContain(`requireCapability("${cap}")`);
+    }
+  });
+
   it("no auth or db call sits inside a withStaffRo callback", () => {
     for (const part of dataParts()) {
       const inside = part.slice(part.indexOf("withStaffRo(") + "withStaffRo(".length);

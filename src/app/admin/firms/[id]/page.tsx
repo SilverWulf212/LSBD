@@ -5,7 +5,9 @@ import { requireCapability } from "@/lib/auth-utils";
 import { can } from "@/lib/auth-capabilities";
 import { getFirmDetail } from "@/lib/staff-data";
 import { formatCentralDate, formatCentralDateTime } from "@/lib/central-time";
+import { FIRM_PERMITS_LIMIT } from "@/lib/staff-permits";
 import { safeEmailHref, safeUrlHref } from "@/lib/staff-links";
+import { PermitHolder } from "@/components/admin/permit-holder";
 import { NotLinked } from "@/components/admin/not-linked";
 import { PrintButton } from "@/components/admin/print-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,8 +51,7 @@ function phone(num: string | null, ext: string | null): string | null {
 }
 
 /** A link only when safeHref approved the value; otherwise the stored text, unlinked. */
-function MaybeLink({ text, href }: { text: string | null; href: string | null }) {
-  if (text === null) return null;
+function MaybeLink({ text, href }: { text: string; href: string | null }) {
   return href ? (
     <a href={href} className="text-primary hover:underline" rel="noopener noreferrer">
       {text}
@@ -88,7 +89,8 @@ export default async function FirmDetailPage({ params }: { params: Promise<{ id:
   }
   if (!data) notFound();
 
-  const { firm, permits } = data;
+  const { firm, permits: permitList } = data;
+  const permits = permitList.rows;
   const name = t(firm.name) ?? `Firm ${firm.id}`;
   const email = t(firm.email);
   const url = t(firm.url);
@@ -137,8 +139,8 @@ export default async function FirmDetailPage({ params }: { params: Promise<{ id:
             ["Phone", phone(firm.phone1, firm.ext1)],
             ["Second phone", phone(firm.phone2, firm.ext2)],
             ["Fax", t(firm.fax)],
-            ["E-mail", <MaybeLink key="e" text={email} href={safeEmailHref(email)} />],
-            ["Web", <MaybeLink key="u" text={url} href={safeUrlHref(url)} />],
+            ["E-mail", email === null ? null : <MaybeLink key="e" text={email} href={safeEmailHref(email)} />],
+            ["Web", url === null ? null : <MaybeLink key="u" text={url} href={safeUrlHref(url)} />],
             ["Office id", firm.officeId],
           ]}
         />
@@ -155,25 +157,13 @@ export default async function FirmDetailPage({ params }: { params: Promise<{ id:
                 {p.level ? ` · level ${p.level}` : ""}
                 {` · issued ${formatCentralDate(p.issueDate)}`}
                 {" · "}
-                {p.holderKey !== null && t(p.holderName) ? (
-                  canOpenLicensee ? (
-                    <Link href={`/admin/licensees/${p.holderKey}`} className="text-primary hover:underline">
-                      {t(p.holderName)}
-                    </Link>
-                  ) : (
-                    t(p.holderName)
-                  )
-                ) : (
-                  <>
-                    {p.dentistId !== null ? `Dentist id ${p.dentistId}` : "no holder recorded"} <NotLinked />
-                  </>
-                )}
+                <PermitHolder row={p} canOpenLicensee={canOpenLicensee} />
               </li>
             ))}
           </ul>
         )}
-        {permits.length >= 500 && (
-          <p className="text-xs text-muted-foreground">Showing the first 500. More exist.</p>
+        {permitList.truncated && (
+          <p className="text-xs text-muted-foreground">Showing the first {FIRM_PERMITS_LIMIT}. More exist.</p>
         )}
         <p className="text-muted-foreground">Linked by office id (unverified link U1).</p>
       </Section>

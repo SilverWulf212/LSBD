@@ -12,7 +12,8 @@ export function safeUrlHref(v: string | null): string | null {
   }
 }
 
-const EMAIL = /^[^\s@:?&#/<>"']+@[^\s@:?&#/<>"']+\.[^\s@:?&#/<>"']+$/;
+// No whitespace, scheme colon, header-injection (%, comma, semicolon, ? and &) or markup characters.
+const EMAIL = /^[^\s@:?&#/<>"'%,;]+@[^\s@:?&#/<>"'%,;]+\.[^\s@:?&#/<>"'%,;]+$/;
 
 /** A mailto: link built from a value that looks like a plain address, never the stored text itself. */
 export function safeEmailHref(v: string | null): string | null {

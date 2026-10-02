@@ -45,7 +45,7 @@ describe("staff-firms", () => {
     await listFirms(f.query, { ...NONE, number: "160179", status: "CUR" });
     expect(f.calls[0].params).toEqual(["160179", "CUR", 0]);
     expect(f.calls[0].text).toContain("license_id = $1");
-    expect(f.calls[0].text).toContain("status = $2");
+    expect(f.calls[0].text).toContain("btrim(status) = $2");
   });
 
   it("lists everyone when no filter is set", async () => {
@@ -113,6 +113,8 @@ describe("staff-firms", () => {
   it("lists distinct statuses", async () => {
     const f = fake([{ status: "CUR" }, { status: "INA" }]);
     expect(await firmStatusOptions(f.query)).toEqual(["CUR", "INA"]);
+    expect(f.calls[0].text).toContain("DISTINCT btrim(status)");
+    expect(f.calls[0].text).toContain("nullif(btrim(status), '') IS NOT NULL");
   });
 
   it("counts professional associations", async () => {

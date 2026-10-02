@@ -19,7 +19,7 @@ export function parsePermitFilters(sp: RawSearchParams): PermitFilters {
   return {
     kind: kind === "personal" || kind === "office" ? kind : "",
     type: cleanText(sp.type),
-    level: cleanText(sp.level, 20),
+    level: cleanText(sp.level, 20).toUpperCase(),
     page: parsePage(sp.page),
   };
 }
@@ -120,18 +120,35 @@ export async function permitFilterOptions(q: RoQueryFn): Promise<{ types: string
   };
 }
 
-export async function permitsForHolder(q: RoQueryFn, legacyKey: number): Promise<PermitRow[]> {
-  const rows = await q(
-    `${SELECT}\n${FROM}\nWHERE pm.dentist_id = $1\nORDER BY pm.issue_date DESC NULLS LAST, pm.id\nLIMIT 200`,
-    [legacyKey],
-  );
-  return rows.map(mapPermit);
+export const HOLDER_PERMITS_LIMIT = 200;
+export const FIRM_PERMITS_LIMIT = 500;
+
+export type PermitList = { rows: PermitRow[]; truncated: boolean };
+
+function cutList(rows: readonly Record<string, unknown>[], limit: number): PermitList {
+  return { rows: rows.slice(0, limit).map(mapPermit), truncated: rows.length > limit };
 }
 
-export async function permitsForFirm(q: RoQueryFn, firmId: number): Promise<PermitRow[]> {
+export async function permitsForHolder(q: RoQueryFn, legacyKey: number): Promise<PermitList> {
   const rows = await q(
-    `${SELECT}\n${FROM}\nWHERE pm.office_id = $1 AND pm.office_id > 0\n${LIST_ORDER}\nLIMIT 500`,
+    `${SELECT}
+${FROM}
+WHERE pm.dentist_id = $1
+ORDER BY pm.issue_date DESC NULLS LAST, pm.id
+LIMIT ${HOLDER_PERMITS_LIMIT + 1}`,
+    [legacyKey],
+  );
+  return cutList(rows, HOLDER_PERMITS_LIMIT);
+}
+
+export async function permitsForFirm(q: RoQueryFn, firmId: number): Promise<PermitList> {
+  const rows = await q(
+    `${SELECT}
+${FROM}
+WHERE pm.office_id = $1 AND pm.office_id > 0
+${LIST_ORDER}
+LIMIT ${FIRM_PERMITS_LIMIT + 1}`,
     [firmId],
   );
-  return rows.map(mapPermit);
+  return cutList(rows, FIRM_PERMITS_LIMIT);
 }

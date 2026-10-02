@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  PERMIT_FIRM_JOIN, listPermits, parsePermitFilters, permitFilterOptions, permitKind, permitsForFirm,
+  FIRM_PERMITS_LIMIT, HOLDER_PERMITS_LIMIT, PERMIT_FIRM_JOIN, listPermits, parsePermitFilters, permitFilterOptions, permitKind, permitsForFirm,
   permitsForHolder, type PermitFilters,
 } from "../../src/lib/staff-permits";
 import type { RoQueryFn } from "../../src/lib/db/lsbd-ro";
@@ -115,10 +115,27 @@ describe("staff-permits", () => {
     await permitsForFirm(f.query, 3810);
     expect(f.calls[0].params).toEqual([12345]);
     expect(f.calls[0].text).toContain("WHERE pm.dentist_id = $1");
-    expect(f.calls[0].text).toMatch(/LIMIT 200$/);
+    expect(f.calls[0].text).toMatch(/LIMIT 201$/);
     expect(f.calls[1].params).toEqual([3810]);
     expect(f.calls[1].text).toContain("WHERE pm.office_id = $1 AND pm.office_id > 0");
-    expect(f.calls[1].text).toMatch(/LIMIT 500$/);
+    expect(f.calls[1].text).toMatch(/LIMIT 501$/);
+  });
+
+  it("reports a cut holder or firm permit list", async () => {
+    const rows = (n: number) => Array.from({ length: n }, (_, i) => ({ ...ROW, id: i + 1 }));
+    const a = fake(rows(HOLDER_PERMITS_LIMIT + 1), rows(HOLDER_PERMITS_LIMIT));
+    const cut = await permitsForHolder(a.query, 1);
+    expect(cut.truncated).toBe(true);
+    expect(cut.rows).toHaveLength(HOLDER_PERMITS_LIMIT);
+    expect((await permitsForHolder(a.query, 1)).truncated).toBe(false);
+    const b = fake(rows(FIRM_PERMITS_LIMIT + 1));
+    const firm = await permitsForFirm(b.query, 1);
+    expect(firm.truncated).toBe(true);
+    expect(firm.rows).toHaveLength(FIRM_PERMITS_LIMIT);
+  });
+
+  it("upper-cases and trims the level filter", () => {
+    expect(parsePermitFilters({ level: " p " }).level).toBe("P");
   });
 
   it("returns sorted distinct filter options", async () => {

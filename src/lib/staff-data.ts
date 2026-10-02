@@ -9,7 +9,7 @@ import {
   loadLicenseeDetail, parseLicenseeKey, type DetailCaps, type LicenseeDetail,
 } from "@/lib/staff-licensee-detail";
 import {
-  listPermits, parsePermitFilters, permitFilterOptions, permitsForFirm, type PermitFilters, type PermitRow,
+  listPermits, parsePermitFilters, permitFilterOptions, permitsForFirm, type PermitFilters, type PermitList, type PermitRow,
 } from "@/lib/staff-permits";
 import {
   countProfessionalAssociations, firmStatusOptions, getFirm, listFirms, parseFirmFilters, parseFirmId,
@@ -74,7 +74,7 @@ export async function getFirmList(sp: RawSearchParams): Promise<{
 /** null for a malformed id or an id with no firm row. CR3: no licensee-by-number section. */
 export async function getFirmDetail(
   rawId: string,
-): Promise<{ firm: FirmDetail; permits: PermitRow[] } | null> {
+): Promise<{ firm: FirmDetail; permits: PermitList } | null> {
   await requireCapability("permits.read");
   const id = parseFirmId(rawId);
   if (id === null) return null;

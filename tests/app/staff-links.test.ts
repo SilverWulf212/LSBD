@@ -23,3 +23,21 @@ describe("safeEmailHref", () => {
     }
   });
 });
+
+describe("hostile stored values", () => {
+  const HOSTILE = [
+    " JavaScript:alert(1)", "java\tscript:alert(1)", "java\nscript:alert(1)", "//evil.example", "vbscript:x",
+    "data:text/html,x", "www.example.com", "a@b.com%0Acc:x", "a@b.com%0Abcc%3Ax%40y.org", "a@b.com,x@y.org",
+    "a@b.com?bcc=x@y.com",
+  ];
+  it("never become an e-mail or web href", () => {
+    for (const v of HOSTILE) {
+      expect(safeEmailHref(v), v).toBeNull();
+      expect(safeUrlHref(v), v).toBeNull();
+    }
+  });
+  it("plain good values still link", () => {
+    expect(safeUrlHref("https://example.com/x")).toBe("https://example.com/x");
+    expect(safeEmailHref("a@b.com")).toBe("mailto:a@b.com");
+  });
+});

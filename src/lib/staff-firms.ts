@@ -87,7 +87,7 @@ export function listFirms(q: RoQueryFn, f: FirmFilters): Promise<Paged<FirmListR
   if (f.name) where.push(`est_name ILIKE ${bind(`%${escapeLike(f.name)}%`)}`);
   if (f.number) where.push(`license_id = ${bind(f.number)}`);
   if (f.city) where.push(`city ILIKE ${bind(`${escapeLike(f.city)}%`)}`);
-  if (f.status) where.push(`status = ${bind(f.status)}`);
+  if (f.status) where.push(`btrim(status) = ${bind(f.status)}`);
 
   const sql = `SELECT ${LIST_COLUMNS}, count(*) OVER() AS total
 FROM lsbd.professional_llc${where.length ? `\nWHERE ${where.join(" AND ")}` : ""}
@@ -96,7 +96,7 @@ ORDER BY est_name NULLS LAST, id`;
 }
 
 export async function firmStatusOptions(q: RoQueryFn): Promise<string[]> {
-  const rows = await q("SELECT DISTINCT status FROM lsbd.professional_llc WHERE status IS NOT NULL ORDER BY 1");
+  const rows = await q("SELECT DISTINCT btrim(status) AS status FROM lsbd.professional_llc WHERE nullif(btrim(status), '') IS NOT NULL ORDER BY 1");
   return rows.map((r) => String(r.status));
 }
 
