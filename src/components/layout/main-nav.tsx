@@ -6,67 +6,37 @@ import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/constants";
+import { isNavItemActive, navGroups, type NavItem } from "@/lib/nav";
 
 export function MainNav() {
   const pathname = usePathname();
 
   return (
     <nav aria-label="Main navigation" className="hidden lg:block">
-      <ul className="flex items-center gap-0.5">
-        {NAV_ITEMS.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
-          const hasChildren = "children" in item && item.children;
-
-          if (!hasChildren) {
-            return (
-              <li key={item.label}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px]",
-                    "hover:bg-[#CAF0F8] hover:text-[#005f8f]",
-                    "focus-visible:ring-2 focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 focus-visible:outline-none",
-                    isActive
-                      ? "bg-[#CAF0F8] text-[#005f8f] font-semibold"
-                      : "text-[#495057]"
-                  )}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  <span className="font-[family-name:var(--font-oswald)] uppercase tracking-wide text-[13px]">
-                    {item.label}
-                  </span>
-                </Link>
-              </li>
-            );
-          }
-
-          return (
-            <li key={item.label}>
-              <NavDropdown item={item} isActive={isActive} />
-            </li>
-          );
-        })}
+      <ul className="flex items-center gap-1">
+        {(NAV_ITEMS as readonly NavItem[]).map((item) => (
+          <li key={item.label}>
+            <NavDropdown item={item} isActive={isNavItemActive(item, pathname)} pathname={pathname} />
+          </li>
+        ))}
       </ul>
     </nav>
   );
 }
 
-interface NavItemWithChildren {
-  label: string;
-  href: string;
-  children: readonly { label: string; href: string }[];
-}
-
 function NavDropdown({
   item,
   isActive,
+  pathname,
 }: {
-  item: NavItemWithChildren;
+  item: NavItem;
   isActive: boolean;
+  pathname: string;
 }) {
   const [open, setOpen] = React.useState(false);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const groups = navGroups(item);
+  const isPanel = groups.length > 1;
 
   const openMenu = () => {
     if (timeoutRef.current) {
@@ -85,6 +55,11 @@ function NavDropdown({
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  // Close after a link is followed (the header stays mounted across pages).
+  React.useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
@@ -130,24 +105,41 @@ function NavDropdown({
         />
       </button>
       {open && (
-        <ul
-          role="menu"
-          className="absolute left-0 top-full z-50 mt-1 min-w-[220px] rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+        <div
+          className={cn(
+            "absolute left-0 top-full z-50 mt-1 rounded-md border border-gray-200 bg-white shadow-lg",
+            isPanel ? "flex gap-2 p-3" : "min-w-[220px] py-1"
+          )}
         >
-          {item.children.map((child) => (
-            <li key={child.href} role="none">
-              <Link
-                href={child.href}
-                role="menuitem"
-                className="flex items-center px-4 py-2.5 text-sm text-[#495057] transition-colors min-h-[44px] hover:bg-[#CAF0F8] hover:text-[#005f8f] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0077B6] focus-visible:outline-none"
-                onFocus={openMenu}
-                onBlur={closeMenu}
-              >
-                {child.label}
-              </Link>
-            </li>
+          {groups.map((group) => (
+            <div key={group.label ?? item.label} className={cn(isPanel && "w-[210px]")}>
+              {group.label && (
+                <p className="px-3 pb-1 pt-2 font-[family-name:var(--font-oswald)] text-xs uppercase tracking-wider text-[#005f8f] border-b border-gray-200 mb-1">
+                  {group.label}
+                </p>
+              )}
+              <ul>
+                {group.children.map((child) => (
+                  <li key={child.href}>
+                    <Link
+                      href={child.href}
+                      aria-current={pathname === child.href ? "page" : undefined}
+                      className={cn(
+                        "flex items-center rounded-sm py-2.5 text-sm transition-colors min-h-[44px] hover:bg-[#CAF0F8] hover:text-[#005f8f] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0077B6] focus-visible:outline-none",
+                        isPanel ? "px-3" : "px-4",
+                        pathname === child.href ? "text-[#005f8f] font-medium" : "text-[#495057]"
+                      )}
+                      onFocus={openMenu}
+                      onBlur={closeMenu}
+                    >
+                      {child.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

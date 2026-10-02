@@ -12,34 +12,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { NAV_ITEMS } from "@/lib/constants";
+import { allNavPages, type NavPage } from "@/lib/nav";
 
-interface SearchPage {
-  title: string;
-  href: string;
-  section: string;
-}
-
-function buildSearchablePages(): SearchPage[] {
-  const pages: SearchPage[] = [
-    { title: "Home", href: "/", section: "Pages" },
-  ];
-  NAV_ITEMS.forEach((item) => {
-    pages.push({ title: item.label, href: item.href, section: "Pages" });
-    if ("children" in item && item.children) {
-      item.children.forEach((child) => {
-        pages.push({
-          title: `${item.label} - ${child.label}`,
-          href: child.href,
-          section: item.label,
-        });
-      });
-    }
-  });
-  return pages;
-}
-
-const SEARCHABLE_PAGES = buildSearchablePages();
+const SEARCHABLE_PAGES: NavPage[] = [
+  { title: "Home", href: "/", section: "Pages" },
+  ...allNavPages(),
+];
 
 export function SearchDialog() {
   const [open, setOpen] = React.useState(false);

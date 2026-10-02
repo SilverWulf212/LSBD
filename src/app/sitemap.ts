@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
-import { SITE_URL, NAV_ITEMS } from "@/lib/constants";
+import { SITE_URL } from "@/lib/constants";
+import { allNavPages } from "@/lib/nav";
 import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -13,27 +14,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Nav-based pages
-  const navPages: MetadataRoute.Sitemap = NAV_ITEMS.flatMap((item) => {
-    const pages = [
-      {
-        url: `${baseUrl}${item.href}`,
-        lastModified: new Date(),
-        changeFrequency: "monthly" as const,
-        priority: 0.8,
-      },
-    ];
-    if ("children" in item && item.children) {
-      item.children.forEach((child) => {
-        pages.push({
-          url: `${baseUrl}${child.href}`,
-          lastModified: new Date(),
-          changeFrequency: "monthly" as const,
-          priority: 0.7,
-        });
-      });
-    }
-    return pages;
-  });
+  const navPages: MetadataRoute.Sitemap = allNavPages().map((page) => ({
+    url: `${baseUrl}${page.href}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    // Section landing pages (one path segment) rank above the pages under them.
+    priority: page.href.split("/").length === 2 ? 0.8 : 0.7,
+  }));
 
   // Blog posts from database
   const publishedPosts = await db.select().from(posts).where(eq(posts.status, "published"));
