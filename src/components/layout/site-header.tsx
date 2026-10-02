@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { LogIn, FileText, Search } from "lucide-react";
+import { LogIn, Search } from "lucide-react";
 import { SITE_NAME, EXTERNAL_LINKS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { MainNav } from "@/components/layout/main-nav";
@@ -52,15 +52,10 @@ export function SiteHeader() {
               size="sm"
               className="hidden sm:inline-flex bg-[#0077B6] hover:bg-[#005f8f] text-white font-[family-name:var(--font-oswald)] uppercase tracking-wide text-xs min-h-[44px] min-w-[44px]"
             >
-              <a
-                href={EXTERNAL_LINKS.dentistLogin}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FileText className="h-4 w-4 mr-1" aria-hidden="true" />
-                Apply
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
+              <Link href="/public/verify">
+                <Search className="h-4 w-4 mr-1" aria-hidden="true" />
+                Verify a License
+              </Link>
             </Button>
 
             <Button
@@ -75,21 +70,9 @@ export function SiteHeader() {
                 rel="noopener noreferrer"
               >
                 <LogIn className="h-4 w-4 mr-1" aria-hidden="true" />
-                Login
+                Licensee Login
                 <span className="sr-only"> (opens in a new tab)</span>
               </a>
-            </Button>
-
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="hidden md:inline-flex border-[#0077B6] text-[#005f8f] hover:bg-[#CAF0F8] font-[family-name:var(--font-oswald)] uppercase tracking-wide text-xs min-h-[44px] min-w-[44px]"
-            >
-              <Link href="/public/verify">
-                <Search className="h-4 w-4 mr-1" aria-hidden="true" />
-                Verify
-              </Link>
             </Button>
           </div>
         </div>

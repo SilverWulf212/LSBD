@@ -18,31 +18,37 @@ export const EXTERNAL_LINKS = {
   reportFraud: "https://www.ReportFraud.La",
 } as const;
 
+// The public menu, grouped by audience. An item has either `groups` (a panel with one
+// labelled column per group) or `children` (a plain dropdown). `href` is the section's
+// own overview page when it has one; it is not shown in the menu but is kept for the
+// sitemap and site search. Helpers are in src/lib/nav.ts.
 export const NAV_ITEMS = [
   {
-    label: "Dentists",
-    href: "/dentists",
-    children: [
-      { label: "Overview", href: "/dentists" },
-      { label: "Licensure Pathways", href: "/dentists/licensure" },
-      { label: "Renewal", href: "/dentists/renewal" },
-      { label: "Continuing Education", href: "/dentists/continuing-ed" },
+    label: "Licensees",
+    groups: [
+      {
+        label: "Dentists",
+        children: [
+          { label: "Overview", href: "/dentists" },
+          { label: "Licensure Pathways", href: "/dentists/licensure" },
+          { label: "Renewal", href: "/dentists/renewal" },
+          { label: "Continuing Education", href: "/dentists/continuing-ed" },
+        ],
+      },
+      {
+        label: "Hygienists",
+        children: [
+          { label: "Overview", href: "/hygienists" },
+          { label: "Licensure Pathways", href: "/hygienists/licensure" },
+          { label: "Renewal", href: "/hygienists/renewal" },
+          { label: "Continuing Education", href: "/hygienists/continuing-ed" },
+        ],
+      },
+      {
+        label: "Assistants",
+        children: [{ label: "Dental Assisting & EDDA", href: "/assistants" }],
+      },
     ],
-  },
-  {
-    label: "Hygienists",
-    href: "/hygienists",
-    children: [
-      { label: "Overview", href: "/hygienists" },
-      { label: "Licensure Pathways", href: "/hygienists/licensure" },
-      { label: "Renewal", href: "/hygienists/renewal" },
-      { label: "Continuing Education", href: "/hygienists/continuing-ed" },
-    ],
-  },
-  {
-    label: "Assistants",
-    href: "/assistants",
-    description: "Dental Assisting & EDDA",
   },
   {
     label: "Public",
@@ -72,9 +78,9 @@ export const NAV_ITEMS = [
       { label: "Board Members", href: "/about/board" },
       { label: "Staff Directory", href: "/about/staff" },
       { label: "Policies", href: "/about/policies" },
+      { label: "News", href: "/news" },
     ],
   },
-  { label: "News", href: "/news" },
 ] as const;
 
 export const FORM_CATEGORIES = [
